@@ -233,6 +233,29 @@ const zoomLayoutReference = {
 let baselineDevicePixelScale = null;
 let lastKnownBrowserZoom = 1;
 
+/* ТЗ п.1: при браузерном зуме (Ctrl +/-) НЕ пересчитываем масштаб макета —
+   пусть браузер масштабирует готовую страницу нативно, иначе дробный --dpx
+   пересчитывается на каждый шаг зума и текст «прыгает». Зум надёжно детектим по
+   отклонению devicePixelRatio от значения на загрузке (окно-ресайз dpr не меняет). */
+let baselineDeviceRatio = null;
+function captureBaselineDeviceRatio() {
+  if (baselineDeviceRatio == null) {
+    baselineDeviceRatio =
+      Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+        ? window.devicePixelRatio
+        : 1;
+  }
+}
+function isBrowserZoomed() {
+  if (baselineDeviceRatio == null) return false;
+  const dpr =
+    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+      ? window.devicePixelRatio
+      : 1;
+  return Math.abs(dpr / baselineDeviceRatio - 1) > 0.02;
+}
+window.isBrowserZoomed = isBrowserZoomed;
+
 function captureZoomLayoutReference(force) {
   const outerWidth = window.outerWidth;
   const innerWidth = window.innerWidth;
@@ -333,31 +356,21 @@ function getLayoutViewportWidth() {
 
 function applyBrowserZoomNeutralizer() {
   const frame = document.getElementById("zoomFrame");
-  const browserZoom = getBrowserZoomScale();
   const root = document.documentElement;
 
   if (!frame) return;
 
-  if (Math.abs(browserZoom - 1) < 0.008) {
-    frame.style.removeProperty("zoom");
-    frame.style.removeProperty("transform");
-    frame.style.removeProperty("width");
-    frame.style.removeProperty("min-height");
-    root.classList.remove("is-browser-zoom-neutralized");
-    root.style.removeProperty("--browser-zoom");
-    root.style.removeProperty("--browser-zoom-inv");
-    captureZoomLayoutReference(true);
-    return;
-  }
-
-  const inv = (1 / browserZoom).toFixed(6);
-  frame.style.zoom = inv;
+  /* ТЗ п.1: больше НЕ «догоняем» браузерный зум масштабом фрейма. Раньше сюда
+     ставился frame.style.zoom = 1/browserZoom по неточной оценке зума, из-за чего
+     на каждом шаге зума макет чуть по-разному перекладывался и текст прыгал.
+     Теперь зум чисто нативный — просто убеждаемся, что никакого override нет. */
+  frame.style.removeProperty("zoom");
   frame.style.removeProperty("transform");
   frame.style.removeProperty("width");
   frame.style.removeProperty("min-height");
-  root.classList.add("is-browser-zoom-neutralized");
-  root.style.setProperty("--browser-zoom", browserZoom.toFixed(6));
-  root.style.setProperty("--browser-zoom-inv", inv);
+  root.classList.remove("is-browser-zoom-neutralized");
+  root.style.removeProperty("--browser-zoom");
+  root.style.removeProperty("--browser-zoom-inv");
 }
 
 function getCurrentPageScale() {
@@ -1906,6 +1919,9 @@ function updateSvgTextZoomCompensation() {
 
 function updateZoomAwareLines() {
   const textRenderModeChanged = updateSvgTextZoomCompensation();
+  // ТЗ п.1: на браузерном зуме масштаб макета НЕ трогаем (иначе текст прыгает) —
+  // браузер масштабирует страницу нативно, --dpx остаётся с последнего не-зум состояния.
+  if (isBrowserZoomed()) return textRenderModeChanged;
   const root = document.documentElement;
   const layoutWidth = snapLayoutCssPx(getLayoutViewportWidth());
   const pageScale = layoutWidth / DESIGN_VIEWPORT_WIDTH;
@@ -7178,6 +7194,7 @@ function bindBitmapTextFontRefresh() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+  captureBaselineDeviceRatio();
   captureZoomLayoutReference(true);
   applyBrowserZoomNeutralizer();
   if (typeof window.syncDesignViewportUnit === "function") {

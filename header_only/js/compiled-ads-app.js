@@ -3416,6 +3416,11 @@
   }
 
   function syncDesignViewportUnit() {
+    // ТЗ п.1: на браузерном зуме единицу макета --fvw НЕ пересчитываем —
+    // браузер масштабирует страницу нативно, иначе текст прыгает на каждом шаге зума.
+    if (typeof window.isBrowserZoomed === "function" && window.isBrowserZoomed()) {
+      return;
+    }
     const browserZoom =
       typeof window.getBrowserZoomScale === "function"
         ? window.getBrowserZoomScale()
