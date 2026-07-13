@@ -1168,6 +1168,17 @@ a {
     vertical-align: top;
 }
 
+.html-label {
+    pointer-events: auto;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.html-label-line {
+    user-select: text;
+    -webkit-user-select: text;
+}
+
 .nav-text .svg-label {
     width: 100%;
     height: calc(1.25 * var(--fvw, 1vw));
@@ -2413,7 +2424,10 @@ a {
     display: none;
 }
 
-.icon-wrapper:hover > .tooltip {
+/* ТЗ п.1: подсказка по CSS-ховеру — только при осознанном наведении мышью
+   (класс has-hover-intent ставится по реальному pointermove), чтобы она не
+   всплывала сама, когда элемент «подъезжает» под курсор при зуме/пересчёте. */
+html.has-hover-intent .icon-wrapper:hover > .tooltip {
     display: flex;
 }
 

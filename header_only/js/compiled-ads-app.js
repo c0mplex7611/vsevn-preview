@@ -3417,9 +3417,13 @@
         ? window.getBrowserZoomScale()
         : 1;
     const w = document.documentElement.clientWidth || window.innerWidth || 1920;
+    const layoutWidth =
+      typeof window.snapLayoutCssPx === "function"
+        ? window.snapLayoutCssPx(w * browserZoom)
+        : w * browserZoom;
     document.documentElement.style.setProperty(
       "--fvw",
-      (w * browserZoom) / 100 + "px",
+      layoutWidth / 100 + "px",
     );
   }
 

@@ -222,7 +222,7 @@ function esc(str) {
 
 const svgNS = "http://www.w3.org/2000/svg";
 const STATIC_TEXT_FAMILY = "Roboto, Arial, sans-serif";
-const TEXT_RENDER_ENGINE = "bitmap-mask-v1";
+const TEXT_RENDER_ENGINE = "html-text-v1";
 const DESIGN_VIEWPORT_WIDTH = 1920;
 const MIN_PAGE_SCALE = 0.05;
 const zoomLayoutReference = {
@@ -383,6 +383,24 @@ function getDevicePixelScale() {
   return Math.max(1, deviceScale * visualScale);
 }
 
+function snapLayoutCssPx(value) {
+  const scale = getDevicePixelScale();
+  if (!Number.isFinite(value) || !Number.isFinite(scale) || scale <= 0) {
+    return value;
+  }
+  return Math.round(value * scale) / scale;
+}
+
+function snapPositiveCssPx(value) {
+  if (!Number.isFinite(value) || value <= 0) return value;
+  const scale = getDevicePixelScale();
+  const physicalPx = 1 / Math.max(1, scale || 1);
+  return Math.max(physicalPx, snapLayoutCssPx(value));
+}
+
+window.snapLayoutCssPx = snapLayoutCssPx;
+window.snapPositiveCssPx = snapPositiveCssPx;
+
 const DEFAULT_DATE_FROM = "12.05.2023";
 
 const navIconConfig = {
@@ -426,140 +444,63 @@ const navTextWidths = {
   settings: 180,
 };
 
-const BITMAP_TEXT_OVERFLOW_PAD = 36;
-
-function getBitmapMaskPadding(options = {}) {
-  const pad =
-    options.maskOverflowPadding !== undefined
-      ? Math.max(0, Number(options.maskOverflowPadding) || 0)
-      : BITMAP_TEXT_OVERFLOW_PAD;
-  const anchor = options.anchor || "start";
-
-  if (anchor === "middle") {
-    return { left: pad, right: pad };
-  }
-  if (anchor === "end") {
-    return { left: pad, right: 0 };
-  }
-  return { left: 0, right: pad };
-}
-
 function createSvgText(text, options = {}) {
   const width = options.width || 200;
   const height = options.height || 26;
   const fontSize = options.size || 21;
-  const svg = document.createElementNS(svgNS, "svg");
-  const label = document.createElementNS(svgNS, "text");
+  const label = document.createElement("span");
+  const lines = options.lines && options.lines.length ? options.lines : [text];
+  const lineHeight = options.lineHeight || fontSize * 1.15;
+  const baselineY =
+    options.y !== undefined ? options.y : Math.round(fontSize * 0.82);
+  const textTop = Math.max(0, baselineY - fontSize * 0.82);
+  const textAlign =
+    options.anchor === "middle"
+      ? "center"
+      : options.anchor === "end"
+        ? "right"
+        : "left";
 
-  svg.classList.add("svg-label");
-  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  svg.setAttribute(
-    "preserveAspectRatio",
-    options.preserveAspectYMin ? "xMinYMin meet" : "xMinYMid meet",
-  );
-  svg.setAttribute("width", (width / 19.2).toFixed(5) + "vw");
-  svg.setAttribute("height", (height / 19.2).toFixed(5) + "vw");
-  svg.setAttribute("aria-hidden", "true");
-  svg.setAttribute("text-rendering", "geometricPrecision");
-  svg.style.width = pxToVw(width);
-  svg.style.height = pxToVw(height);
-  svg.style.overflow = "visible";
-  svg.style.textRendering = "geometricPrecision";
-  svg.style.setProperty("font-size", "0px", "important");
-  svg.style.setProperty("line-height", "0px", "important");
-
-  if (options.useBitmapText !== false && shouldUseBitmapTextMasks()) {
-    const maskPadding = getBitmapMaskPadding(options);
-    const maskWidth = width + maskPadding.left + maskPadding.right;
-    const maskX = -maskPadding.left;
-    appendBitmapTextMask(
-      svg,
-      getTextMaskDataUrl(text, {
-        text,
-        lines: options.lines,
-        size: fontSize,
-        width: maskWidth,
-        height,
-        x: (function () {
-          var base = options.x;
-          if (base === undefined) {
-            if (options.anchor === "middle") base = width / 2;
-            else if (options.anchor === "end") base = width;
-            else base = 0;
-          }
-          return base + maskPadding.left;
-        })(),
-        y: options.y,
-        lineHeight: options.lineHeight,
-        anchor: options.anchor,
-        weight: options.weight || 300,
-        family: options.family || STATIC_TEXT_FAMILY,
-      }),
-      {
-        x: maskX,
-        width: maskWidth,
-        height,
-        color: options.color || "currentColor",
-      },
-    );
-    return svg;
-  }
-
-  label.setAttribute("x", options.x !== undefined ? options.x : 0);
-  label.setAttribute(
-    "y",
-    options.y !== undefined ? options.y : Math.round(fontSize * 0.82),
-  );
-  if (options.anchor) label.setAttribute("text-anchor", options.anchor);
-  label.setAttribute("fill", options.color || "currentColor");
-  label.setAttribute("font-family", options.family || STATIC_TEXT_FAMILY);
-  label.setAttribute("font-size", fontSize);
-  label.setAttribute("font-weight", options.weight || 300);
-  label.setAttribute("font-synthesis", "none");
-  label.setAttribute("stroke", "none");
-  label.setAttribute("paint-order", "fill");
-  label.setAttribute("text-rendering", "geometricPrecision");
+  label.classList.add("svg-label", "html-label");
+  label.style.width = pxToVw(width);
+  label.style.height = pxToVw(height);
+  label.style.overflow = "visible";
+  label.style.boxSizing = "border-box";
+  label.style.paddingTop = pxToVw(textTop);
+  label.style.pointerEvents = "auto";
+  label.style.color = options.color || "currentColor";
+  label.style.whiteSpace = lines.length > 1 ? "normal" : "nowrap";
+  label.style.textAlign = textAlign;
+  label.style.userSelect = "text";
+  label.style.webkitUserSelect = "text";
   label.style.setProperty(
     "font-family",
     options.family || STATIC_TEXT_FAMILY,
     "important",
   );
-  label.style.setProperty("font-size", fontSize + "px", "important");
+  label.style.setProperty("font-size", pxToVw(fontSize), "important");
   label.style.setProperty(
     "font-weight",
     String(options.weight || 300),
     "important",
   );
-  label.style.setProperty("line-height", "1", "important");
-  if (options.lines && options.lines.length > 1) {
-    options.lines.forEach(function (line, index) {
-      const tspan = document.createElementNS(svgNS, "tspan");
-      tspan.setAttribute("x", options.x !== undefined ? options.x : 0);
-      tspan.setAttribute(
-        "y",
-        (options.y !== undefined ? options.y : Math.round(fontSize * 0.82)) +
-          index * (options.lineHeight || fontSize * 1.15),
-      );
-      tspan.style.setProperty("font-size", fontSize + "px", "important");
-      tspan.style.setProperty(
-        "font-weight",
-        String(options.weight || 300),
-        "important",
-      );
-      tspan.style.setProperty(
-        "font-family",
-        options.family || STATIC_TEXT_FAMILY,
-        "important",
-      );
-      tspan.textContent = line;
-      label.append(tspan);
+  label.style.setProperty("line-height", pxToVw(lineHeight), "important");
+
+  if (lines.length > 1) {
+    lines.forEach(function (line) {
+      const span = document.createElement("span");
+      span.className = "html-label-line";
+      span.textContent = line;
+      span.style.display = "block";
+      span.style.userSelect = "text";
+      span.style.webkitUserSelect = "text";
+      label.append(span);
     });
   } else {
-    label.textContent = options.lines ? options.lines[0] : text;
+    label.textContent = lines[0];
   }
 
-  svg.append(label);
-  return svg;
+  return label;
 }
 
 function getSvgTextRenderKey(text, options = {}) {
@@ -578,7 +519,7 @@ function getSvgTextRenderKey(text, options = {}) {
     options.family || "",
     options.color || "",
     options.lineHeight || "",
-    options.useBitmapText === false ? "svg-text" : "bitmap-text",
+    "html-text",
   ].join("\u0002");
 }
 
@@ -1096,7 +1037,7 @@ function lockScaleCriticalCarriers(root) {
     });
 }
 
-const plainTextRenderSelectors = [];
+const plainTextRenderSelectors = ["*"];
 const plainTextRenderSelector = plainTextRenderSelectors.join(",");
 
 function shouldRenderPlainText(element) {
@@ -1179,10 +1120,7 @@ function splitTextIntoLines(text, maxChars) {
   return lines;
 }
 
-const bitmapTextMaskCache = new Map();
-let bitmapTextMaskCounter = 0;
-let bitmapTextFontVersion = 0;
-let textRenderMode = "bitmap";
+let textRenderMode = "html";
 let textRenderModeVersion = 0;
 let viewportTextVersion = 0;
 let lastViewportTextSignature = "";
@@ -1204,7 +1142,6 @@ function getViewportTextSignature() {
     pageScale.toFixed(4),
     visualScale.toFixed(4),
     dpr.toFixed(4),
-    getBitmapTextScale(),
   ].join(":");
 }
 
@@ -1218,13 +1155,11 @@ function invalidateRenderedStaticText(root) {
 
 function getTextRenderEngineKey() {
   const viewportKey = "vp" + viewportTextVersion;
-  return textRenderMode === "bitmap"
-    ? `${TEXT_RENDER_ENGINE}:${bitmapTextFontVersion}:${textRenderModeVersion}:${viewportKey}`
-    : `svg-text-v1:${textRenderModeVersion}:${viewportKey}`;
+  return `${TEXT_RENDER_ENGINE}:${textRenderModeVersion}:${viewportKey}`;
 }
 
 function shouldUseBitmapTextMasks() {
-  return textRenderMode === "bitmap";
+  return false;
 }
 
 function getNormalBrowserZoomRatio() {
@@ -1240,11 +1175,6 @@ function isNormalBrowserZoomActive() {
   const ratio = getNormalBrowserZoomRatio();
   const currentScale = getDevicePixelScale();
   return Math.abs(ratio - 1) > 0.015 || currentScale >= 3;
-}
-
-function getBitmapTextScale() {
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
-  return Math.max(3, Math.min(6, Math.ceil(dpr)));
 }
 
 function makeCanvasFont(size, weight, family) {
@@ -1392,101 +1322,6 @@ window.markViewportChanging = markViewportChanging;
 window.getFormControlSearchMode = function (key) {
   return key === "phone" || key === "salary" ? "cap" : "lowercase";
 };
-
-function getTextMaskDataUrl(text, options = {}) {
-  const width = Math.max(1, Math.ceil(options.width || 200));
-  const height = Math.max(1, Math.ceil(options.height || 26));
-  const size = options.size || 21;
-  const weight = options.weight || 300;
-  const family = options.family || STATIC_TEXT_FAMILY;
-  const x = options.x !== undefined ? options.x : 0;
-  const y = options.y !== undefined ? options.y : Math.round(size * 0.82);
-  const lineHeight = options.lineHeight || size * 1.15;
-  const lines = options.lines && options.lines.length ? options.lines : [text];
-  const anchor = options.anchor || "start";
-  const scale = getBitmapTextScale();
-  const key = [
-    TEXT_RENDER_ENGINE,
-    bitmapTextFontVersion,
-    String(text),
-    lines.join("\u0001"),
-    width,
-    height,
-    size,
-    weight,
-    family,
-    x,
-    y,
-    lineHeight,
-    anchor,
-    scale,
-  ].join("\u0002");
-
-  if (bitmapTextMaskCache.has(key)) return bitmapTextMaskCache.get(key);
-
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.ceil(width * scale);
-  canvas.height = Math.ceil(height * scale);
-
-  const ctx = canvas.getContext("2d");
-  ctx.setTransform(scale, 0, 0, scale, 0, 0);
-  ctx.clearRect(0, 0, width, height);
-  ctx.font = makeCanvasFont(size, weight, family);
-  ctx.textBaseline = "alphabetic";
-  ctx.textAlign =
-    anchor === "middle" ? "center" : anchor === "end" ? "right" : "left";
-  ctx.fillStyle = "#FFFFFF";
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-
-  lines.forEach(function (line, index) {
-    ctx.fillText(line, x, y + index * lineHeight);
-  });
-
-  const dataUrl = canvas.toDataURL("image/png");
-  bitmapTextMaskCache.set(key, dataUrl);
-  return dataUrl;
-}
-
-function appendBitmapTextMask(svg, dataUrl, options = {}) {
-  const x = options.x || 0;
-  const y = options.y || 0;
-  const width = options.width || 200;
-  const height = options.height || 26;
-  const maskId = `bitmap-text-mask-${++bitmapTextMaskCounter}`;
-  const defs = document.createElementNS(svgNS, "defs");
-  const mask = document.createElementNS(svgNS, "mask");
-  const image = document.createElementNS(svgNS, "image");
-  const rect = document.createElementNS(svgNS, "rect");
-
-  mask.setAttribute("id", maskId);
-  mask.setAttribute("maskUnits", "userSpaceOnUse");
-  mask.setAttribute("maskContentUnits", "userSpaceOnUse");
-  mask.setAttribute("x", x);
-  mask.setAttribute("y", y);
-  mask.setAttribute("width", width);
-  mask.setAttribute("height", height);
-  mask.style.maskType = "alpha";
-
-  image.setAttribute("href", dataUrl);
-  image.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", dataUrl);
-  image.setAttribute("x", x);
-  image.setAttribute("y", y);
-  image.setAttribute("width", width);
-  image.setAttribute("height", height);
-  image.setAttribute("preserveAspectRatio", "none");
-
-  rect.setAttribute("x", x);
-  rect.setAttribute("y", y);
-  rect.setAttribute("width", width);
-  rect.setAttribute("height", height);
-  rect.setAttribute("fill", options.color || "currentColor");
-  rect.setAttribute("mask", `url(#${maskId})`);
-
-  mask.append(image);
-  defs.append(mask);
-  svg.append(defs, rect);
-}
 
 function truncateTextToWidth(text, size, weight, maxWidth, family) {
   const value = String(text || "");
@@ -2071,13 +1906,12 @@ function getSvgTextZoomFactor() {
 }
 
 function updateSvgTextZoomCompensation() {
-  const nextMode = "bitmap";
+  const nextMode = "html";
   const changed = nextMode !== textRenderMode;
 
   if (changed) {
     textRenderMode = nextMode;
     textRenderModeVersion += 1;
-    bitmapTextMaskCache.clear();
   }
 
   document.documentElement.style.setProperty("--svg-text-zoom-inverse", "1");
@@ -2087,25 +1921,29 @@ function updateSvgTextZoomCompensation() {
 function updateZoomAwareLines() {
   const textRenderModeChanged = updateSvgTextZoomCompensation();
   const root = document.documentElement;
-  const layoutWidth = getLayoutViewportWidth();
+  const layoutWidth = snapLayoutCssPx(getLayoutViewportWidth());
   const pageScale = layoutWidth / DESIGN_VIEWPORT_WIDTH;
   const underlineScreenDotPx = 2;
   const underlineScreenGapPx = 3;
   const zoomSafeLine = Math.max(MIN_PAGE_SCALE, pageScale);
-  const dotSize = zoomSafeLine * underlineScreenDotPx;
-  const dotStep = dotSize + zoomSafeLine * underlineScreenGapPx;
-  const checkboxFillLine = pageScale * 6;
+  const dotSize = snapPositiveCssPx(zoomSafeLine * underlineScreenDotPx);
+  const dotStep = snapPositiveCssPx(
+    dotSize + zoomSafeLine * underlineScreenGapPx,
+  );
+  const checkboxFillLine = snapPositiveCssPx(pageScale * 6);
   const nextVars = {
     "--page-scale": pageScale.toFixed(6),
     "--dpx": pageScale.toFixed(6) + "px",
-    "--ui-half-line": (pageScale * 0.5).toFixed(6) + "px",
-    "--ui-hairline": pageScale.toFixed(6) + "px",
-    "--ui-control-line": (pageScale * 0.5).toFixed(6) + "px",
-    "--ui-control-strong-line": (pageScale * 1.5).toFixed(6) + "px",
-    "--ui-checkbox-line": (pageScale * 1.25).toFixed(6) + "px",
+    "--ui-half-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
+    "--ui-hairline": snapPositiveCssPx(pageScale).toFixed(6) + "px",
+    "--ui-control-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
+    "--ui-control-strong-line":
+      snapPositiveCssPx(pageScale * 1.5).toFixed(6) + "px",
+    "--ui-checkbox-line":
+      snapPositiveCssPx(pageScale * 1.25).toFixed(6) + "px",
     "--ui-checkbox-fill-line": checkboxFillLine.toFixed(6) + "px",
-    "--ui-strong-line": (pageScale * 2).toFixed(6) + "px",
-    "--zoom-safe-line": zoomSafeLine.toFixed(6) + "px",
+    "--ui-strong-line": snapPositiveCssPx(pageScale * 2).toFixed(6) + "px",
+    "--zoom-safe-line": snapPositiveCssPx(zoomSafeLine).toFixed(6) + "px",
     "--zoom-dot-size": dotSize.toFixed(6) + "px",
     "--zoom-dot-radius": (dotSize / 2).toFixed(6) + "px",
     "--zoom-dot-edge": (dotSize * 0.55).toFixed(6) + "px",
@@ -2246,7 +2084,60 @@ function applyViewportMetrics() {
   if (dateCalendarState.field) positionDateCalendar(dateCalendarState.field);
 }
 
+/* ТЗ п.1: тултипы должны появляться только при реальном наведении мышью,
+   а не когда лейаут «подъезжает» под неподвижный курсор при зуме/пересчёте.
+   Флаг hover-intent ставится по настоящему движению указателя и сбрасывается
+   на каждое изменение вьюпорта — до следующего реального движения мыши. */
+let hoverIntentActive = false;
+let lastPointerPosition = null;
+let hoverIntentArmPosition = null;
+function setHoverIntent(on) {
+  on = !!on;
+  if (on === hoverIntentActive) return;
+  hoverIntentActive = on;
+  document.documentElement.classList.toggle("has-hover-intent", on);
+}
+function hasHoverIntent() {
+  return hoverIntentActive;
+}
+
+function rememberPointerPosition(event) {
+  if (!event || !Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) {
+    return;
+  }
+  lastPointerPosition = {
+    x: event.clientX,
+    y: event.clientY,
+  };
+}
+
+function armHoverIntentAfterViewportChange() {
+  hoverIntentArmPosition = lastPointerPosition
+    ? { x: lastPointerPosition.x, y: lastPointerPosition.y }
+    : null;
+}
+
+function markRealPointerHover(event) {
+  if (!event || event.pointerType === "touch") return;
+  if (!hoverIntentArmPosition) {
+    rememberPointerPosition(event);
+    setHoverIntent(true);
+    return;
+  }
+
+  const dx = event.clientX - hoverIntentArmPosition.x;
+  const dy = event.clientY - hoverIntentArmPosition.y;
+  const threshold = Math.max(2, 1 / getDevicePixelScale());
+  rememberPointerPosition(event);
+
+  if (Math.sqrt(dx * dx + dy * dy) < threshold) return;
+  hoverIntentArmPosition = null;
+  setHoverIntent(true);
+}
+
 function markViewportChanging() {
+  setHoverIntent(false);
+  armHoverIntentAfterViewportChange();
   activateZoomHoverShield();
   if (viewportUpdateFrame !== null) return;
   viewportUpdateFrame = window.requestAnimationFrame(applyViewportMetrics);
@@ -6905,7 +6796,7 @@ function initImportButton() {
 let logAreaHandlerAttached = false;
 
 function positionTooltip(tooltip, event) {
-  if (areTooltipsSuppressed()) {
+  if (areTooltipsSuppressed() || !hasHoverIntent()) {
     hideTooltip(tooltip);
     return;
   }
@@ -6932,7 +6823,7 @@ function positionTooltip(tooltip, event) {
 }
 
 function positionTooltipByElement(tooltip, element) {
-  if (areTooltipsSuppressed()) {
+  if (areTooltipsSuppressed() || !hasHoverIntent()) {
     hideTooltip(tooltip);
     return;
   }
@@ -7040,6 +6931,24 @@ function initControlTooltips() {
 }
 
 function initGlobalTooltipDismiss() {
+  // Настоящее движение/нажатие указателя = осознанный ховер пользователя.
+  // Фантомный ховер от перекладки лейаута на зуме pointermove НЕ порождает.
+  window.addEventListener(
+    "pointermove",
+    function (event) {
+      markRealPointerHover(event);
+    },
+    true,
+  );
+  window.addEventListener(
+    "pointerdown",
+    function (event) {
+      rememberPointerPosition(event);
+      hoverIntentArmPosition = null;
+      setHoverIntent(true);
+    },
+    true,
+  );
   window.addEventListener("blur", hideAllTooltips);
   window.addEventListener("scroll", hideAllTooltips, true);
   document.addEventListener("keydown", function (event) {
@@ -7272,9 +7181,7 @@ function bindBitmapTextFontRefresh() {
     return;
   bitmapTextFontRefreshBound = true;
   document.fonts.ready.then(function () {
-    if (textRenderMode !== "bitmap") return;
-    bitmapTextFontVersion += 1;
-    bitmapTextMaskCache.clear();
+    textRenderModeVersion += 1;
     if (typeof applyFormControlVerticalCssVars === "function")
       applyFormControlVerticalCssVars();
     renderStaticText();
