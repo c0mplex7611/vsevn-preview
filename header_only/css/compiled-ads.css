@@ -44,9 +44,11 @@ body:has(#adsTable) #zoomFrame {
 /* ---------- Карточка ---------- */
 .ads-card {
   position: relative;
-  width: calc(1881 * var(--px));
+  /* ТЗ п.1: origin и ширина карточки привязаны к целым физическим пикселям,
+     чтобы края таблицы не попадали на дробные px (субпиксельные швы/смещения). */
+  width: round(calc(1881 * var(--px)), 1px);
   min-height: calc(1195 * var(--px));
-  margin: 0 0 calc(40 * var(--px)) calc(19 * var(--px));
+  margin: 0 0 calc(40 * var(--px)) round(calc(19 * var(--px)), 1px);
   background: #ffffff;
   border-radius: 0;
   box-shadow: none;
@@ -1054,7 +1056,9 @@ body:has(#adsTable) #zoomFrame {
    ============================================================ */
 .ads-table-wrapper {
   margin-top: calc(350 * var(--px));
-  padding: 0 calc(12 * var(--px)) calc(20 * var(--px)) calc(18 * var(--px));
+  /* левый паддинг снапнут к целому px, чтобы origin таблицы был целым */
+  padding: 0 calc(12 * var(--px)) calc(20 * var(--px))
+    round(calc(18 * var(--px)), 1px);
   overflow-x: auto;
 }
 .ads-table {

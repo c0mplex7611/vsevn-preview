@@ -1126,23 +1126,9 @@ let viewportTextVersion = 0;
 let lastViewportTextSignature = "";
 
 function getViewportTextSignature() {
-  const layoutWidth = getLayoutViewportWidth();
+  const layoutWidth = snapLayoutCssPx(getLayoutViewportWidth());
   const pageScale = layoutWidth / DESIGN_VIEWPORT_WIDTH;
-  const visualScale =
-    window.visualViewport &&
-    Number.isFinite(window.visualViewport.scale) &&
-    window.visualViewport.scale > 0
-      ? window.visualViewport.scale
-      : 1;
-  const dpr =
-    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-      ? window.devicePixelRatio
-      : 1;
-  return [
-    pageScale.toFixed(4),
-    visualScale.toFixed(4),
-    dpr.toFixed(4),
-  ].join(":");
+  return pageScale.toFixed(4);
 }
 
 function invalidateRenderedStaticText(root) {

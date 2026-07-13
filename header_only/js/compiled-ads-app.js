@@ -2025,7 +2025,11 @@
     const cg = document.getElementById("adsColgroup");
     if (!cg) return;
     cg.innerHTML = COLUMNS.map(function (col) {
-      return '<col style="width:calc(' + col.width + ' * var(--px))">';
+      // ТЗ п.1: ширина колонки округляется до целого физического пикселя,
+      // чтобы вертикальные границы ячеек стояли на целых px (без субпиксельных швов).
+      return (
+        '<col style="width:round(calc(' + col.width + ' * var(--px)), 1px)">'
+      );
     }).join("");
   }
 
@@ -3421,10 +3425,10 @@
       typeof window.snapLayoutCssPx === "function"
         ? window.snapLayoutCssPx(w * browserZoom)
         : w * browserZoom;
-    document.documentElement.style.setProperty(
-      "--fvw",
-      layoutWidth / 100 + "px",
-    );
+    const nextFvw = layoutWidth / 100 + "px";
+    if (document.documentElement.dataset.lastFvw === nextFvw) return;
+    document.documentElement.dataset.lastFvw = nextFvw;
+    document.documentElement.style.setProperty("--fvw", nextFvw);
   }
 
   window.syncDesignViewportUnit = syncDesignViewportUnit;
