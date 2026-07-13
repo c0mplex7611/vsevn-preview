@@ -8,13 +8,17 @@
       content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"
     />
     <title>vsevn.ru — Объявления скомпонованные</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- ТЗ п.3/п.5: убран внешний render-blocking запрос Google Fonts.
+         Шрифт Roboto подключён локально через @font-face в css/style.css,
+         шрифт Inter в вёрстке не используется. Страница полностью самодостаточна. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300&family=Roboto:wght@100;200;300;400;500&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      href="fonts/roboto-cyrillic.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
-    <link rel="stylesheet" href="css/style.css?v=420" />
+    <link rel="stylesheet" href="css/style.css?v=421" />
     <link rel="stylesheet" href="css/compiled-ads.css?v=205" />
   </head>
   <body>
