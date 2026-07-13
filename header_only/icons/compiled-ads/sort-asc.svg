@@ -1,0 +1,6 @@
+<svg viewBox="0 0 20 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M5 2.5v12" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M5 19.5L1.75 15.75h6.5L5 19.5z" fill="#000000"/>
+  <text x="11.5" y="11.5" font-family="Roboto, Arial, sans-serif" font-size="8.5" font-weight="700" fill="#000000">A</text>
+  <text x="11.5" y="21.5" font-family="Roboto, Arial, sans-serif" font-size="8.5" font-weight="700" fill="#000000">Z</text>
+</svg>

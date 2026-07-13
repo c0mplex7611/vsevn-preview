@@ -1,0 +1,2180 @@
+/* ============================================================
+   Объявления скомпонованные — pixel perfect по Figma (ТЗ п.5)
+   Чистый HTML/CSS/vanilla JS. База 1920px: 1px = var(--fvw)/19.2
+   Координаты: js/data/figma-layout.json
+   ============================================================ */
+
+.ads-page {
+  --px: var(--dpx, calc(var(--fvw, 1vw) / 19.2));
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  --c-text: #62560e;
+  --c-link: #0087fc;
+  --c-muted: #4d4343;
+  --c-ad-type: #59c90e;
+  --c-date3: #66a811;
+  --c-date4: #ff7903;
+  --c-date5: #1f08ee;
+  --c-fio: #a006f8;
+  --c-border: rgba(98, 86, 14, 0.45);
+  --c-border-table: rgba(98, 86, 14, 0.7);
+  --c-border-dropdown: #b0ab87;
+  --c-border-dropdown-divider: #cccccc;
+  --c-zebra: #fffefb;
+  --c-placeholder: #b0ab87;
+  --c-checkbox: #86868a;
+  --c-dropdown-hover-bg: #fed839;
+  position: relative;
+  background: #fffcec;
+  text-transform: none;
+}
+
+.page-wrapper.ads-page {
+  padding: calc(17 * var(--px)) 0 0;
+  margin: 0;
+  max-width: none;
+}
+
+/* PerfectPixel: холст 1920 design px = ширина артборда Figma */
+body:has(#adsTable) #zoomFrame {
+  width: calc(1920 * var(--fvw, 1vw) / 19.2);
+  max-width: 100%;
+}
+
+/* ---------- Карточка ---------- */
+.ads-card {
+  position: relative;
+  width: calc(1881 * var(--px));
+  min-height: calc(1195 * var(--px));
+  margin: 0 0 calc(40 * var(--px)) calc(19 * var(--px));
+  background: #ffffff;
+  border-radius: 0;
+  box-shadow: none;
+  font-family: "Roboto", sans-serif;
+}
+
+/* ---------- Заголовок ---------- */
+.ads-title {
+  position: absolute;
+  left: calc(42 * var(--px));
+  top: calc(38 * var(--px));
+  margin: 0;
+  font-family: "Roboto", sans-serif;
+  font-size: calc(27 * var(--px));
+  font-weight: 400;
+  line-height: 1.37;
+  color: var(--c-text);
+  white-space: nowrap;
+}
+.ads-th-text .svg-label {
+  display: block;
+  pointer-events: none;
+  max-width: 100%;
+  margin-right: auto;
+}
+.ads-search-ph .svg-label {
+  display: inline-block;
+  vertical-align: middle;
+  pointer-events: none;
+  max-width: 100%;
+}
+
+/* ---------- Выпадающие списки ---------- */
+.ads-dropdown {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  width: calc(928 * var(--px));
+  height: calc(50 * var(--px));
+  padding: 0 calc(22 * var(--px));
+  background: #ffffff;
+  border: calc(0.3 * var(--px)) solid var(--c-border-dropdown);
+  border-radius: 0;
+  box-sizing: border-box;
+  cursor: pointer;
+  user-select: none;
+}
+.ads-dropdown--xml {
+  left: calc(36 * var(--px));
+  top: calc(275 * var(--px));
+  z-index: 5;
+  width: calc(891 * var(--px));
+  align-items: center;
+  padding: 0 calc(22 * var(--px));
+}
+.ads-dropdown--xml .ads-dropdown-text {
+  font-size: calc(22 * var(--px));
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  padding: 0;
+  color: var(--c-text);
+  margin-bottom: 0;
+  line-height: 1;
+}
+.ads-dropdown--xml.has-value .ads-dropdown-text {
+  padding-right: calc(74 * var(--px));
+}
+.ads-dropdown--xml .ads-dropdown-arrow {
+  position: absolute;
+  top: 50%;
+  right: calc(18 * var(--px));
+  transform: translateY(-50%);
+  flex-shrink: 0;
+}
+.ads-dropdown--xml.has-value .ads-dropdown-arrow {
+  right: calc(58 * var(--px));
+}
+.ads-dropdown.is-open.ads-dropdown--xml .ads-dropdown-arrow {
+  transform: translateY(-50%) rotate(180deg);
+}
+.ads-dropdown--xml .ads-dropdown-option {
+  font-size: calc(22 * var(--px));
+  line-height: 1.37;
+}
+.ads-dropdown--xml:hover {
+  border-color: var(--c-link);
+}
+.ads-dropdown--xml .ads-dropdown-menu {
+  left: 0;
+  top: 100%;
+  width: 100%;
+  margin-top: 0;
+  max-height: none;
+  overflow: visible;
+  border: calc(0.3 * var(--px)) solid var(--c-border-dropdown);
+  border-radius: 0;
+  box-shadow: none;
+}
+.ads-dropdown--xml .ads-dropdown-clear {
+  right: calc(18 * var(--px));
+}
+.ads-dropdown--groups {
+  left: calc(939 * var(--px));
+  top: calc(275 * var(--px));
+  align-items: center;
+  padding: 0 calc(22 * var(--px)) 0 calc(18 * var(--px));
+}
+.ads-dropdown--groups .ads-dropdown-text {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  padding: 0;
+  margin-bottom: 0;
+  line-height: 1;
+}
+.ads-dropdown--groups.has-value .ads-dropdown-text {
+  padding-right: calc(76 * var(--px));
+}
+.ads-dropdown--groups .ads-dropdown-arrow {
+  right: calc(20 * var(--px));
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ads-dropdown--groups.has-value .ads-dropdown-arrow {
+  right: calc(60 * var(--px));
+}
+.ads-dropdown--groups .ads-dropdown-clear {
+  right: calc(20 * var(--px));
+}
+.ads-dropdown.is-open.ads-dropdown--groups .ads-dropdown-arrow {
+  transform: translateY(-50%) rotate(180deg);
+}
+.ads-dropdown--groups .ads-dropdown-option {
+  padding: calc(12 * var(--px)) calc(22 * var(--px)) calc(12 * var(--px))
+    calc(18 * var(--px));
+  font-size: calc(21.6 * var(--px));
+  line-height: 1.37;
+}
+.ads-dropdown-text {
+  font-size: calc(21.6 * var(--px));
+  font-weight: 300;
+  line-height: 1;
+  color: var(--c-text);
+  margin-bottom: 0;
+}
+.ads-dropdown-arrow {
+  position: absolute;
+  right: calc(22 * var(--px));
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(16 * var(--px));
+  height: calc(9 * var(--px));
+  background: url("../icons/compiled-ads/dropdown-arrow.svg") center/contain
+    no-repeat;
+  pointer-events: none;
+  overflow: hidden;
+  transition: transform 0.15s ease;
+}
+/* Состояния селекта (ТЗ п.17): hover — голубая окантовка 0.3px, открыт — 2px голубая + стрелка вверх */
+.ads-dropdown {
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    border-width 0.15s ease;
+}
+.ads-dropdown:hover {
+  border-color: var(--c-link);
+}
+.ads-dropdown.is-open {
+  height: calc(50 * var(--px));
+  border: calc(2 * var(--px)) solid var(--c-link);
+  z-index: 61;
+  isolation: isolate;
+}
+.ads-dropdown--xml.is-open,
+.ads-dropdown--groups.is-open {
+  border: calc(2 * var(--px)) solid var(--c-link);
+}
+.ads-dropdown.is-open > .ads-dropdown-text {
+  position: relative;
+  z-index: 2;
+}
+.ads-dropdown.is-open > .ads-dropdown-arrow,
+.ads-dropdown.is-open > .ads-dropdown-clear {
+  z-index: 2;
+}
+.ads-dropdown.is-open > .ads-dropdown-menu {
+  position: absolute;
+  z-index: 1;
+  left: calc(-2 * var(--px));
+  top: calc(100% + calc(2 * var(--px)));
+  width: calc(100% + 4 * var(--px));
+  margin-top: 0;
+  max-height: none;
+  overflow: visible;
+  border: calc(2 * var(--px)) solid var(--c-link);
+  border-top: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+.ads-dropdown.is-open .ads-dropdown-arrow {
+  transform: rotate(180deg);
+}
+.ads-dropdown.has-value .ads-dropdown-text {
+  color: var(--c-text);
+}
+.ads-dropdown-clear {
+  position: absolute;
+  right: calc(18 * var(--px));
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(30 * var(--px));
+  height: calc(30 * var(--px));
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ads-dropdown-clear[hidden],
+.ads-dropdown:not(.has-value) .ads-dropdown-clear {
+  display: none !important;
+}
+.ads-dropdown-clear .vi-clear {
+  width: calc(30 * var(--px));
+  height: calc(30 * var(--px));
+}
+.ads-dropdown-menu {
+  position: absolute;
+  left: calc(-2 * var(--px));
+  top: 100%;
+  width: calc(100% + 4 * var(--px));
+  max-height: calc(300 * var(--px));
+  overflow-y: auto;
+  background: #fff;
+  border: calc(0.3 * var(--px)) solid var(--c-border-dropdown);
+  border-radius: 0;
+  box-shadow: none;
+  z-index: 60;
+  margin-top: 0;
+}
+.ads-dropdown-option {
+  padding: calc(12 * var(--px)) calc(22 * var(--px));
+  font-size: calc(22 * var(--px));
+  font-weight: 300;
+  line-height: 1.37;
+  color: var(--c-muted);
+  cursor: pointer;
+  background: #ffffff;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+}
+.ads-dropdown-option + .ads-dropdown-option {
+  border-top: calc(0.3 * var(--px)) solid var(--c-border-dropdown-divider);
+}
+.ads-dropdown-option.is-selected {
+  color: var(--c-link);
+  font-weight: 400;
+  background: #fcfcfc;
+}
+.ads-dropdown-option:hover,
+.ads-dropdown-option:focus-visible {
+  background: var(--c-dropdown-hover-bg);
+  color: var(--c-link);
+}
+.ads-dropdown-option.is-selected:hover,
+.ads-dropdown-option.is-selected:focus-visible {
+  background: var(--c-dropdown-hover-bg);
+  color: var(--c-link);
+}
+
+/* ---------- Поля даты (Figma 10:92 / 10:94) ---------- */
+.ads-page .ads-date-field.date-field {
+  position: absolute;
+  top: calc(99 * var(--px));
+  width: calc(225 * var(--px));
+  height: calc(50 * var(--px));
+  display: block;
+  padding: 0;
+  margin: 0;
+  background: #ffffff;
+  border: calc(0.3 * var(--px)) solid var(--c-border);
+  border-radius: 0;
+  box-shadow: none;
+  box-sizing: border-box;
+  cursor: pointer;
+  overflow: hidden;
+  gap: 0;
+  align-items: unset;
+  justify-content: unset;
+  flex-shrink: unset;
+  transition: border-color 0.15s ease;
+}
+.ads-page .ads-date-field.date-field[data-date-role="from"] {
+  left: calc(33 * var(--px));
+}
+.ads-page .ads-date-field.date-field[data-date-role="to"] {
+  left: calc(259 * var(--px));
+}
+.ads-page .ads-date-field.date-field:hover {
+  border-color: var(--c-link);
+}
+.ads-page .ads-date-field.date-field.is-calendar-open {
+  border-color: var(--c-link);
+  border-width: calc(2 * var(--px));
+}
+.ads-page .ads-date-field .date-value-render {
+  display: none !important;
+}
+.ads-page .ads-date-field .ads-date-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.ads-date-line {
+  display: block;
+  padding: var(--fc-toolbar-top, calc(10 * var(--px))) calc(14 * var(--px)) 0;
+  font-size: calc(21.6 * var(--px));
+  font-weight: 300;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.ads-page .ads-date-field.date-field[data-date-role="to"] .ads-date-line {
+  padding-left: calc(11 * var(--px));
+}
+.ads-date-label {
+  color: var(--c-text);
+}
+.ads-date-value {
+  color: var(--c-link);
+}
+
+/* ---------- Счётчик (Figma 10:90) ---------- */
+.ads-count-box {
+  position: absolute;
+  left: calc(488 * var(--px));
+  top: calc(99 * var(--px));
+  width: calc(301 * var(--px));
+  height: calc(50 * var(--px));
+  padding: var(--fc-toolbar-top, calc(10 * var(--px))) calc(14 * var(--px)) 0;
+  background: #ffffff;
+  border: calc(0.3 * var(--px)) solid var(--c-border);
+  border-radius: 0;
+  box-sizing: border-box;
+  display: block;
+  text-align: center;
+}
+.ads-count-line {
+  display: inline-block;
+  line-height: 1;
+  padding: 0;
+  font-size: calc(21.6 * var(--px));
+  font-weight: 300;
+  white-space: nowrap;
+  text-align: center;
+  vertical-align: top;
+}
+.ads-count-label {
+  display: inline-block;
+  vertical-align: top;
+  color: var(--c-text);
+}
+.ads-count-num {
+  display: inline-block;
+  vertical-align: top;
+  margin-left: 0.28em;
+  color: var(--c-link);
+  line-height: 1;
+}
+
+/* ---------- Кнопка delete (Figma 10:204) ---------- */
+.ads-delete-btn {
+  position: absolute;
+  left: calc(899 * var(--px));
+  top: calc(99 * var(--px));
+  width: calc(60 * var(--px));
+  height: calc(50 * var(--px));
+  padding: 0;
+  background: #ffffff;
+  border: calc(0.3 * var(--px)) solid var(--c-border);
+  border-radius: 0;
+  cursor: pointer;
+  overflow: visible;
+}
+.ads-delete-text {
+  position: absolute;
+  left: calc(11.7 * var(--px));
+  top: calc(1.7 * var(--px));
+  font-family: "Roboto", sans-serif;
+  font-size: calc(14 * var(--px));
+  font-weight: 100;
+  line-height: 1.37;
+  color: #9c9c9c;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+  transition: color 0.15s ease;
+}
+.ads-delete-icon-wrap {
+  position: absolute;
+  left: calc(17 * var(--px));
+  top: calc(20 * var(--px));
+  width: calc(26 * var(--px));
+  height: calc(24 * var(--px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+.ads-delete-icon-wrap img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: block;
+  width: calc(24.664 * var(--px));
+  height: calc(22 * var(--px));
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+.ads-delete-icon-active {
+  opacity: 0;
+}
+.ads-delete-btn:hover {
+  border-color: #ff0303;
+  box-shadow: none;
+}
+.ads-delete-btn:hover .ads-delete-text {
+  color: #ff0303;
+}
+.ads-delete-btn:hover .ads-delete-icon-idle {
+  opacity: 0;
+}
+.ads-delete-btn:hover .ads-delete-icon-active {
+  opacity: 1;
+}
+
+/* ---------- Экспорт + пагинация (Figma: exportBtn 1043×99, pagination 1309×99) ---------- */
+.ads-toolbar-export-page {
+  position: absolute;
+  left: calc(1043 * var(--px));
+  top: calc(99 * var(--px));
+  display: flex;
+  align-items: center;
+  gap: calc(20 * var(--px));
+  height: calc(50 * var(--px));
+}
+.ads-toolbar-export-page .ads-export-btn {
+  position: relative;
+  left: auto;
+  top: auto;
+  flex: 0 0 calc(246 * var(--px));
+  width: calc(246 * var(--px));
+  height: calc(50 * var(--px));
+  display: flex;
+  align-items: center;
+}
+.ads-toolbar-export-page .ads-pagination {
+  position: relative;
+  left: auto;
+  top: auto;
+  flex: 0 0 auto;
+  height: calc(50 * var(--px));
+}
+
+/* ---------- Кнопка экспорта (Figma 10:197) ---------- */
+.ads-export-btn {
+  position: absolute;
+  left: calc(1043 * var(--px));
+  top: calc(99 * var(--px));
+  width: calc(246 * var(--px));
+  height: calc(50 * var(--px));
+  padding: 0;
+  background: #ffffff;
+  border: calc(0.3 * var(--px)) solid var(--c-border);
+  border-radius: 0;
+  cursor: pointer;
+  box-sizing: border-box;
+  overflow: visible;
+  display: block;
+  transition: border-color 0.15s ease;
+}
+.ads-export-line {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  padding: 0 calc(47 * var(--px)) 0 calc(18 * var(--px));
+  font-size: calc(21 * var(--px));
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  box-sizing: border-box;
+  text-align: left;
+}
+.ads-export-text {
+  font-weight: 200;
+  color: #9c9c9c;
+  transition: color 0.15s ease;
+}
+.ads-export-xml {
+  font-weight: 300;
+  color: #a8d889;
+  transition: color 0.15s ease;
+}
+.ads-export-icon-wrap {
+  position: absolute;
+  right: calc(10.3 * var(--px));
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(36 * var(--px));
+  height: calc(36 * var(--px));
+  display: block;
+  pointer-events: none;
+}
+.ads-export-icon-wrap img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+.ads-export-icon-active {
+  opacity: 0;
+}
+.ads-export-btn:hover .ads-export-xml {
+  color: #67db1a;
+}
+.ads-export-btn:hover .ads-export-icon-idle {
+  opacity: 0;
+}
+.ads-export-btn:hover .ads-export-icon-active {
+  opacity: 1;
+}
+
+/* ---------- Селект «строк на странице» (ТЗ п.11, п.17) ---------- */
+.ads-rows-select {
+  position: absolute;
+  left: calc(798 * var(--px));
+  top: calc(99 * var(--px));
+  z-index: 2;
+}
+.ads-rows-select:has(.ads-dropdown--rows.is-open) {
+  z-index: 100;
+}
+.ads-dropdown--rows {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: calc(92 * var(--px));
+  height: calc(50 * var(--px));
+  padding: 0 calc(10 * var(--px));
+  align-items: center;
+  background: #ffffff;
+  border: calc(0.3 * var(--px)) solid var(--c-border-dropdown);
+  border-radius: 0;
+  box-sizing: border-box;
+}
+.ads-dropdown--rows.is-open {
+  z-index: 61;
+  border: calc(2 * var(--px)) solid var(--c-link);
+}
+.ads-dropdown.is-open.ads-dropdown--rows > .ads-dropdown-menu {
+  top: calc(100% + calc(2 * var(--px)));
+  left: calc(-2 * var(--px));
+  width: calc(100% + 4 * var(--px));
+  border: calc(2 * var(--px)) solid var(--c-link);
+  border-top: none;
+}
+.ads-dropdown--rows .ads-dropdown-text {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  padding-right: calc(26 * var(--px));
+  font-size: calc(22 * var(--px));
+  font-weight: 300;
+  line-height: 1;
+  color: var(--c-text);
+  text-align: center;
+}
+.ads-dropdown--rows .ads-dropdown-arrow {
+  right: calc(8 * var(--px));
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ads-dropdown.is-open.ads-dropdown--rows .ads-dropdown-arrow {
+  transform: translateY(-50%) rotate(180deg);
+}
+.ads-dropdown--rows .ads-dropdown-menu {
+  left: 0;
+  top: 100%;
+  width: 100%;
+  min-width: 0;
+  margin-top: 0;
+  max-height: none;
+  padding-bottom: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: calc(0.3 * var(--px)) solid var(--c-border-dropdown);
+  border-top: 0;
+  box-sizing: border-box;
+}
+.ads-dropdown--rows .ads-dropdown-option {
+  height: calc(50 * var(--px));
+  padding: 0 calc(10 * var(--px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(22 * var(--px));
+  font-weight: 300;
+  line-height: 1;
+  box-sizing: border-box;
+}
+.ads-dropdown--rows .ads-dropdown-option.is-selected {
+  color: var(--c-link);
+  font-weight: 400;
+  background: #fcfcfc;
+}
+.ads-dropdown--rows .ads-dropdown-option.is-selected:hover,
+.ads-dropdown--rows .ads-dropdown-option.is-selected:focus-visible {
+  background: var(--c-dropdown-hover-bg);
+  color: var(--c-link);
+}
+
+/* ---------- Пагинация ---------- */
+.ads-pagination {
+  position: absolute;
+  left: calc(1309 * var(--px));
+  top: calc(99 * var(--px));
+  height: calc(50 * var(--px));
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--px));
+  flex-wrap: nowrap;
+}
+.ads-pagination button {
+  min-width: calc(50 * var(--px));
+  width: calc(50 * var(--px));
+  height: calc(50 * var(--px));
+  padding: 0;
+  background: #fffefb;
+  border: calc(0.3 * var(--px)) solid var(--c-border);
+  border-radius: 0;
+  font-family: "Roboto", sans-serif;
+  font-size: calc(22 * var(--px));
+  font-weight: 300;
+  color: #c6c6c6;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  text-align: center;
+  box-sizing: border-box;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+.ads-pagination button.is-edge {
+  font-size: calc(16 * var(--px));
+  letter-spacing: calc(0.1297 * var(--px));
+  line-height: calc(15.565 * var(--px));
+}
+.ads-pagination button.is-edge.is-active-edge:not(:disabled) {
+  color: var(--c-link);
+  border-color: var(--c-link);
+  background: #fffefb;
+}
+/* First/Next disabled — макет Figma node 1:60 */
+.ads-pagination button.is-edge:disabled {
+  background: #fffefb;
+  border-color: var(--c-border);
+  color: #c6c6c6;
+  cursor: default;
+}
+/* Disabled для прочих кнопок пагинации */
+.ads-pagination button:disabled:not(.is-edge) {
+  background: #f1f1f1;
+  border: calc(0.3 * var(--px)) solid #d4d4d4;
+  color: #c6c6c6;
+  cursor: default;
+}
+.ads-pagination button.active {
+  background: var(--c-link);
+  border: calc(1 * var(--px)) solid var(--c-link);
+  color: #fff;
+  font-size: calc(22 * var(--px));
+  font-weight: 400;
+  line-height: 1;
+}
+.ads-pagination button:not(.is-edge):not(.active):not(.ellipsis) {
+  color: #c6c6c6;
+}
+.ads-pagination button.ellipsis {
+  font-size: calc(20 * var(--px));
+  font-weight: 400;
+  line-height: 1;
+  background: #fffefb;
+  border: calc(0.3 * var(--px)) solid var(--c-border);
+}
+/* Hover — белый фон, голубая обводка и текст (макет п.14) */
+.ads-pagination button:hover:not(:disabled):not(.active) {
+  background: #fffefb;
+  border-color: var(--c-link);
+  color: var(--c-link);
+}
+
+/* Серая подсказка из макета Figma (ТЗ п.4): фон #EAEAEA, отступы 9×20px, max 600px */
+.ads-tip,
+.ads-page-tip {
+  --px: var(--dpx, calc(var(--fvw, 1vw) / 19.2));
+  position: absolute;
+  z-index: 10000;
+  box-sizing: border-box;
+  max-width: calc(600 * var(--px));
+  padding: calc(9 * var(--px)) calc(20 * var(--px));
+  background: #eaeaea;
+  color: #000;
+  font-family: "Roboto", sans-serif;
+  font-size: calc(21.6 * var(--px));
+  font-weight: 300;
+  line-height: calc(25 * var(--px));
+  border-radius: 0;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.ads-tip.is-wrapped,
+.ads-page-tip.is-wrapped {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Подсказка (legacy alias) */
+.ads-tooltip {
+  --px: var(--dpx, calc(var(--fvw, 1vw) / 19.2));
+  position: absolute;
+  z-index: 10000;
+  max-width: calc(600 * var(--px));
+  padding: calc(9 * var(--px)) calc(20 * var(--px));
+  background: #eaeaea;
+  color: #000;
+  font-family: "Roboto", sans-serif;
+  font-size: calc(21.6 * var(--px));
+  font-weight: 300;
+  line-height: calc(25 * var(--px));
+  border-radius: 0;
+  pointer-events: none;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  box-sizing: border-box;
+}
+.ads-tooltip[hidden] {
+  display: none;
+}
+
+/* ---------- Радиокнопки (Figma: Frame 25555772, x=154 y=175) ---------- */
+.ads-radio-row {
+  position: absolute;
+  left: calc(154 * var(--px));
+  top: calc(176 * var(--px));
+  width: calc(925 * var(--px));
+  height: calc(28 * var(--px));
+  line-height: 1;
+}
+.ads-radio {
+  position: absolute;
+  top: 0;
+  height: calc(28 * var(--px));
+  display: inline-flex;
+  align-items: flex-start;
+  gap: calc(12 * var(--px));
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ads-radio:nth-child(1) {
+  left: 0;
+}
+.ads-radio:nth-child(2) {
+  left: calc(90 * var(--px));
+}
+.ads-radio:nth-child(3) {
+  left: calc(389 * var(--px));
+}
+.ads-radio:nth-child(4) {
+  left: calc(542 * var(--px));
+}
+.ads-radio:nth-child(5) {
+  left: calc(736 * var(--px));
+}
+.ads-radio-dot {
+  width: calc(28 * var(--px));
+  height: calc(28 * var(--px));
+  border-radius: 50%;
+  border: calc(1 * var(--px)) solid #bbc1c7;
+  background: #fff;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  transition:
+    border-width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.15s ease;
+}
+/* Figma Ellipse 24: 28×28, stroke #0087FC weight 9 INSIDE — кольцо с белым центром */
+.ads-radio:hover .ads-radio-dot {
+  border-color: var(--c-link);
+}
+.ads-radio.is-active .ads-radio-dot {
+  border-width: calc(9 * var(--px));
+  border-color: var(--c-link);
+}
+.ads-radio-text {
+  font-size: calc(21.6 * var(--px));
+  font-weight: 300;
+  line-height: 1;
+  padding-top: var(--fc-216-lc-28-top, calc(2 * var(--px)));
+  color: var(--c-text);
+  white-space: nowrap;
+  display: inline-block;
+  transition:
+    color 0.15s ease,
+    font-weight 0.15s ease;
+}
+.ads-radio.is-active .ads-radio-text {
+  color: var(--c-link);
+  font-weight: 400;
+}
+
+/* ---------- Чекбоксы (ТЗ п.18: анимация заливки и галочки) ---------- */
+.ads-check {
+  position: absolute;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: calc(12 * var(--px));
+  cursor: pointer;
+}
+.ads-check .check-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.ads-check .ads-check-label {
+  position: relative;
+  padding-left: calc(38 * var(--px));
+  padding-top: var(--fc-216-lc-28-top, calc(2 * var(--px)));
+  font-size: calc(21.6 * var(--px));
+  font-weight: 300;
+  line-height: 1;
+  color: var(--c-text);
+  white-space: nowrap;
+  display: block;
+  min-height: calc(28 * var(--px));
+  box-sizing: border-box;
+  transition:
+    color 0.15s ease,
+    font-weight 0.15s ease;
+}
+.ads-check .ads-check-label::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(26 * var(--px));
+  height: calc(26 * var(--px));
+  border: calc(1 * var(--px)) solid var(--c-checkbox);
+  border-radius: calc(3 * var(--px));
+  background: #fff;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 0 0 var(--c-link);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ads-check:hover .check-input:not(:checked) + .ads-check-label::before {
+  border-color: var(--c-link);
+}
+.ads-check .check-input:checked + .ads-check-label::before {
+  border-color: var(--c-link);
+  box-shadow: inset 0 0 0 calc(13 * var(--px)) var(--c-link);
+}
+.ads-check .ads-check-label::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(26 * var(--px));
+  height: calc(26 * var(--px));
+  transform: scale(0.55);
+  opacity: 0;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 15' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M2 8l4.5 4.5L16 2.5'/></svg>")
+    center/calc(16 * var(--px)) no-repeat;
+  pointer-events: none;
+  transition:
+    transform 0.16s ease 0.07s,
+    opacity 0.16s ease 0.07s;
+}
+.ads-check .check-input:checked + .ads-check-label::after {
+  transform: scale(1);
+  opacity: 1;
+}
+/* ТЗ п.26: активный чекбокс — голубой текст, Regular вместо Light */
+.ads-check .check-input:checked + .ads-check-label,
+.ads-check .ads-check-label.is-checked {
+  color: var(--c-link);
+  font-weight: 400;
+}
+.ads-check--depub {
+  left: calc(1116 * var(--px));
+  top: calc(176 * var(--px));
+  height: calc(28 * var(--px));
+  align-items: flex-start;
+}
+.ads-check--depub .ads-check-label {
+  line-height: 1;
+  min-height: calc(28 * var(--px));
+  padding-left: calc(38 * var(--px));
+}
+.ads-check--responses,
+.ads-check--wrap,
+.ads-check--collapse,
+.ads-check--notags,
+.ads-check--changed {
+  top: calc(222 * var(--px));
+  height: calc(28 * var(--px));
+}
+.ads-check--responses {
+  left: calc(36 * var(--px));
+}
+.ads-check--wrap {
+  left: calc(395 * var(--px));
+}
+.ads-check--collapse {
+  left: calc(572 * var(--px));
+}
+.ads-check--notags {
+  left: calc(766 * var(--px));
+}
+.ads-check--changed {
+  left: calc(925 * var(--px));
+}
+.ads-check--responses .ads-check-label,
+.ads-check--wrap .ads-check-label,
+.ads-check--collapse .ads-check-label,
+.ads-check--notags .ads-check-label,
+.ads-check--changed .ads-check-label {
+  min-height: calc(28 * var(--px));
+}
+.ads-check--changed .ads-check-label {
+  white-space: nowrap;
+}
+
+/* ---------- Легенда ---------- */
+.ads-legend {
+  position: absolute;
+  left: calc(36 * var(--px));
+  top: calc(267 * var(--px));
+  display: flex;
+  gap: calc(24 * var(--px));
+}
+.ads-legend-block {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.ads-legend-block:first-child {
+  width: calc(335 * var(--px));
+  height: calc(65 * var(--px));
+}
+.ads-legend-block:last-child {
+  width: calc(478 * var(--px));
+  height: calc(90 * var(--px));
+}
+.ads-legend-row {
+  display: block;
+  font-size: calc(21.6 * var(--px));
+  font-weight: 300;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ads-legend-block:first-child .ads-legend-row {
+  line-height: calc(21.667 * var(--px));
+}
+.ads-legend-block:last-child .ads-legend-row {
+  line-height: calc(22.5 * var(--px));
+}
+
+/* ============================================================
+   Таблица
+   ============================================================ */
+.ads-table-wrapper {
+  margin-top: calc(350 * var(--px));
+  padding: 0 calc(12 * var(--px)) calc(20 * var(--px)) calc(18 * var(--px));
+  overflow-x: auto;
+}
+.ads-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: calc(1849 * var(--px));
+  font-size: calc(20 * var(--px));
+}
+.ads-table th,
+.ads-table td {
+  border: calc(0.3 * var(--px)) solid var(--c-border-table);
+  vertical-align: top;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.ads-table th.th-title {
+  position: relative;
+}
+body.ads-col-resizing,
+body.ads-col-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+/* Заголовки колонок (Figma: текст с x=10 y=6, шаг строки 29px) */
+.ads-table thead .th-title {
+  height: calc(127 * var(--px));
+  min-height: calc(127 * var(--px));
+  padding: 0;
+  background: #fff;
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+}
+.ads-th-line {
+  position: absolute;
+  left: calc(10 * var(--px));
+  right: calc(10 * var(--px));
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: calc(4 * var(--px));
+  height: calc(29 * var(--px));
+  overflow: visible;
+  font-size: calc(21 * var(--px));
+  font-weight: 300;
+  line-height: calc(29 * var(--px));
+  color: var(--c-text);
+  text-align: left;
+}
+.ads-th-line.is-sortable {
+  cursor: pointer;
+  display: inline-flex;
+  right: auto;
+  width: auto;
+  max-width: calc(100% - 20 * var(--px));
+  align-items: center;
+}
+.ads-th-line.is-wrapped-sort {
+  display: block;
+  align-items: stretch;
+}
+.ads-th-last-row {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(3 * var(--px));
+  height: calc(29 * var(--px));
+  line-height: calc(29 * var(--px));
+  white-space: nowrap;
+}
+.ads-th-line.is-wrapped-sort .ads-sort-btn {
+  margin-left: 0;
+}
+.ads-th-line.is-sortable:not(.is-wrapped-sort) .ads-sort-btn {
+  margin-left: calc(6 * var(--px));
+}
+.ads-th-text-last {
+  display: inline-block;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+.ads-th-text {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  display: block;
+  overflow: visible;
+  text-align: left;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+  font-size: calc(21 * var(--px));
+  font-weight: 300;
+  line-height: calc(29 * var(--px));
+}
+.ads-th-text .svg-label {
+  display: none !important;
+}
+/* col-vacancy: выравнивание заголовков с соседними колонками */
+.ads-table th.col-vacancy .ads-th-line:nth-child(1) .ads-th-last-row {
+  transform: translateY(calc(-2 * var(--px)));
+}
+.ads-table th.col-vacancy .ads-th-line:nth-child(2) > .ads-th-text,
+.ads-table th.col-vacancy .ads-th-line:nth-child(2) .ads-th-last-row {
+  transform: translateY(calc(-1 * var(--px)));
+}
+.ads-search-ph svg {
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+/* Иконки сортировки А-Я / Я-А (ТЗ п.10) */
+.ads-sort-btn {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  width: calc(20 * var(--px));
+  height: calc(24 * var(--px));
+  padding: 0;
+  margin-left: calc(-4 * var(--px));
+  border: 0;
+  outline: none;
+  box-shadow: none;
+  background: transparent url("../icons/compiled-ads/sort-az.svg") center /
+    contain no-repeat;
+  cursor: pointer;
+  vertical-align: middle;
+  flex-shrink: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: opacity 0.15s ease;
+}
+.ads-sort-btn.is-asc {
+  background-image: url("../icons/compiled-ads/sort-az.svg");
+}
+.ads-sort-btn.is-desc {
+  background-image: url("../icons/compiled-ads/sort-za.svg");
+}
+.ads-sort-btn:hover {
+  filter: brightness(0) saturate(100%) invert(40%) sepia(98%) saturate(2476%)
+    hue-rotate(186deg) brightness(101%) contrast(101%);
+}
+.ads-sort-btn:focus {
+  outline: none;
+}
+/* col-vacancy: отступы иконок сортировки (после базового .ads-sort-btn) */
+.ads-table th.col-vacancy .ads-th-line.is-sortable:not(.is-wrapped-sort) .ads-sort-btn {
+  margin-left: calc(6 * var(--px));
+}
+.ads-table th.col-vacancy .ads-th-line.is-wrapped-sort .ads-sort-btn {
+  margin-left: 0;
+}
+.ads-table th.col-vacancy .ads-th-last-row {
+  gap: calc(6 * var(--px));
+}
+
+/* Строка быстрого поиска */
+.ads-table thead .th-search {
+  height: calc(100 * var(--px));
+  padding: 0;
+  background: #fff;
+}
+.ads-search-field {
+  position: relative;
+  height: calc(50 * var(--px));
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.ads-search-field + .ads-search-field {
+  border-top: calc(0.3 * var(--px)) solid var(--c-border-table);
+}
+.ads-search-field .ads-search-ico {
+  position: absolute;
+  left: calc(10 * var(--px));
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: calc(23 * var(--px));
+  height: calc(23 * var(--px));
+  pointer-events: none;
+  background: url("../icons/compiled-ads/search.svg?v=2") center/contain
+    no-repeat;
+  transition: none;
+}
+.ads-search-slot {
+  position: absolute;
+  left: calc(39 * var(--px));
+  right: calc(10 * var(--px));
+  top: 0;
+  height: calc(50 * var(--px));
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.ads-search-field.is-focused .ads-search-slot,
+.ads-search-field.has-value .ads-search-slot {
+  left: calc(10 * var(--px));
+}
+.ads-search-field.has-value .ads-search-slot {
+  right: calc(46 * var(--px));
+}
+.ads-search-field input {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  z-index: 1;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: "Roboto", sans-serif;
+  font-size: calc(20 * var(--px));
+  font-weight: 300;
+  color: var(--c-text);
+  height: calc(20 * var(--px));
+  margin: 0;
+  padding: 0;
+  line-height: calc(20 * var(--px));
+  transform: translateY(-50%);
+  caret-color: var(--c-text);
+  box-sizing: border-box;
+}
+.ads-search-field input::placeholder {
+  color: var(--c-placeholder);
+  opacity: 1;
+}
+.ads-search-ph {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  color: var(--c-placeholder);
+  font-size: calc(20 * var(--px));
+  font-weight: 300;
+  line-height: calc(20 * var(--px));
+  pointer-events: none;
+  white-space: nowrap;
+  min-width: 0;
+}
+.ads-search-field.is-focused .ads-search-ph,
+.ads-search-field.has-value .ads-search-ph {
+  display: none;
+}
+.ads-search-field.has-value .ads-search-ico,
+.ads-search-field.is-focused .ads-search-ico {
+  display: none;
+}
+.ads-search-field .ads-search-clear {
+  position: absolute;
+  right: calc(8 * var(--px));
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: calc(30 * var(--px));
+  height: calc(30 * var(--px));
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: none;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+.ads-search-field .ads-search-clear .vi-clear {
+  width: calc(30 * var(--px));
+  height: calc(30 * var(--px));
+}
+.ads-search-field.has-value .ads-search-clear {
+  display: flex;
+}
+
+/* Ячейки данных */
+.ads-table tbody td {
+  height: auto;
+  min-height: calc(116 * var(--px));
+  padding: calc(7 * var(--px)) calc(10 * var(--px));
+  background: #fff;
+  vertical-align: top;
+}
+
+/* Статус — бейдж в колонке контактов (Figma 2:20 / 2:21 / 2:22) */
+.ads-table.collapsed tbody td.col-contact .ads-contact-body {
+  max-height: calc(96 * var(--px));
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+}
+.ads-table.collapsed tbody td.col-contact .ads-contact-body .ads-cell-line {
+  display: block;
+  margin: 0;
+  padding: 0;
+  line-height: calc(24 * var(--px));
+}
+.ads-table.collapsed tbody td.col-contact .ads-contact-body .ads-status-line {
+  display: block;
+  margin: 0;
+  padding: 0;
+  line-height: calc(24 * var(--px));
+}
+.ads-table.collapsed tbody td.col-contact .ads-contact-body .ads-status-badge {
+  height: calc(24 * var(--px));
+  padding: 0;
+  align-items: center;
+}
+.ads-table tbody td.col-contact .ads-status-line {
+  display: block;
+  width: 100%;
+  margin: calc(-2 * var(--px));
+  padding: 0;
+  line-height: calc(24 * var(--px));
+  margin-top: calc(5 * var(--px));
+}
+.ads-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: calc(133 * var(--px));
+  height: calc(31 * var(--px));
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  font-size: calc(20 * var(--px));
+  font-weight: 400;
+  line-height: calc(24 * var(--px));
+  border: 0;
+  border-radius: 0;
+  white-space: nowrap;
+  text-align: center;
+}
+.ads-status-badge--active {
+  color: #0087fc;
+  background: #e3f2ff;
+}
+.ads-status-badge--moderation {
+  color: #59c90e;
+  background: #eaffdc;
+}
+.ads-status-badge--done {
+  color: #ff0303;
+  background: #ffdddd;
+}
+
+/* Первая колонка: №, ID, тип объявления — слева, без переноса (фото 4) */
+.ads-table tbody td.col-num {
+  padding: calc(7 * var(--px)) calc(6 * var(--px));
+  overflow: visible;
+  text-align: left;
+}
+.ads-table tbody td.col-num .ads-cell-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+  text-align: left;
+}
+.ads-table tbody td.col-num .ads-cell-line {
+  display: block;
+  width: auto;
+  max-width: none;
+  text-align: left;
+  align-self: flex-start;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+.ads-table tbody td.col-num .ads-ad-type-text {
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
+  -webkit-hyphens: none;
+}
+.ads-table.collapsed:not(.no-wrap)
+  tbody
+  td.col-num
+  .ads-cell-inner
+  .ads-cell-line,
+.ads-table:not(.no-wrap):not(.collapsed) tbody td.col-num .ads-cell-line {
+  white-space: nowrap;
+  hyphens: none;
+  -webkit-hyphens: none;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+/* ТЗ п.23–24: до правого края ячейки не более 1–3px (при переносе и при ellipsis) */
+.ads-table:not(.no-wrap)
+  tbody
+  td:not([class*="col-date"]):not(.col-company):not(.col-num),
+.ads-table.no-wrap
+  tbody
+  td:not([class*="col-date"]):not(.col-company):not(.col-num) {
+  padding-right: calc(2 * var(--px));
+}
+/* Колонка «Компания»: симметричные отступы по макету (10px слева и справа) */
+.ads-table tbody td.col-company {
+  padding-left: calc(10 * var(--px));
+  padding-right: calc(10 * var(--px));
+}
+.ads-table:not(.no-wrap):not(.collapsed) tbody tr {
+  height: calc(571 * var(--px));
+}
+.ads-table:not(.no-wrap):not(.collapsed) tbody td {
+  height: calc(571 * var(--px));
+  min-height: calc(571 * var(--px));
+}
+.ads-table.no-wrap tbody tr,
+.ads-table.collapsed tbody tr {
+  height: calc(116 * var(--px));
+}
+.ads-table.no-wrap:not(.collapsed) tbody td {
+  height: calc(116 * var(--px));
+  min-height: calc(116 * var(--px));
+  max-height: calc(116 * var(--px));
+  overflow: hidden;
+  vertical-align: top;
+}
+.ads-table.collapsed tbody td {
+  height: calc(116 * var(--px));
+  min-height: calc(116 * var(--px));
+  max-height: calc(116 * var(--px));
+  overflow: hidden;
+  vertical-align: top;
+}
+/* ТЗ п.27: в свёрнутой строке видно не более 4 строк (4 × 24px = 96px) */
+.ads-table.collapsed tbody .ads-cell-inner {
+  max-height: calc(96 * var(--px));
+  overflow: hidden;
+  line-height: calc(24 * var(--px));
+}
+/* ТЗ п.27 + п.24: «Свернуть все» + «Переносить» — перенос по слогам, ссылки с ellipsis */
+.ads-table.collapsed:not(.no-wrap)
+  tbody
+  td:not([class*="col-date"]):not(.col-contact):not(.col-num)
+  .ads-cell-inner
+  .ads-cell-line:not(.is-link):not(.ads-cell-line--copy):not(.is-company):not(
+    .is-invoice
+  ):not(.ads-cell-line--no-hyphen) {
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: normal;
+  hyphenate-limit-chars: 6 2 2;
+  hyphenate-limit-zone: 2%;
+  -webkit-hyphenate-limit-before: 2;
+  -webkit-hyphenate-limit-after: 1;
+  text-wrap: pretty;
+}
+.ads-table.collapsed:not(.no-wrap) tbody .ads-cell-inner .ads-text-content,
+.ads-table.collapsed:not(.no-wrap) tbody .ads-cell-inner .ads-text-html,
+.ads-table.collapsed:not(.no-wrap) tbody .ads-cell-inner .ads-text-plain {
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphenate-limit-chars: 6 2 2;
+  hyphenate-limit-zone: 2%;
+  -webkit-hyphenate-limit-before: 2;
+  -webkit-hyphenate-limit-after: 1;
+  text-wrap: pretty;
+}
+.ads-table.collapsed:not(.no-wrap) tbody .ads-cell-inner .ads-text-html {
+  white-space: pre-wrap;
+}
+.ads-table.collapsed:not(.no-wrap) tbody .ads-cell-inner .ads-cell-line.is-link,
+.ads-table.collapsed:not(.no-wrap) tbody .ads-cell-inner a.ads-cell-link {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  hyphens: none;
+  max-width: 100%;
+}
+.ads-table.collapsed td.col-text {
+  overflow: hidden;
+}
+/* Колонки дат — всегда показывают все строки (не обрезаются при «Свернуть все») */
+.ads-table.collapsed tbody td[class*="col-date"] {
+  overflow: visible;
+  padding-left: calc(4 * var(--px));
+  padding-right: calc(4 * var(--px));
+}
+.ads-table.collapsed tbody td[class*="col-date"] .ads-cell-inner {
+  max-height: none;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+/* П.27 + макет: в свёрнутом режиме дата и время — отдельные строки по 24px */
+.ads-table.collapsed tbody td[class*="col-date"] .ads-cell-line,
+.ads-table.collapsed tbody td.col-time .ads-cell-line {
+  display: block;
+  flex: 0 0 calc(24 * var(--px));
+  height: calc(24 * var(--px));
+  min-height: calc(24 * var(--px));
+  line-height: calc(24 * var(--px));
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
+  text-align: left;
+  hyphens: none;
+  -webkit-hyphens: none;
+  overflow: visible;
+  text-overflow: clip;
+}
+.ads-table.collapsed:not(.no-wrap)
+  tbody
+  td[class*="col-date"]
+  .ads-cell-inner
+  .ads-cell-line,
+.ads-table.collapsed:not(.no-wrap)
+  tbody
+  td.col-time
+  .ads-cell-inner
+  .ads-cell-line {
+  white-space: nowrap;
+  hyphens: none;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+.ads-table.collapsed tbody td.col-time {
+  overflow: visible;
+}
+.ads-table.collapsed tbody td.col-time .ads-cell-inner {
+  max-height: none;
+  overflow: visible;
+}
+.ads-table tbody tr:nth-child(even) td {
+  background: var(--c-zebra);
+}
+.ads-cell-inner {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.ads-cell-line {
+  font-size: calc(20 * var(--px));
+  font-weight: 300;
+  line-height: calc(24 * var(--px));
+  color: var(--c-text);
+}
+/* Даты и TIME — узкие колонки, заголовок 4 строки по 29px */
+.ads-table th[class*="col-date"] .ads-th-line,
+.ads-table th.col-time .ads-th-line {
+  left: calc(6 * var(--px));
+  right: calc(6 * var(--px));
+  font-size: calc(21 * var(--px));
+  line-height: calc(29 * var(--px));
+  height: auto;
+  min-height: calc(29 * var(--px));
+}
+.ads-table th[class*="col-date"] .ads-th-text-line,
+.ads-table th.col-time .ads-th-text-line {
+  display: block;
+  line-height: calc(29 * var(--px));
+  white-space: nowrap;
+}
+.ads-table td[class*="col-date"],
+.ads-table td.col-time {
+  text-align: left;
+  padding-top: calc(6 * var(--px));
+  padding-bottom: calc(6 * var(--px));
+  padding-left: calc(4 * var(--px));
+  padding-right: calc(4 * var(--px));
+}
+.ads-table td[class*="col-date"] .ads-cell-inner,
+.ads-table td.col-time .ads-cell-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  width: 100%;
+}
+.ads-table:not(.collapsed) td[class*="col-date"] .ads-cell-line,
+.ads-table:not(.collapsed) td.col-time .ads-cell-line {
+  display: block;
+  line-height: calc(24 * var(--px));
+  min-height: calc(24 * var(--px));
+  height: calc(24 * var(--px));
+  font-size: calc(20 * var(--px));
+  margin: 0;
+  padding: 0;
+}
+.ads-table td[class*="col-date"] .ads-cell-line,
+.ads-table td.col-time .ads-cell-line {
+  white-space: nowrap;
+  hyphens: none;
+  -webkit-hyphens: none;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  text-align: left;
+  overflow: visible;
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+.ads-table td.col-date1 .ads-cell-line {
+  color: var(--c-muted);
+}
+.ads-table td.col-date2 .ads-cell-line {
+  color: var(--c-link);
+}
+.ads-table td.col-date3 .ads-cell-line {
+  color: var(--c-date3);
+}
+.ads-table td.col-date4 .ads-cell-line {
+  color: var(--c-date4);
+}
+.ads-table td.col-date5 .ads-cell-line {
+  color: var(--c-date5);
+}
+.ads-table td.col-time .ads-cell-line {
+  color: var(--c-text);
+}
+.ads-table td.col-time .ads-cell-line--time {
+  text-align: left;
+  align-self: flex-start;
+}
+.ads-table:not(.no-wrap) .ads-cell-line.ads-wrap-line,
+.ads-table:not(.no-wrap) .ads-cell-line[data-wrap-src] {
+  white-space: nowrap;
+  hyphens: none;
+  -webkit-hyphens: none;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+/* Название компании: каждая JS-строка — одна визуальная линия, без повторного CSS-переноса */
+.ads-table:not(.no-wrap) .ads-cell-line.is-company,
+.ads-table:not(.no-wrap) .ads-cell-line.is-company[data-wrap-src],
+.ads-table:not(.no-wrap) .ads-cell-line.is-company.ads-wrap-line {
+  white-space: nowrap;
+  hyphens: none;
+  -webkit-hyphens: none;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.ads-table:not(.no-wrap) .ads-cell-line[data-wrap-no-hyphen="true"],
+.ads-table:not(.no-wrap)
+  .ads-cell-line.ads-wrap-line[data-wrap-no-hyphen="true"],
+.ads-table td.col-contact .ads-cell-line[data-wrap-no-hyphen="true"],
+.ads-table td.col-contact .ads-cell-line.ads-wrap-line,
+.ads-table td[class*="col-date"] .ads-cell-line,
+.ads-table td.col-time .ads-cell-line,
+.ads-table .ads-cell-line--no-hyphen,
+.ads-table .ads-cell-line--no-hyphen[data-wrap-src],
+.ads-table .ads-cell-line--no-hyphen.ads-wrap-line {
+  hyphens: none;
+  -webkit-hyphens: none;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.ads-table:not(.no-wrap):not(.collapsed)
+  td:not([class*="col-date"]):not(.col-contact):not(.col-num)
+  .ads-cell-line:not(.is-link):not(.ads-cell-line--copy):not(.is-company):not(
+    .is-invoice
+  ):not(.ads-cell-line--no-hyphen) {
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphenate-limit-chars: 6 2 2;
+  hyphenate-limit-zone: 2%;
+  -webkit-hyphenate-limit-before: 2;
+  -webkit-hyphenate-limit-after: 1;
+  text-wrap: pretty;
+}
+.ads-table:not(.no-wrap):not(.collapsed) .ads-text-content,
+.ads-table:not(.no-wrap):not(.collapsed) .ads-text-html,
+.ads-table:not(.no-wrap):not(.collapsed) .ads-text-plain {
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphenate-limit-chars: 6 2 2;
+  hyphenate-limit-zone: 2%;
+  -webkit-hyphenate-limit-before: 2;
+  -webkit-hyphenate-limit-after: 1;
+  text-wrap: pretty;
+}
+.ads-table:not(.no-wrap):not(.collapsed) .ads-cell-line.is-link,
+.ads-table:not(.no-wrap):not(.collapsed) a.ads-cell-link {
+  hyphens: none;
+  word-break: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* ТЗ п.25: иконка копирования после текста ссылки (отступ по макету — 9px) */
+.ads-cell-line.is-link,
+.ads-cell-line--copy {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: calc(9 * var(--px));
+  width: 100%;
+  max-width: 100%;
+  line-height: calc(24 * var(--px));
+}
+.ads-cell-line.is-link .ads-cell-link,
+.ads-cell-line--copy .ads-fio-link {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.ads-source-suffix {
+  flex: 0 0 auto;
+  color: var(--c-text);
+  font-weight: 300;
+  white-space: nowrap;
+}
+.ads-cell-line.is-link .ads-copy-ico,
+.ads-cell-line--copy .ads-copy-ico,
+.ads-cell-line--copy .ads-resume-ico {
+  flex: 0 0 auto;
+}
+.ads-cell-line--copy .ads-resume-ico {
+  margin-left: calc(3 * var(--px));
+}
+.ads-cell-line.is-link,
+a.ads-cell-link:not(.ads-fio-link) {
+  color: var(--c-link);
+  cursor: pointer;
+  text-decoration: none;
+}
+.ads-table.no-wrap .ads-cell-line.is-link,
+.ads-table.no-wrap a.ads-cell-link {
+  word-break: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+a.ads-cell-link:hover {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: currentColor;
+  text-underline-offset: calc(3 * var(--px));
+}
+.ads-cell-line.is-muted {
+  color: #4d4343;
+}
+.ads-cell--nowrap .ads-cell-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ads-table.no-wrap
+  tbody
+  td:not([class*="col-date"]):not(.col-time):not(.col-num)
+  .ads-cell-line:not(.ads-status-line) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Даты и время — всегда полностью, без сокращения (ТЗ п.23 не для дат) */
+.ads-table.no-wrap tbody td.col-num .ads-cell-line {
+  overflow: visible;
+  text-overflow: clip;
+}
+.ads-table.collapsed tbody td.col-num {
+  overflow: visible;
+}
+.ads-table.collapsed tbody td.col-num .ads-cell-inner {
+  overflow: visible;
+}
+.ads-table.collapsed tbody td.col-num .ads-cell-line {
+  overflow: visible;
+  max-width: none;
+  text-overflow: clip;
+}
+.ads-table.no-wrap tbody td[class*="col-date"] .ads-cell-line,
+.ads-table.no-wrap tbody td.col-time .ads-cell-line,
+.ads-table.collapsed.no-wrap tbody td[class*="col-date"] .ads-cell-line,
+.ads-table.collapsed.no-wrap tbody td.col-time .ads-cell-line {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.ads-copy-ico {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: calc(20 * var(--px));
+  height: calc(20 * var(--px));
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.ads-copy-ico img {
+  display: block;
+  width: calc(20 * var(--px));
+  height: calc(20 * var(--px));
+  pointer-events: none;
+}
+.ads-copy-ico-active {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+.ads-copy-ico:hover .ads-copy-ico-idle,
+.ads-copy-ico:focus-visible .ads-copy-ico-idle,
+.ads-copy-ico.is-copied .ads-copy-ico-idle {
+  opacity: 0;
+}
+.ads-copy-ico:hover .ads-copy-ico-active,
+.ads-copy-ico:focus-visible .ads-copy-ico-active,
+.ads-copy-ico.is-copied .ads-copy-ico-active {
+  opacity: 1;
+}
+.ads-copy-ico:focus-visible {
+  outline: none;
+}
+.ads-delete-btn {
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+/* Цвета строк ячеек (посимвольные стили из Figma) */
+.ads-cell-line.c-blue,
+.c-blue {
+  color: var(--c-link);
+}
+.ads-cell-line.c-gray,
+.c-gray {
+  color: var(--c-muted);
+}
+.ads-cell-line.c-green,
+.c-green {
+  color: var(--c-ad-type);
+}
+.ads-cell-line.c-orange,
+.c-orange {
+  color: var(--c-date4);
+}
+.ads-cell-line.c-purple,
+.c-purple {
+  color: var(--c-fio);
+}
+.ads-cell-line.c-d3 {
+  color: var(--c-date3);
+}
+.ads-cell-line.c-d4 {
+  color: var(--c-date4);
+}
+.ads-cell-line.c-d5 {
+  color: var(--c-date5);
+}
+a.ads-fio-link {
+  color: var(--c-fio);
+  text-decoration: none;
+}
+a.ads-fio-link:hover {
+  color: var(--c-link);
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: currentColor;
+  text-underline-offset: calc(3 * var(--px));
+}
+.ads-resume-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: calc(21 * var(--px));
+  height: calc(20 * var(--px));
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+}
+.ads-resume-ico-svg {
+  display: block;
+  width: calc(21 * var(--px));
+  height: calc(20 * var(--px));
+  pointer-events: none;
+  transition:
+    transform 0.12s ease,
+    filter 0.12s ease;
+}
+.ads-resume-ico-path {
+  fill: #0087fc;
+  transition: fill 0.12s ease;
+}
+.ads-resume-ico:hover .ads-resume-ico-path,
+.ads-resume-ico:focus-visible .ads-resume-ico-path {
+  fill: #006bd6;
+}
+.ads-resume-ico:hover .ads-resume-ico-svg,
+.ads-resume-ico:focus-visible .ads-resume-ico-svg {
+  transform: scale(1.06);
+  filter: drop-shadow(0 0 calc(0.4 * var(--px)) #006bd6)
+    drop-shadow(0 0 calc(0.4 * var(--px)) #006bd6);
+}
+a.ads-vacancy-count,
+.ads-cell-line .ads-vacancy-count {
+  display: inline;
+  margin-left: calc(5 * var(--px));
+  color: var(--c-fio);
+  text-decoration: none;
+  cursor: pointer;
+}
+a.ads-vacancy-count:hover,
+a.ads-vacancy-count:focus-visible {
+  color: var(--c-fio);
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: currentColor;
+  text-underline-offset: calc(3 * var(--px));
+}
+
+/* Строка «Дата отклика DD.MM.YYYY» — #62560E, 20px Light, одна линия */
+.ads-response-date {
+  color: var(--c-text);
+  font-size: calc(20 * var(--px));
+  font-weight: 300;
+  line-height: calc(24 * var(--px));
+}
+.ads-response-text {
+  display: inline;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+}
+.ads-response-text .search-highlight {
+  color: var(--c-link);
+}
+.ads-cell-line.is-link,
+a.ads-cell-link:not(.ads-fio-link) {
+  color: var(--c-link);
+}
+.ads-cell-line.is-invoice {
+  color: var(--c-muted);
+}
+.ads-cell-line.is-inn b {
+  font-weight: 500;
+  color: var(--c-text);
+}
+.ads-cell-line.is-company {
+  color: var(--c-text);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  display: block;
+}
+.ads-company-form {
+  font-style: italic;
+  font-weight: 300;
+}
+
+/* Подсказка (tooltip) — см. .ads-tip выше */
+
+/* Колонка «Источник» — по макету Figma: caps, #62560E, перенос по строкам из макета */
+.ads-table th.col-text .ads-th-text {
+  text-transform: uppercase;
+  color: var(--c-text);
+  font-weight: 300;
+  line-height: calc(29 * var(--px));
+  white-space: normal;
+}
+.ads-th-text-line {
+  display: block;
+  line-height: calc(29 * var(--px));
+  white-space: nowrap;
+}
+.ads-table th.col-text .ads-th-line:first-child .ads-th-text {
+  white-space: nowrap;
+}
+
+/* Текстовая ячейка объявления */
+.ads-table td.col-text {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.ads-table td.col-text .ads-cell-inner {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+.ads-text-content {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  font-size: calc(20 * var(--px));
+  font-weight: 300;
+  line-height: calc(24 * var(--px));
+  color: #4d4343;
+  user-select: text;
+}
+/* Режим с тегами: разметка xml видна как текст (ТЗ п.21) */
+.ads-text-html {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  font-size: calc(20 * var(--px));
+  font-weight: 300;
+  line-height: calc(24 * var(--px));
+  color: #4d4343;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+.ads-table.collapsed:not(.no-wrap) tbody .ads-cell-inner .ads-text-html,
+.ads-table:not(.no-wrap):not(.collapsed) .ads-text-html,
+.ads-table:not(.no-wrap):not(.collapsed) .ads-text-content .ads-text-html {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  hyphens: none;
+  -webkit-hyphens: none;
+  white-space: pre-wrap;
+}
+/* Режим «Без тегов» (ТЗ п.21) */
+.ads-text-plain {
+  user-select: text;
+}
+.ads-text-plain .text-section {
+  margin-bottom: calc(6 * var(--px));
+}
+.ads-text-plain .text-section-title {
+  display: block;
+  font-weight: 400;
+  color: var(--c-text);
+  line-height: calc(24 * var(--px));
+}
+.ads-text-plain .text-section-item {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(6 * var(--px));
+  font-weight: 300;
+  line-height: calc(24 * var(--px));
+}
+.ads-text-plain .text-section-text {
+  flex: 1;
+  min-width: 0;
+  font-weight: 300;
+  color: #4d4343;
+}
+.ads-text-plain .text-marker {
+  flex-shrink: 0;
+  width: calc(7 * var(--px));
+  height: calc(7 * var(--px));
+  margin-top: calc(8 * var(--px));
+  background: #4d4343;
+  box-shadow: inset 0 0 0 calc(2 * var(--px)) #fff;
+}
+
+/* Подсветка результатов поиска */
+.search-highlight {
+  color: var(--c-link);
+  background: transparent;
+  font-weight: inherit;
+}
+
+/* Скрываем нижнюю полосу страницы */
+.ads-page .bottom-stripe {
+  display: none;
+}
+
+/* Вертикальный скролл — overflow-y: scroll, полоса видна сразу и вверху страницы (п.9) */
+html:has(.ads-page) {
+  overflow-x: hidden !important;
+  overflow-y: scroll !important;
+  height: 100%;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(98, 86, 14, 0.45) #fffcec !important;
+}
+html:has(.ads-page)::-webkit-scrollbar {
+  display: block !important;
+  -webkit-appearance: none;
+  width: calc(12 * var(--fvw, 1vw) / 19.2);
+  background-color: #fffcec;
+}
+html:has(.ads-page)::-webkit-scrollbar-track {
+  background: #fffcec;
+}
+html:has(.ads-page)::-webkit-scrollbar-thumb {
+  background: rgba(98, 86, 14, 0.45);
+  border-radius: calc(6 * var(--fvw, 1vw) / 19.2);
+  min-height: calc(48 * var(--fvw, 1vw) / 19.2);
+  border: calc(2 * var(--fvw, 1vw) / 19.2) solid #fffcec;
+  background-clip: padding-box;
+}
+body:has(.ads-page) {
+  overflow-x: hidden !important;
+  overflow-y: scroll !important;
+  min-height: 100%;
+}
+body:has(.ads-page) #zoomFrame {
+  position: relative;
+  height: auto;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: visible;
+  min-height: 100vh;
+  background: #fffcec;
+}

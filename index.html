@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <base href="header_only/" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"
+    />
+    <title>vsevn.ru — Объявления скомпонованные</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300&family=Roboto:wght@100;200;300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css?v=419" />
+    <link rel="stylesheet" href="css/compiled-ads.css?v=204" />
+  </head>
+  <body>
+    <div id="zoomFrame">
+      <header class="topbar">
+        <nav class="main-nav" aria-label="Главное меню">
+          <a class="nav-link" href="#" data-tab="ads">
+            <span class="icon icon-ads" aria-hidden="true"></span>
+            <span class="nav-text" data-text="ОБЪЯВЛЕНИЯ">ОБЪЯВЛЕНИЯ</span>
+          </a>
+          <a class="nav-link active" href="#" data-tab="letters">
+            <span class="icon icon-letters" aria-hidden="true"></span>
+            <span class="nav-text" data-text="ОБЪЯВЛЕНИЯ СКОМПОНОВАННЫЕ"
+              >ОБЪЯВЛЕНИЯ СКОМПОНОВАННЫЕ</span
+            >
+          </a>
+          <a class="nav-link" href="#" data-tab="import">
+            <span class="icon icon-import" aria-hidden="true"></span>
+            <span class="nav-text" data-text="ИМПОРТ ИЗ XML ФАЙЛА"
+              >ИМПОРТ ИЗ XML ФАЙЛА</span
+            >
+          </a>
+          <a class="nav-link" href="#" data-tab="companies">
+            <span class="icon icon-companies" aria-hidden="true"></span>
+            <span class="nav-text" data-text="ГРУППЫ ОК">ГРУППЫ ОК</span>
+          </a>
+          <a class="nav-link" href="#" data-tab="resume">
+            <span class="icon icon-resume" aria-hidden="true"></span>
+            <span class="nav-text" data-text="ПОДПИСЧИКИ">ПОДПИСЧИКИ</span>
+          </a>
+          <a class="nav-link" href="#" data-tab="managers">
+            <span class="icon icon-managers" aria-hidden="true"></span>
+            <span class="nav-text" data-text="ИНТЕРФЕЙС">ИНТЕРФЕЙС</span>
+          </a>
+        </nav>
+      </header>
+
+      <div class="page-wrapper ads-page">
+        <div class="ads-card">
+          <!-- Заголовок -->
+          <h1 class="ads-title" data-text="Объявления скомпонованные">
+            Объявления скомпонованные
+          </h1>
+
+          <!-- Строка управления (даты / счётчик / delete / экспорт / пагинация) -->
+          <div class="ads-date-field date-field" data-date-role="from">
+            <input
+              type="text"
+              class="ads-date-input date-input"
+              id="dateFromInput"
+              value="12.05.2023"
+              readonly
+            />
+            <span class="ads-date-line"
+              ><span class="ads-date-label">ДАТА ОТ</span>
+              <span class="ads-date-value" id="dateFromRender"
+                >12.05.2023</span
+              ></span
+            >
+          </div>
+          <div class="ads-date-field date-field" data-date-role="to">
+            <input
+              type="text"
+              class="ads-date-input date-input"
+              id="dateToInput"
+              value="12.05.2023"
+              readonly
+            />
+            <span class="ads-date-line"
+              ><span class="ads-date-label">ДАТА ДО</span>
+              <span class="ads-date-value" id="dateToRender"
+                >12.05.2023</span
+              ></span
+            >
+          </div>
+
+          <div class="ads-count-box">
+            <span class="ads-count-line"
+              ><span class="ads-count-label">КОЛИЧЕСТВО ЛОГОВ:</span
+              ><span class="ads-count-num" id="adsCountNum">0</span></span
+            >
+          </div>
+
+          <button type="button" class="ads-delete-btn" id="adsDeleteBtn">
+            <span class="ads-delete-text">delete</span>
+            <span class="ads-delete-icon-wrap" aria-hidden="true"
+              ><img
+                class="ads-delete-icon-idle"
+                src="icons/compiled-ads/delete.svg"
+                width="25"
+                height="22"
+                alt="" /><img
+                class="ads-delete-icon-active"
+                src="icons/compiled-ads/delete-hover.svg"
+                width="25"
+                height="22"
+                alt=""
+            /></span>
+          </button>
+
+          <div class="ads-rows-select">
+            <div
+              class="ads-dropdown ads-dropdown--rows"
+              data-dropdown="rowsPerPage"
+              data-default="500"
+            >
+              <span class="ads-dropdown-text has-value" data-text="500"
+                >500</span
+              >
+              <span class="ads-dropdown-arrow" aria-hidden="true"></span>
+              <div class="ads-dropdown-menu" hidden></div>
+            </div>
+          </div>
+
+          <div class="ads-toolbar-export-page">
+            <button type="button" class="ads-export-btn" id="adsExportBtn">
+              <span class="ads-export-line"
+                ><span class="ads-export-text">ЭКСПОРТ В&nbsp;</span
+                ><span class="ads-export-xml">XML</span></span
+              >
+              <span class="ads-export-icon-wrap" aria-hidden="true"
+                ><img
+                  class="ads-export-icon-idle"
+                  src="icons/compiled-ads/export-xml.svg"
+                  width="36"
+                  height="36"
+                  alt="" /><img
+                  class="ads-export-icon-active"
+                  src="icons/compiled-ads/export-xml-hover.svg"
+                  width="36"
+                  height="36"
+                  alt=""
+              /></span>
+            </button>
+
+            <div class="ads-pagination" id="pagination"></div>
+          </div>
+
+          <!-- Радиокнопки статуса -->
+          <div class="ads-radio-row" id="adsRadioRow"></div>
+
+          <!-- Чекбокс «Депубликации раньше срока на сайте» -->
+          <label class="ads-check ads-check--depub">
+            <input type="checkbox" class="check-input" id="chkEarlyDepub" />
+            <span
+              class="ads-check-label"
+              data-text="Депубликации раньше срока на сайте"
+              >Депубликации раньше срока на сайте</span
+            >
+          </label>
+
+          <!-- Чекбоксы режима отображения -->
+          <label class="ads-check ads-check--responses">
+            <input type="checkbox" class="check-input" id="chkResponsesOnly" />
+            <span
+              class="ads-check-label"
+              data-text="Показать только с откликами"
+              >Показать только с откликами</span
+            >
+          </label>
+          <label class="ads-check ads-check--wrap">
+            <input
+              type="checkbox"
+              class="check-input"
+              id="chkWrapText"
+              checked
+            />
+            <span class="ads-check-label is-checked" data-text="Переносить"
+              >Переносить</span
+            >
+          </label>
+          <label class="ads-check ads-check--collapse">
+            <input type="checkbox" class="check-input" id="chkCollapseAll" />
+            <span class="ads-check-label" data-text="Свернуть все"
+              >Свернуть все</span
+            >
+          </label>
+          <label class="ads-check ads-check--notags">
+            <input type="checkbox" class="check-input" id="chkWithoutTags" />
+            <span class="ads-check-label" data-text="Без тегов">Без тегов</span>
+          </label>
+          <label class="ads-check ads-check--changed">
+            <input type="checkbox" class="check-input" id="chkChangedDepub" />
+            <span
+              class="ads-check-label"
+              data-text="Показать объявления с изменённой датой депубликацией"
+              >Показать объявления с изменённой датой депубликацией</span
+            >
+          </label>
+
+          <!-- Выпадающие списки «Все файлы xml» / «Все группы ОК» -->
+          <div
+            class="ads-dropdown ads-dropdown--xml"
+            data-dropdown="xmlFiles"
+            data-default="Все файлы xml"
+          >
+            <span class="ads-dropdown-text" data-text="Все файлы xml"
+              >Все файлы xml</span
+            >
+            <span class="ads-dropdown-arrow" aria-hidden="true"></span>
+            <button
+              type="button"
+              class="ads-dropdown-clear"
+              aria-label="Очистить"
+              hidden
+            >
+              <i class="vi vi-clear" aria-hidden="true"></i>
+            </button>
+            <div class="ads-dropdown-menu" hidden></div>
+          </div>
+          <div
+            class="ads-dropdown ads-dropdown--groups"
+            data-dropdown="groups"
+            data-default="Все группы ОК"
+          >
+            <span class="ads-dropdown-text" data-text="Все группы ОК"
+              >Все группы ОК</span
+            >
+            <span class="ads-dropdown-arrow" aria-hidden="true"></span>
+            <button
+              type="button"
+              class="ads-dropdown-clear"
+              aria-label="Очистить"
+              hidden
+            >
+              <i class="vi vi-clear" aria-hidden="true"></i>
+            </button>
+            <div class="ads-dropdown-menu" hidden></div>
+          </div>
+
+          <!-- Таблица -->
+          <div class="ads-table-wrapper">
+            <table class="ads-table" id="adsTable">
+              <colgroup id="adsColgroup"></colgroup>
+              <thead id="adsTableHead"></thead>
+              <tbody id="adsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/data/legal-forms.js"></script>
+    <script src="js/data/figma-colors.js"></script>
+    <script src="js/data/figma-columns.js?v=14"></script>
+    <script src="js/data/ads-data.js?v=9"></script>
+    <script src="js/data/select-options.js"></script>
+    <script src="js/script.js?v=328"></script>
+    <script src="js/compiled-ads-app.js?v=173"></script>
+  </body>
+</html>
