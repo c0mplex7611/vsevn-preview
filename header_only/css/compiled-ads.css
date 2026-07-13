@@ -2166,7 +2166,7 @@ html:has(.ads-page)::-webkit-scrollbar-thumb {
 }
 body:has(.ads-page) {
   overflow-x: hidden !important;
-  overflow-y: scroll !important;
+  overflow-y: visible !important;
   min-height: 100%;
 }
 body:has(.ads-page) #zoomFrame {
