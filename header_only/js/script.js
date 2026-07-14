@@ -360,18 +360,34 @@ function applyBrowserZoomNeutralizer() {
 
   if (!frame) return;
 
-  /* ТЗ п.1: больше НЕ «догоняем» браузерный зум масштабом фрейма. Раньше сюда
-     ставился frame.style.zoom = 1/browserZoom по неточной оценке зума, из-за чего
-     на каждом шаге зума макет чуть по-разному перекладывался и текст прыгал.
-     Теперь зум чисто нативный — просто убеждаемся, что никакого override нет. */
-  frame.style.removeProperty("zoom");
-  frame.style.removeProperty("transform");
-  frame.style.removeProperty("width");
-  frame.style.removeProperty("min-height");
-  root.classList.remove("is-browser-zoom-neutralized");
-  root.style.removeProperty("--browser-zoom");
-  root.style.removeProperty("--browser-zoom-inv");
+  /* ТЗ: СТАТИЧЕСКИЙ дизайн должен ОСТАВАТЬСЯ НА МЕСТЕ при браузерном зуме —
+     не масштабироваться вместе со страницей и не дёргаться. Компенсируем зум,
+     масштабируя #zoomFrame ровно на обратный коэффициент. Коэффициент берём из
+     devicePixelRatio: он меняется СТРОГО пропорционально зуму и без «гуляния»
+     (в отличие от старой эвристики по innerWidth/outerWidth, которая и давала
+     дёрганье). --dpx/--fvw при зуме заморожены (см. isBrowserZoomed), поэтому
+     раскладка макета не пересчитывается — только целиком «отменяется» зум. */
+  const dpr =
+    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+      ? window.devicePixelRatio
+      : 1;
+  const base = baselineDeviceRatio || dpr;
+  const zoomRatio = dpr / base;
+
+  if (Math.abs(zoomRatio - 1) < 0.005) {
+    frame.style.removeProperty("zoom");
+    root.classList.remove("is-browser-zoom-neutralized");
+    root.style.removeProperty("--browser-zoom");
+    captureZoomLayoutReference(true);
+    return;
+  }
+
+  const inv = (1 / zoomRatio).toFixed(6);
+  frame.style.zoom = inv;
+  root.classList.add("is-browser-zoom-neutralized");
+  root.style.setProperty("--browser-zoom", zoomRatio.toFixed(6));
 }
+window.applyBrowserZoomNeutralizer = applyBrowserZoomNeutralizer;
 
 function getCurrentPageScale() {
   const value = parseFloat(
