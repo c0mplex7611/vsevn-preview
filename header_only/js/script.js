@@ -374,18 +374,33 @@ function applyBrowserZoomNeutralizer() {
   const base = baselineDeviceRatio || dpr;
   const zoomRatio = dpr / base;
 
-  if (Math.abs(zoomRatio - 1) < 0.005) {
+  const nextZoom =
+    Math.abs(zoomRatio - 1) < 0.005 ? "" : (1 / zoomRatio).toFixed(6);
+  const currentZoom = frame.style.zoom || "";
+  if (nextZoom === currentZoom) return; // масштаб не изменился — скролл не трогаем
+
+  // Компенсация зума меняет высоту страницы → чтобы прокрученная страница не
+  // «прыгала» вверх (ТЗ п.2), сохраняем относительную позицию прокрутки вокруг
+  // смены масштаба фрейма.
+  const scroller = document.scrollingElement || document.documentElement;
+  const prevTop = scroller.scrollTop;
+  const prevH = scroller.scrollHeight || 1;
+
+  if (nextZoom === "") {
     frame.style.removeProperty("zoom");
     root.classList.remove("is-browser-zoom-neutralized");
     root.style.removeProperty("--browser-zoom");
     captureZoomLayoutReference(true);
-    return;
+  } else {
+    frame.style.zoom = nextZoom;
+    root.classList.add("is-browser-zoom-neutralized");
+    root.style.setProperty("--browser-zoom", zoomRatio.toFixed(6));
   }
 
-  const inv = (1 / zoomRatio).toFixed(6);
-  frame.style.zoom = inv;
-  root.classList.add("is-browser-zoom-neutralized");
-  root.style.setProperty("--browser-zoom", zoomRatio.toFixed(6));
+  const newH = scroller.scrollHeight || 1;
+  if (prevH > 0 && Math.abs(newH - prevH) > 1) {
+    scroller.scrollTop = prevTop * (newH / prevH);
+  }
 }
 window.applyBrowserZoomNeutralizer = applyBrowserZoomNeutralizer;
 
@@ -2064,6 +2079,13 @@ function syncViewportMetrics() {
 
   captureZoomLayoutReference(false);
   applyBrowserZoomNeutralizer();
+
+  // ТЗ: при браузерном зуме (Ctrl +/-) НИЧЕГО не перерисовываем и не
+  // пересчитываем. Живой текст масштабируется браузером сам, а любой ре-рендер
+  // на зуме двигает DOM: меняется радиокнопка, произвольно всплывает подсказка,
+  // дёргается открытый селект. Оставляем только компенсацию зума (выше) — макет
+  // остаётся статичным, без визуальных изменений.
+  if (isBrowserZoomed()) return;
 
   if (typeof window.syncDesignViewportUnit === "function") {
     window.syncDesignViewportUnit();
