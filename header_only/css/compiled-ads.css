@@ -2257,20 +2257,3 @@ body:has(.ads-page) #zoomFrame {
   min-height: 100vh;
   background: #fffcec;
 }
-
-/*
- * Keep table body text in the metrics from the first stable layout.
- * The wrapper is still ordinary HTML: transform only composites that layout
- * at the current physical size, so zoom does not reflow glyphs and icons.
- */
-.ads-table tbody .ads-cell-inner {
-  --px: var(--table-text-px, var(--dpx, 1px));
-  width: calc(100% / var(--table-text-scale, 1)) !important;
-  max-width: none !important;
-  transform: translate(
-      var(--table-text-snap-x, 0px),
-      var(--table-text-snap-y, 0px)
-    )
-    scale(var(--table-text-scale, 1));
-  transform-origin: top left;
-}

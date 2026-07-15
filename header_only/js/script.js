@@ -1826,111 +1826,7 @@ function designPxToViewportPx(px) {
 }
 
 const zoomLineVarsCache = {};
-let frozenTableTextPageScale = null;
-let svgTextZoomProbe = null;
-let svgTextZoomMeasureCanvas = null;
-
-function snapTableTextLayersToPhysicalPixels(deviceScale) {
-  if (!(deviceScale > 0)) return;
-
-  const layers = Array.from(
-    document.querySelectorAll(".ads-table tbody .ads-cell-inner"),
-  );
-
-  layers.forEach(function (layer) {
-    layer.style.setProperty("--table-text-snap-x", "0px");
-    layer.style.setProperty("--table-text-snap-y", "0px");
-  });
-
-  const corrections = layers.map(function (layer) {
-    const rect = layer.getBoundingClientRect();
-    const correctionX =
-      (Math.round(rect.left * deviceScale) - rect.left * deviceScale) /
-      deviceScale;
-    const correctionY =
-      (Math.round(rect.top * deviceScale) - rect.top * deviceScale) /
-      deviceScale;
-
-    return { layer, correctionX, correctionY };
-  });
-
-  corrections.forEach(function (item) {
-    const { layer, correctionX, correctionY } = item;
-    layer.style.setProperty(
-      "--table-text-snap-x",
-      Math.abs(correctionX) < 0.000001
-        ? "0px"
-        : correctionX.toFixed(6) + "px",
-    );
-    layer.style.setProperty(
-      "--table-text-snap-y",
-      Math.abs(correctionY) < 0.000001
-        ? "0px"
-        : correctionY.toFixed(6) + "px",
-    );
-  });
-}
-
-window.snapTableTextLayersToPhysicalPixels =
-  snapTableTextLayersToPhysicalPixels;
-
-function getSvgTextZoomFactor() {
-  if (!document.body) return 1;
-
-  if (!svgTextZoomProbe) {
-    const wrapper = document.createElement("div");
-    const svg = document.createElementNS(svgNS, "svg");
-    const label = document.createElementNS(svgNS, "text");
-
-    wrapper.style.position = "fixed";
-    wrapper.style.left = "-10000px";
-    wrapper.style.top = "-10000px";
-    wrapper.style.width = "1px";
-    wrapper.style.height = "1px";
-    wrapper.style.overflow = "hidden";
-    wrapper.style.pointerEvents = "none";
-    wrapper.style.visibility = "hidden";
-    wrapper.className = "text-zoom-probe";
-    wrapper.setAttribute("aria-hidden", "true");
-
-    svg.setAttribute("width", "1200");
-    svg.setAttribute("height", "160");
-    svg.setAttribute("viewBox", "0 0 1200 160");
-    label.setAttribute("x", "0");
-    label.setAttribute("y", "110");
-    label.setAttribute("font-family", "Arial, sans-serif");
-    label.setAttribute("font-size", "100");
-    label.setAttribute("font-weight", "400");
-    label.textContent = "MMMMMMMMMM";
-
-    svg.append(label);
-    wrapper.append(svg);
-    document.body.append(wrapper);
-    svgTextZoomProbe = { wrapper, label };
-  }
-
-  if (!svgTextZoomMeasureCanvas) {
-    svgTextZoomMeasureCanvas = document.createElement("canvas");
-  }
-  const ctx = svgTextZoomMeasureCanvas.getContext("2d");
-  ctx.font = "400 100px Arial, sans-serif";
-  const canvasWidth = Math.max(
-    1,
-    ctx.measureText(svgTextZoomProbe.label.textContent).width,
-  );
-  let svgWidth = canvasWidth;
-
-  try {
-    svgWidth = svgTextZoomProbe.label.getBBox().width || canvasWidth;
-  } catch (error) {
-    svgWidth = canvasWidth;
-  }
-
-  const factor = svgWidth / canvasWidth;
-  return Number.isFinite(factor) && factor > 0
-    ? Math.max(1, Math.min(8, factor))
-    : 1;
-}
+let frozenLayoutPageScale = null;
 
 function updateSvgTextZoomCompensation() {
   const nextMode = "html";
@@ -1948,24 +1844,17 @@ function updateSvgTextZoomCompensation() {
 function updateZoomAwareLines() {
   const textRenderModeChanged = updateSvgTextZoomCompensation();
   const root = document.documentElement;
-  // ТЗ: СТАТИЧЕСКИЙ дизайн. Единица дизайна = 1 физический пиксель:
-  //   --dpx = 1 / devicePixelRatio (в CSS-px).
-  // Тогда 1 design-px = 1 физический px при любом браузерном зуме → дизайн
-  // остаётся ТОГО ЖЕ размера (стоит на месте), а целые координаты ложатся на
-  // целые физические пиксели (нет дробных смещений). Работает одинаково во всех
-  // браузерах, т.к. не использует нестандартный CSS `zoom`/`transform`.
+  // Freeze the design coordinate system once. Browser zoom must scale the
+  // finished HTML page as one layer; recalculating --dpx per zoom step makes
+  // Firefox reflow text and icons independently and causes vertical jumps.
   const dpr =
     Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
       ? window.devicePixelRatio
       : 1;
-  const pageScale = 1 / dpr;
-  // Keep table text layout in one CSS coordinate system. The table geometry
-  // still follows --dpx, while the already-laid-out HTML text is composited
-  // to the current page scale instead of being reflowed at every zoom step.
-  if (!(frozenTableTextPageScale > 0)) {
-    frozenTableTextPageScale = pageScale;
+  if (!(frozenLayoutPageScale > 0)) {
+    frozenLayoutPageScale = 1 / dpr;
   }
-  const tableTextScale = pageScale / frozenTableTextPageScale;
+  const pageScale = frozenLayoutPageScale;
   const underlineScreenDotPx = 2;
   const underlineScreenGapPx = 3;
   const zoomSafeLine = Math.max(MIN_PAGE_SCALE, pageScale);
@@ -1977,8 +1866,6 @@ function updateZoomAwareLines() {
   const nextVars = {
     "--page-scale": pageScale.toFixed(6),
     "--dpx": pageScale.toFixed(6) + "px",
-    "--table-text-px": frozenTableTextPageScale.toFixed(6) + "px",
-    "--table-text-scale": tableTextScale.toFixed(6),
     "--ui-half-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
     "--ui-hairline": snapPositiveCssPx(pageScale).toFixed(6) + "px",
     "--ui-control-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
@@ -2000,8 +1887,6 @@ function updateZoomAwareLines() {
     zoomLineVarsCache[name] = nextVars[name];
     root.style.setProperty(name, nextVars[name]);
   });
-
-  snapTableTextLayersToPhysicalPixels(dpr);
 
   return textRenderModeChanged;
 }
@@ -2046,10 +1931,6 @@ function armZoomHoverRelease() {
 function resetTransientHoverState() {
   hideAllTooltips();
 
-  document.querySelectorAll(".nav-link").forEach(function (item) {
-    renderNavIcon(item);
-  });
-
   document
     .querySelectorAll(".delete-btn.is-pressed")
     .forEach(function (button) {
@@ -2091,19 +1972,7 @@ function syncViewportMetrics() {
     viewportUpdateFrame = null;
   }
 
-  captureZoomLayoutReference(false);
-  applyBrowserZoomNeutralizer();
-
-  // Держим единицы масштаба (--dpx = 1/dpr, --fvw = 19.2/dpr) в актуальном
-  // состоянии по devicePixelRatio.
-  if (typeof window.syncDesignViewportUnit === "function") {
-    window.syncDesignViewportUnit();
-  }
-  updateZoomAwareLines();
-
-  // Живой HTML-текст и его декоративные элементы здесь не трогаем: повторная
-  // запись inline-стилей на каждом событии Firefox zoom вызывает лишний reflow.
-  // Все ширины заданы в design-px и уже масштабируются через --dpx.
+  // Geometry variables are deliberately immutable after initial layout.
 }
 
 function applyViewportMetrics() {
@@ -2167,13 +2036,6 @@ function markViewportChanging() {
   setHoverIntent(false);
   armHoverIntentAfterViewportChange();
   activateZoomHoverShield();
-  // Обновляем единицу масштаба СИНХРОННО (не дожидаясь rAF), иначе между шагом
-  // зума и пересчётом --dpx возникает кадр рассинхрона → дизайн «дёргается» в
-  // сторону. При --dpx=1/dpr это дёшево (только запись CSS-переменных).
-  if (typeof window.syncDesignViewportUnit === "function") {
-    window.syncDesignViewportUnit();
-  }
-  updateZoomAwareLines();
   if (viewportUpdateFrame !== null) return;
   viewportUpdateFrame = window.requestAnimationFrame(applyViewportMetrics);
 }

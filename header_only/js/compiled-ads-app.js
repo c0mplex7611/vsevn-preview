@@ -1689,13 +1689,6 @@
     applyTableCellWrap();
     applyContactTableCellWrap();
     bindRowInteractions();
-    if (typeof window.snapTableTextLayersToPhysicalPixels === "function") {
-      window.snapTableTextLayersToPhysicalPixels(
-        Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-          ? window.devicePixelRatio
-          : 1,
-      );
-    }
   }
 
   window.__afterTableCellLayout = afterTableCellLayout;
@@ -3421,19 +3414,16 @@
   }
 
   function syncDesignViewportUnit() {
-    // ТЗ: СТАТИЧЕСКИЙ дизайн — единица --fvw привязана к физическому пикселю,
-    // согласованно с --dpx (= 1/dpr). 1% ширины артборда 1920px = 19.2 design-px,
-    // поэтому --fvw = 19.2 / devicePixelRatio (в CSS-px). Дизайн не масштабируется
-    // при браузерном зуме (остаётся того же физического размера) и работает
-    // одинаково во всех браузерах, без нестандартного CSS `zoom`.
+    const root = document.documentElement;
+    if (root.dataset.designViewportUnitFrozen === "true") return;
     const dpr =
       Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
         ? window.devicePixelRatio
         : 1;
     const nextFvw = 19.2 / dpr + "px";
-    if (document.documentElement.dataset.lastFvw === nextFvw) return;
-    document.documentElement.dataset.lastFvw = nextFvw;
-    document.documentElement.style.setProperty("--fvw", nextFvw);
+    root.dataset.designViewportUnitFrozen = "true";
+    root.dataset.lastFvw = nextFvw;
+    root.style.setProperty("--fvw", nextFvw);
   }
 
   window.syncDesignViewportUnit = syncDesignViewportUnit;
