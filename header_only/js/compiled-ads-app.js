@@ -3431,24 +3431,12 @@
 
   function syncDesignViewportUnit() {
     const root = document.documentElement;
-    const liveDpr =
-      Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-        ? window.devicePixelRatio
-        : 1;
-    const exposedBaseline =
-      typeof window.__baselineDpr === "function"
-        ? Number(window.__baselineDpr())
-        : NaN;
-    const layoutDpr =
-      Number.isFinite(exposedBaseline) && exposedBaseline > 0
-        ? exposedBaseline
-        : liveDpr;
 
-    // Размеры макета должны оставаться привязаны к DPR в момент загрузки.
-    // Текущий browser zoom компенсируется единым transform у #zoomFrame.
-    const nextFvw = 19.2 / layoutDpr + "px";
-    root.dataset.lastFvw = nextFvw;
-    root.style.setProperty("--fvw", nextFvw);
+    // Чистая viewport-сетка: 1 fvw = 1vw, 1 design-px = 100vw / 1920.
+    // При browser zoom физические координаты сохраняются без transform.
+    root.dataset.lastFvw = "1vw";
+    root.style.setProperty("--fvw", "1vw");
+    root.style.setProperty("--dpx", "calc(100vw / 1920)");
   }
 
   window.syncDesignViewportUnit = syncDesignViewportUnit;

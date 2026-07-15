@@ -369,8 +369,7 @@ function getLayoutViewportWidth() {
     document.documentElement.clientWidth ||
     window.innerWidth ||
     DESIGN_VIEWPORT_WIDTH;
-  if (raw <= 0) return DESIGN_VIEWPORT_WIDTH;
-  return raw * getBrowserZoomScale();
+  return raw > 0 ? raw : DESIGN_VIEWPORT_WIDTH;
 }
 
 function applyBrowserZoomNeutralizer() {
@@ -380,58 +379,36 @@ function applyBrowserZoomNeutralizer() {
 
   if (!frame || !viewport) return;
 
-  captureBaselineDeviceRatio();
+  /*
+   * Статичный макет без DPR-компенсации.
+   * Один design-px равен 100vw / 1920. При браузерном зуме ширина
+   * layout viewport меняется обратно пропорционально масштабу, поэтому
+   * физические координаты остаются на месте автоматически. Transform/zoom
+   * здесь не нужны: именно их запоздалое применение вызывало скачок кадра.
+   */
+  frame.style.removeProperty("transform");
+  frame.style.removeProperty("transform-origin");
+  frame.style.removeProperty("zoom");
+  viewport.style.removeProperty("height");
 
-  // Метод Codex: раскладка макета зафиксирована на базовом devicePixelRatio
-  // (updateZoomAwareLines замораживает --dpx), а браузерный зум компенсируется
-  // ОДНИМ transform:scale готового кадра. Кадр не пересчитывается (нет reflow) —
-  // поэтому при зуме ничего не «прыгает»: шапка, иконки, «Активное», экспорт
-  // остаются на месте. Кроссбраузерно (transform одинаков в Chrome и Firefox).
+  root.classList.remove("is-browser-zoom-neutralized");
+  root.style.setProperty("--browser-zoom", "1");
+  root.style.setProperty("--browser-zoom-inv", "1");
+
   if (typeof window.syncDesignViewportUnit === "function") {
     window.syncDesignViewportUnit();
   }
   updateZoomAwareLines();
-
-  const dpr =
-    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-      ? window.devicePixelRatio
-      : 1;
-  const base = baselineDeviceRatio || dpr;
-  const inverse = base / dpr;
-  const inverseValue = inverse.toFixed(8);
-  if (appliedBrowserZoomInverse !== inverseValue) {
-    appliedBrowserZoomInverse = inverseValue;
-    if (Math.abs(inverse - 1) < 0.0005) {
-      frame.style.transform = "none";
-      root.classList.remove("is-browser-zoom-neutralized");
-    } else {
-      frame.style.transformOrigin = "0 0";
-      frame.style.transform = "scale(" + inverse.toFixed(6) + ")";
-      root.classList.add("is-browser-zoom-neutralized");
-    }
-    root.style.setProperty("--browser-zoom", (dpr / base).toFixed(6));
-    root.style.setProperty("--browser-zoom-inv", inverse.toFixed(6));
-  }
-
-  syncBrowserZoomViewportHeight();
-  if (!zoomFrameResizeObserver && typeof ResizeObserver === "function") {
-    zoomFrameResizeObserver = new ResizeObserver(
-      syncBrowserZoomViewportHeight,
-    );
-    zoomFrameResizeObserver.observe(frame);
-  }
 }
 window.applyBrowserZoomNeutralizer = applyBrowserZoomNeutralizer;
 
 function getCurrentPageScale() {
-  const value = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue("--page-scale"),
-  );
-  return Number.isFinite(value) && value > 0
-    ? value
-    : getLayoutViewportWidth() / DESIGN_VIEWPORT_WIDTH;
+  const width =
+    document.documentElement.clientWidth ||
+    window.innerWidth ||
+    DESIGN_VIEWPORT_WIDTH;
+  return width > 0 ? width / DESIGN_VIEWPORT_WIDTH : 1;
 }
-
 function getDevicePixelScale() {
   const deviceScale =
     Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
@@ -1891,44 +1868,28 @@ function updateSvgTextZoomCompensation() {
 function updateZoomAwareLines() {
   const textRenderModeChanged = updateSvgTextZoomCompensation();
   const root = document.documentElement;
-  const dpr =
-    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-      ? window.devicePixelRatio
-      : 1;
-  // Метод Codex: раскладку считаем ОДИН раз на базовом devicePixelRatio и больше
-  // не пересчитываем при зуме — зум компенсируется общим transform:scale кадра.
-  // Так нет reflow → ничего не «прыгает» вверх-вниз при масштабировании.
-  const base = baselineDeviceRatio || dpr;
-  const pageScale = 1 / base;
-  frozenLayoutPageScale = pageScale;
-  const underlineScreenDotPx = 2;
-  const underlineScreenGapPx = 3;
-  const zoomSafeLine = Math.max(MIN_PAGE_SCALE, pageScale);
-  const dotSize = snapPositiveCssPx(zoomSafeLine * underlineScreenDotPx);
-  const dotStep = snapPositiveCssPx(
-    dotSize + zoomSafeLine * underlineScreenGapPx,
-  );
-  const checkboxFillLine = snapPositiveCssPx(pageScale * 6);
+
+  /*
+   * Все размеры остаются функцией ширины layout viewport. На Ctrl +/-
+   * браузер сам меняет эту ширину обратно пропорционально zoom, поэтому
+   * итоговый физический размер не меняется и никакого JS-reflow не требуется.
+   */
   const nextVars = {
-    "--page-scale": pageScale.toFixed(6),
-    "--dpx": pageScale.toFixed(6) + "px",
-    // 1vw макета при ширине 1920 design-px = 19.2 design-px.
-    // Обязательно оставляем единицу px; unitless-значение ломает calc() в CSS.
-    "--fvw": (19.2 * pageScale).toFixed(6) + "px",
-    "--ui-half-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
-    "--ui-hairline": snapPositiveCssPx(pageScale).toFixed(6) + "px",
-    "--ui-control-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
-    "--ui-control-strong-line":
-      snapPositiveCssPx(pageScale * 1.5).toFixed(6) + "px",
-    "--ui-checkbox-line":
-      snapPositiveCssPx(pageScale * 1.25).toFixed(6) + "px",
-    "--ui-checkbox-fill-line": checkboxFillLine.toFixed(6) + "px",
-    "--ui-strong-line": snapPositiveCssPx(pageScale * 2).toFixed(6) + "px",
-    "--zoom-safe-line": snapPositiveCssPx(zoomSafeLine).toFixed(6) + "px",
-    "--zoom-dot-size": dotSize.toFixed(6) + "px",
-    "--zoom-dot-radius": (dotSize / 2).toFixed(6) + "px",
-    "--zoom-dot-edge": (dotSize * 0.55).toFixed(6) + "px",
-    "--zoom-dot-step": dotStep.toFixed(6) + "px",
+    "--page-scale": "1",
+    "--dpx": "calc(100vw / 1920)",
+    "--fvw": "1vw",
+    "--ui-half-line": "calc(var(--dpx) * 0.5)",
+    "--ui-hairline": "var(--dpx)",
+    "--ui-control-line": "calc(var(--dpx) * 0.5)",
+    "--ui-control-strong-line": "calc(var(--dpx) * 1.5)",
+    "--ui-checkbox-line": "calc(var(--dpx) * 1.25)",
+    "--ui-checkbox-fill-line": "calc(var(--dpx) * 6)",
+    "--ui-strong-line": "calc(var(--dpx) * 2)",
+    "--zoom-safe-line": "var(--dpx)",
+    "--zoom-dot-size": "calc(var(--dpx) * 2)",
+    "--zoom-dot-radius": "var(--dpx)",
+    "--zoom-dot-edge": "calc(var(--dpx) * 1.1)",
+    "--zoom-dot-step": "calc(var(--dpx) * 5)",
   };
 
   Object.keys(nextVars).forEach(function (name) {
@@ -1939,7 +1900,6 @@ function updateZoomAwareLines() {
 
   return textRenderModeChanged;
 }
-
 let viewportUpdateFrame = null;
 let zoomHoverShield = null;
 let zoomHoverShieldTimer = null;
