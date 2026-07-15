@@ -795,6 +795,11 @@ body:has(#adsTable) #zoomFrame {
   pointer-events: none;
   white-space: nowrap;
 }
+/* ТЗ п.3.3: во время зум-блокировки скрываем подсказку таблицы, чтобы она не
+   всплывала сама при масштабировании (таблица — отдельный модуль от интерфейса). */
+html.is-zoom-hover-blocked .ads-tip {
+  display: none !important;
+}
 .ads-tip.is-wrapped,
 .ads-page-tip.is-wrapped {
   white-space: normal;

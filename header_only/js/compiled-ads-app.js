@@ -2371,6 +2371,10 @@
       adsTipEl = null;
     }
   }
+  // ТЗ п.3.3: даём интерфейсному модулю (script.js) снимать подсказку таблицы
+  // при зуме — таблица и интерфейс это разные модули, и раньше подсказка таблицы
+  // не снималась при масштабировании.
+  window.__hideAdsTip = hideAdsTip;
 
   function initAdsTipViewportSync() {
     function syncAdsTipPosition() {
@@ -2402,12 +2406,24 @@
     adsTipTimer = setTimeout(hideAdsTip, ms || 5000);
   }
 
+  // ТЗ п.1/3.3: подсказки таблицы показываем только при осознанном наведении
+  // мышью (реальное движение указателя), а не когда при зуме CSS-позиции меняются
+  // и ложно срабатывает mouseenter. Таблица и интерфейс — разные модули, поэтому
+  // дублируем ту же защиту, что и у интерфейсных подсказок.
+  function hoverTipsAllowed() {
+    const root = document.documentElement;
+    return (
+      !root.classList.contains("is-zoom-hover-blocked") &&
+      root.classList.contains("has-hover-intent")
+    );
+  }
+
   function bindTip(el, text, opts) {
     if (!el || el.dataset.tipBound) return;
     el.dataset.tipBound = "1";
     opts = opts || {};
     el.addEventListener("mouseenter", function () {
-      if (el.dataset.tipLocked) return;
+      if (el.dataset.tipLocked || !hoverTipsAllowed()) return;
       showAdsTip(el, typeof text === "function" ? text() : text, opts);
     });
     el.addEventListener("mouseleave", function () {
@@ -2420,7 +2436,7 @@
     if (!el || el.dataset.copyBound) return;
     el.dataset.copyBound = "1";
     el.addEventListener("mouseenter", function () {
-      if (el.dataset.tipLocked) return;
+      if (el.dataset.tipLocked || !hoverTipsAllowed()) return;
       const txt = el.dataset.copy || "";
       const isLink = /^https?:\/\//i.test(txt);
       showAdsTip(el, isLink ? "Скопировать ссылку" : "Скопировать");

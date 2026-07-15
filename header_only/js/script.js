@@ -2062,6 +2062,8 @@ function markViewportChanging() {
   applyBrowserZoomNeutralizer();
   setHoverIntent(false);
   armHoverIntentAfterViewportChange();
+  // ТЗ п.3.3: снимаем и подсказку табличного модуля (он отдельный от интерфейса)
+  if (typeof window.__hideAdsTip === "function") window.__hideAdsTip();
   activateZoomHoverShield();
   if (viewportUpdateFrame !== null) return;
   viewportUpdateFrame = window.requestAnimationFrame(applyViewportMetrics);
