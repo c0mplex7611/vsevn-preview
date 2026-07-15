@@ -506,29 +506,13 @@ body #zoomViewport > #zoomFrame {
     zoom: 1;
     transform: none;
     text-rendering: geometricPrecision;
-    width: 100%;
-    height: auto;
-    min-height: 0;
-    /* overflow-x:hidden автоматически делает overflow-y:auto и создаёт
-       внутренний scrollbar при transform. Он менял ширину на 15px и дёргал
-       вертикальную геометрию. Клип остаётся на #zoomViewport. */
-    overflow: visible;
-    backface-visibility: hidden;
-    will-change: transform;
-}
-
-/* Внутренний контейнер остаётся отдельным compositor-слоем, но не получает
-   собственного масштаба. Масштабирует только #zoomFrame, отменяя browser zoom. */
-body #zoomViewport > #zoomFrame > #zoomContent {
-    position: relative;
-    width: 100%;
-    height: auto;
-    min-height: 0;
-    transform-origin: 0 0;
-    transform: none;
-    text-rendering: geometricPrecision;
-    backface-visibility: hidden;
-    will-change: transform;
+    /* Fixed 1920-design-pixel canvas. The frame must not track viewport width:
+       browser zoom already changes the viewport, and width:100% plus inverse
+       transform causes the visible zoom direction to become inverted. */
+    width: calc(1920 * var(--dpx, 1px));
+    max-width: none;
+    min-height: 100vh;
+    overflow-x: hidden;
 }
 
 @supports not (zoom: 1) {

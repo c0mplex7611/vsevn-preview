@@ -38,7 +38,9 @@
 
 /* PerfectPixel: холст 1920 design px = ширина артборда Figma */
 body:has(#adsTable) #zoomFrame {
-  width: calc(1920 * var(--fvw, 1vw) / 19.2);
+  /* Keep this rule aligned with style.css: the whole canvas uses the frozen
+     design-pixel unit and never follows the live viewport width. */
+  width: calc(1920 * var(--dpx, 1px));
   max-width: none;
 }
 

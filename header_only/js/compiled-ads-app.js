@@ -3435,20 +3435,18 @@
       Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
         ? window.devicePixelRatio
         : 1;
-    const baselineDpr =
+    const exposedBaseline =
       typeof window.__baselineDpr === "function"
-        ? window.__baselineDpr()
+        ? Number(window.__baselineDpr())
+        : NaN;
+    const layoutDpr =
+      Number.isFinite(exposedBaseline) && exposedBaseline > 0
+        ? exposedBaseline
         : liveDpr;
 
-    /* Не пересчитываем --fvw на Ctrl +/-: общий transform уже компенсирует
-       браузерный зум. Живой DPR здесь давал вторую компенсацию только для
-       шапки и старых fvw-элементов, из-за чего направление зума инвертировалось. */
-    const stableDpr =
-      Number.isFinite(baselineDpr) && baselineDpr > 0
-        ? baselineDpr
-        : liveDpr;
-    const nextFvw = 19.2 / stableDpr + "px";
-    if (root.dataset.lastFvw === nextFvw) return;
+    // Freeze the design viewport unit on the DPR captured at page load.
+    // Browser zoom is compensated only by #zoomFrame's single transform.
+    const nextFvw = 19.2 / layoutDpr + "px";
     root.dataset.lastFvw = nextFvw;
     root.style.setProperty("--fvw", nextFvw);
   }
