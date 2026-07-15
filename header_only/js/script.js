@@ -1830,6 +1830,50 @@ let frozenTableTextPageScale = null;
 let svgTextZoomProbe = null;
 let svgTextZoomMeasureCanvas = null;
 
+function snapTableTextLayersToPhysicalPixels(deviceScale) {
+  if (!(deviceScale > 0)) return;
+
+  const layers = Array.from(
+    document.querySelectorAll(".ads-table tbody .ads-cell-inner"),
+  );
+
+  layers.forEach(function (layer) {
+    layer.style.setProperty("--table-text-snap-x", "0px");
+    layer.style.setProperty("--table-text-snap-y", "0px");
+  });
+
+  const corrections = layers.map(function (layer) {
+    const rect = layer.getBoundingClientRect();
+    const correctionX =
+      (Math.round(rect.left * deviceScale) - rect.left * deviceScale) /
+      deviceScale;
+    const correctionY =
+      (Math.round(rect.top * deviceScale) - rect.top * deviceScale) /
+      deviceScale;
+
+    return { layer, correctionX, correctionY };
+  });
+
+  corrections.forEach(function (item) {
+    const { layer, correctionX, correctionY } = item;
+    layer.style.setProperty(
+      "--table-text-snap-x",
+      Math.abs(correctionX) < 0.000001
+        ? "0px"
+        : correctionX.toFixed(6) + "px",
+    );
+    layer.style.setProperty(
+      "--table-text-snap-y",
+      Math.abs(correctionY) < 0.000001
+        ? "0px"
+        : correctionY.toFixed(6) + "px",
+    );
+  });
+}
+
+window.snapTableTextLayersToPhysicalPixels =
+  snapTableTextLayersToPhysicalPixels;
+
 function getSvgTextZoomFactor() {
   if (!document.body) return 1;
 
@@ -1956,6 +2000,8 @@ function updateZoomAwareLines() {
     zoomLineVarsCache[name] = nextVars[name];
     root.style.setProperty(name, nextVars[name]);
   });
+
+  snapTableTextLayersToPhysicalPixels(dpr);
 
   return textRenderModeChanged;
 }

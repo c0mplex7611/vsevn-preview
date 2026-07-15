@@ -1689,6 +1689,13 @@
     applyTableCellWrap();
     applyContactTableCellWrap();
     bindRowInteractions();
+    if (typeof window.snapTableTextLayersToPhysicalPixels === "function") {
+      window.snapTableTextLayersToPhysicalPixels(
+        Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+          ? window.devicePixelRatio
+          : 1,
+      );
+    }
   }
 
   window.__afterTableCellLayout = afterTableCellLayout;

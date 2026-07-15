@@ -2266,6 +2266,11 @@ body:has(.ads-page) #zoomFrame {
 .ads-table tbody .ads-cell-inner {
   --px: var(--table-text-px, var(--dpx, 1px));
   width: calc(100% / var(--table-text-scale, 1)) !important;
-  transform: scale(var(--table-text-scale, 1));
+  max-width: none !important;
+  transform: translate(
+      var(--table-text-snap-x, 0px),
+      var(--table-text-snap-y, 0px)
+    )
+    scale(var(--table-text-scale, 1));
   transform-origin: top left;
 }
