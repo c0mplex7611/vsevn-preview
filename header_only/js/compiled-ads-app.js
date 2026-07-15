@@ -3431,13 +3431,27 @@
 
   function syncDesignViewportUnit() {
     const root = document.documentElement;
+    const exposedScale =
+      typeof window.__baselinePageScale === "function"
+        ? Number(window.__baselinePageScale())
+        : NaN;
+    const cssDpx = parseFloat(
+      getComputedStyle(root).getPropertyValue("--dpx"),
+    );
+    const layoutScale =
+      Number.isFinite(exposedScale) && exposedScale > 0
+        ? exposedScale
+        : Number.isFinite(cssDpx) && cssDpx > 0
+          ? cssDpx
+          : Math.max(0.05, (root.clientWidth || window.innerWidth || 1920) / 1920);
 
-    // Чистая viewport-сетка: 1 fvw = 1vw, 1 design-px = 100vw / 1920.
-    // При browser zoom физические координаты сохраняются без transform.
-    root.dataset.lastFvw = "1vw";
-    root.style.setProperty("--fvw", "1vw");
-    root.style.setProperty("--dpx", "calc(100vw / 1920)");
+    // --fvw является замороженной design-единицей. Текущий DPR здесь не
+    // используется: браузерный зум компенсирует transform у #zoomFrame.
+    const nextFvw = (19.2 * layoutScale).toFixed(8) + "px";
+    root.dataset.lastFvw = nextFvw;
+    root.style.setProperty("--fvw", nextFvw);
   }
+
 
   window.syncDesignViewportUnit = syncDesignViewportUnit;
 

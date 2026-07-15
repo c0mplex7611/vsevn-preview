@@ -38,7 +38,7 @@
 
 /* PerfectPixel: холст 1920 design px = ширина артборда Figma */
 body:has(#adsTable) #zoomFrame {
-  width: 100%;
+  width: calc(1920 * var(--dpx, 1px));
   max-width: none;
 }
 
@@ -2254,11 +2254,13 @@ body:has(.ads-page) {
   min-height: 100%;
 }
 body:has(.ads-page) #zoomFrame {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   height: auto;
   max-height: none;
   overflow-x: hidden;
   overflow-y: visible;
-  min-height: 100vh;
+  min-height: var(--baseline-viewport-height, 100vh);
   background: #fffcec;
 }
