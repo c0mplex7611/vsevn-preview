@@ -2025,11 +2025,9 @@
     const cg = document.getElementById("adsColgroup");
     if (!cg) return;
     cg.innerHTML = COLUMNS.map(function (col) {
-      // ТЗ п.1: ширина колонки округляется до целого физического пикселя,
-      // чтобы вертикальные границы ячеек стояли на целых px (без субпиксельных швов).
-      return (
-        '<col style="width:round(calc(' + col.width + ' * var(--px)), 1px)">'
-      );
+      // При --dpx=1/dpr целые design-px ложатся на целые физические пиксели сами;
+      // CSS-округление тут не нужно (и вредно на дробном масштабе).
+      return '<col style="width:calc(' + col.width + ' * var(--px))">';
     }).join("");
   }
 

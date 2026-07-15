@@ -396,7 +396,8 @@ function getDevicePixelScale() {
     window.visualViewport.scale > 0
       ? window.visualViewport.scale
       : 1;
-  return Math.max(1, deviceScale * visualScale);
+  const scale = deviceScale * visualScale;
+  return Number.isFinite(scale) && scale > 0 ? scale : 1;
 }
 
 function snapLayoutCssPx(value) {
@@ -410,7 +411,7 @@ function snapLayoutCssPx(value) {
 function snapPositiveCssPx(value) {
   if (!Number.isFinite(value) || value <= 0) return value;
   const scale = getDevicePixelScale();
-  const physicalPx = 1 / Math.max(1, scale || 1);
+  const physicalPx = 1 / scale;
   return Math.max(physicalPx, snapLayoutCssPx(value));
 }
 
@@ -2065,11 +2066,9 @@ function syncViewportMetrics() {
   }
   updateZoomAwareLines();
 
-  // ТЗ: живой HTML-текст масштабируется через CSS-переменные, поэтому на
-  // изменение вьюпорта/зума его НЕ перерисовываем — иначе на зуме дёргаются
-  // радиокнопки, произвольно всплывают подсказки, дёргается открытый селект.
-  // Раскладка задана в design-px и инвариантна к зуму — пересчитывать нечего.
-  refreshFilenameUnderlineWidths(document);
+  // Живой HTML-текст и его декоративные элементы здесь не трогаем: повторная
+  // запись inline-стилей на каждом событии Firefox zoom вызывает лишний reflow.
+  // Все ширины заданы в design-px и уже масштабируются через --dpx.
 }
 
 function applyViewportMetrics() {
@@ -2133,6 +2132,13 @@ function markViewportChanging() {
   setHoverIntent(false);
   armHoverIntentAfterViewportChange();
   activateZoomHoverShield();
+  // Обновляем единицу масштаба СИНХРОННО (не дожидаясь rAF), иначе между шагом
+  // зума и пересчётом --dpx возникает кадр рассинхрона → дизайн «дёргается» в
+  // сторону. При --dpx=1/dpr это дёшево (только запись CSS-переменных).
+  if (typeof window.syncDesignViewportUnit === "function") {
+    window.syncDesignViewportUnit();
+  }
+  updateZoomAwareLines();
   if (viewportUpdateFrame !== null) return;
   viewportUpdateFrame = window.requestAnimationFrame(applyViewportMetrics);
 }
