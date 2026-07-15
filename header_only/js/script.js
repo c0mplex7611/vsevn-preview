@@ -239,6 +239,21 @@ let lastKnownBrowserZoom = 1;
 let baselineDeviceRatio = null;
 let appliedBrowserZoomInverse = null;
 let zoomFrameResizeObserver = null;
+
+function syncBrowserZoomViewportHeight() {
+  const frame = document.getElementById("zoomFrame");
+  const viewport = document.getElementById("zoomViewport");
+  const inverseZoom = parseFloat(appliedBrowserZoomInverse);
+  if (!frame || !viewport || !(inverseZoom > 0)) return;
+
+  const frameHeight = frame.offsetHeight;
+  if (!(frameHeight > 0)) return;
+  const nextHeight = (frameHeight * inverseZoom).toFixed(4) + "px";
+  if (viewport.style.height !== nextHeight) {
+    viewport.style.height = nextHeight;
+  }
+}
+
 function captureBaselineDeviceRatio() {
   if (baselineDeviceRatio == null) {
     baselineDeviceRatio =
@@ -363,40 +378,30 @@ function applyBrowserZoomNeutralizer() {
   if (!frame || !viewport) return;
 
   captureBaselineDeviceRatio();
-  const currentDeviceRatio =
-    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-      ? window.devicePixelRatio
-      : baselineDeviceRatio || 1;
-  const relativeZoom = Math.max(
-    MIN_PAGE_SCALE,
-    currentDeviceRatio / (baselineDeviceRatio || currentDeviceRatio),
-  );
-  const inverseZoom = 1 / relativeZoom;
-  const inverseValue = inverseZoom.toFixed(8);
 
-  // Keep all child metrics immutable and compensate browser zoom once on the
-  // common frame. The content remains live HTML; only its compositor layer is
-  // scaled, so Firefox cannot reflow text and icons independently.
+  // Browser zoom changes the CSS viewport and Firefox rounds table/text
+  // layout differently at each scale. Keep the design unit tied to the
+  // current device ratio instead of scaling a finished layer with transform:
+  // every physical design pixel remains one physical pixel, while content
+  // stays live HTML and is laid out only once per viewport update.
+  if (typeof window.syncDesignViewportUnit === "function") {
+    window.syncDesignViewportUnit();
+  }
+  updateZoomAwareLines();
+
+  const inverseValue = "1.00000000";
   if (appliedBrowserZoomInverse !== inverseValue) {
     appliedBrowserZoomInverse = inverseValue;
-    frame.style.removeProperty("zoom");
     root.classList.add("is-browser-zoom-neutralized");
-    root.style.setProperty("--browser-zoom", relativeZoom.toFixed(8));
+    root.style.setProperty("--browser-zoom", "1.00000000");
     root.style.setProperty("--browser-zoom-inv", inverseValue);
   }
 
-  const syncViewportHeight = function () {
-    const frameHeight = frame.offsetHeight;
-    if (!(frameHeight > 0)) return;
-    const nextHeight = (frameHeight * inverseZoom).toFixed(4) + "px";
-    if (viewport.style.height !== nextHeight) {
-      viewport.style.height = nextHeight;
-    }
-  };
-
-  syncViewportHeight();
+  syncBrowserZoomViewportHeight();
   if (!zoomFrameResizeObserver && typeof ResizeObserver === "function") {
-    zoomFrameResizeObserver = new ResizeObserver(syncViewportHeight);
+    zoomFrameResizeObserver = new ResizeObserver(
+      syncBrowserZoomViewportHeight,
+    );
     zoomFrameResizeObserver.observe(frame);
   }
 }
@@ -1870,17 +1875,12 @@ function updateSvgTextZoomCompensation() {
 function updateZoomAwareLines() {
   const textRenderModeChanged = updateSvgTextZoomCompensation();
   const root = document.documentElement;
-  // Freeze the design coordinate system once. Browser zoom must scale the
-  // finished HTML page as one layer; recalculating --dpx per zoom step makes
-  // Firefox reflow text and icons independently and causes vertical jumps.
   const dpr =
     Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
       ? window.devicePixelRatio
       : 1;
-  if (!(frozenLayoutPageScale > 0)) {
-    frozenLayoutPageScale = 1 / dpr;
-  }
-  const pageScale = frozenLayoutPageScale;
+  const pageScale = 1 / dpr;
+  frozenLayoutPageScale = pageScale;
   const underlineScreenDotPx = 2;
   const underlineScreenGapPx = 3;
   const zoomSafeLine = Math.max(MIN_PAGE_SCALE, pageScale);

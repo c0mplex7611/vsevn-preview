@@ -503,11 +503,19 @@ body #zoomViewport > #zoomFrame {
     top: 0;
     left: 0;
     transform-origin: 0 0;
-    transform: scale(var(--browser-zoom-inv, 1));
-    will-change: transform;
+    zoom: 1;
+    transform: none;
+    text-rendering: geometricPrecision;
     width: 100%;
     min-height: 100vh;
     overflow-x: hidden;
+}
+
+@supports not (zoom: 1) {
+    body #zoomViewport > #zoomFrame {
+        zoom: 1;
+        transform: none;
+    }
 }
 
 body {
