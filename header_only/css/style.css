@@ -521,8 +521,9 @@ a {
     width: 100%;
     height: calc(60 / 19.2 * var(--fvw, 1vw));
     background-color: #FED839;
-    padding: 0;
-    border-top: var(--ui-hairline, calc(0.05208 * var(--fvw, 1vw))) solid #bda300;
+    padding: var(--ui-hairline, calc(0.05208 * var(--fvw, 1vw))) 0 0;
+    border-top: 0;
+    box-shadow: inset 0 var(--ui-hairline, calc(0.05208 * var(--fvw, 1vw))) 0 #bda300;
     overflow: hidden;
     box-sizing: border-box;
     display: flex;
@@ -627,8 +628,8 @@ a {
 .icon {
     position: absolute;
     left: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 0;
+    transform: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -642,6 +643,41 @@ a {
     text-transform: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+.nav-icon-mask {
+    background-color: currentColor;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
+
+.nav-link[data-tab="ads"] .nav-icon-mask {
+    -webkit-mask-image: url("../icons/nav-font-src/ads.svg");
+    mask-image: url("../icons/nav-font-src/ads.svg");
+}
+.nav-link[data-tab="letters"] .nav-icon-mask {
+    -webkit-mask-image: url("../icons/nav-font-src/letters.svg");
+    mask-image: url("../icons/nav-font-src/letters.svg");
+}
+.nav-link[data-tab="import"] .nav-icon-mask {
+    -webkit-mask-image: url("../icons/nav-font-src/import.svg");
+    mask-image: url("../icons/nav-font-src/import.svg");
+}
+.nav-link[data-tab="companies"] .nav-icon-mask {
+    -webkit-mask-image: url("../icons/nav-font-src/companies.svg");
+    mask-image: url("../icons/nav-font-src/companies.svg");
+}
+.nav-link[data-tab="resume"] .nav-icon-mask {
+    -webkit-mask-image: url("../icons/nav-font-src/resume.svg");
+    mask-image: url("../icons/nav-font-src/resume.svg");
+}
+.nav-link[data-tab="managers"] .nav-icon-mask {
+    -webkit-mask-image: url("../icons/nav-font-src/managers.svg");
+    mask-image: url("../icons/nav-font-src/managers.svg");
 }
 
 .nav-link[data-tab="ads"] .icon {

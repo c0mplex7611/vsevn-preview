@@ -6,6 +6,7 @@
 
 .ads-page {
   --px: var(--dpx, calc(var(--fvw, 1vw) / 19.2));
+  --table-icon-phase: calc(var(--dpx, 1px) - 1px);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   --c-text: #62560e;
@@ -567,22 +568,21 @@ body:has(#adsTable) #zoomFrame {
 }
 .ads-export-icon-wrap {
   position: absolute;
-  right: calc(10.3 * var(--px));
-  top: 50%;
-  transform: translateY(-50%);
+  right: calc(10.3 * var(--px) + var(--table-icon-phase));
+  top: calc(7 * var(--px) + var(--table-icon-phase));
+  transform: none;
   width: calc(36 * var(--px));
   height: calc(36 * var(--px));
   display: block;
   pointer-events: none;
+  background-color: #a8d889;
+  -webkit-mask: url("../icons/compiled-ads/export-xml.svg") center / contain
+    no-repeat;
+  mask: url("../icons/compiled-ads/export-xml.svg") center / contain no-repeat;
+  transition: background-color 0.15s ease;
 }
 .ads-export-icon-wrap img {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
+  display: none;
 }
 .ads-export-icon-active {
   opacity: 0;
@@ -595,6 +595,9 @@ body:has(#adsTable) #zoomFrame {
 }
 .ads-export-btn:hover .ads-export-icon-active {
   opacity: 1;
+}
+.ads-export-btn:hover .ads-export-icon-wrap {
+  background-color: #67db1a;
 }
 
 /* ---------- Селект «строк на странице» (ТЗ п.11, п.17) ---------- */
@@ -717,6 +720,8 @@ body:has(#adsTable) #zoomFrame {
   text-align: center;
   box-sizing: border-box;
   font-variant-numeric: tabular-nums;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,
@@ -1068,10 +1073,32 @@ body:has(#adsTable) #zoomFrame {
 }
 .ads-table th,
 .ads-table td {
-  border: var(--dpx, 1px) solid var(--c-border-table);
+  border: var(--dpx, 1px) solid transparent;
+  box-shadow:
+    inset calc(-1 * var(--dpx, 1px)) 0 0 var(--c-border-table),
+    inset 0 calc(-1 * var(--dpx, 1px)) 0 var(--c-border-table);
   vertical-align: top;
   box-sizing: border-box;
   overflow: hidden;
+}
+.ads-table tr > :first-child {
+  box-shadow:
+    inset var(--dpx, 1px) 0 0 var(--c-border-table),
+    inset calc(-1 * var(--dpx, 1px)) 0 0 var(--c-border-table),
+    inset 0 calc(-1 * var(--dpx, 1px)) 0 var(--c-border-table);
+}
+.ads-table thead tr:first-child > th {
+  box-shadow:
+    inset calc(-1 * var(--dpx, 1px)) 0 0 var(--c-border-table),
+    inset 0 var(--dpx, 1px) 0 var(--c-border-table),
+    inset 0 calc(-1 * var(--dpx, 1px)) 0 var(--c-border-table);
+}
+.ads-table thead tr:first-child > th:first-child {
+  box-shadow:
+    inset var(--dpx, 1px) 0 0 var(--c-border-table),
+    inset calc(-1 * var(--dpx, 1px)) 0 0 var(--c-border-table),
+    inset 0 var(--dpx, 1px) 0 var(--c-border-table),
+    inset 0 calc(-1 * var(--dpx, 1px)) 0 var(--c-border-table);
 }
 .ads-table th.th-title {
   position: relative;
@@ -1121,6 +1148,7 @@ body.ads-col-resizing * {
   align-items: stretch;
 }
 .ads-th-last-row {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: calc(3 * var(--px));
@@ -1173,34 +1201,73 @@ body.ads-col-resizing * {
 }
 /* Иконки сортировки А-Я / Я-А (ТЗ п.10) */
 .ads-sort-btn {
-  position: relative;
+  position: absolute;
   z-index: 2;
   display: inline-block;
   width: calc(20 * var(--px));
   height: calc(24 * var(--px));
   padding: 0;
-  margin-left: calc(-4 * var(--px));
+  left: calc(var(--sort-left, 0) * var(--px) + var(--table-icon-phase));
+  top: calc(2.5 * var(--px) + var(--table-icon-phase));
+  margin-left: 0 !important;
   border: 0;
   outline: none;
   box-shadow: none;
-  background: transparent url("../icons/compiled-ads/sort-az.svg") center /
-    contain no-repeat;
+  background-color: #000000;
+  -webkit-mask: url("../icons/compiled-ads/sort-az.svg") center / contain
+    no-repeat;
+  mask: url("../icons/compiled-ads/sort-az.svg") center / contain no-repeat;
   cursor: pointer;
   vertical-align: middle;
   flex-shrink: 0;
   -webkit-appearance: none;
   appearance: none;
-  transition: opacity 0.15s ease;
+  transition: background-color 0.15s ease;
+}
+.ads-th-line:has(.ads-sort-btn[data-sort="num"]) {
+  --sort-left: 31.5;
+  --sort-span: 51.5;
+}
+.ads-th-line:has(.ads-sort-btn[data-sort="id"]) {
+  --sort-left: 29.5;
+  --sort-span: 49.5;
+}
+.ads-th-line:has(.ads-sort-btn[data-sort="vacancy"]) {
+  --sort-left: 75.5;
+  --sort-span: 95.5;
+}
+.ads-th-line:has(.ads-sort-btn[data-sort="fio"]) {
+  --sort-left: 58;
+  --sort-span: 78;
+}
+.ads-th-line:has(.ads-sort-btn[data-sort="invoice"]) {
+  --sort-left: 229;
+  --sort-span: 249;
+}
+.ads-th-line:has(.ads-sort-btn[data-sort="inn"]) {
+  --sort-left: 178;
+  --sort-span: 198;
+}
+.ads-th-line:has(.ads-sort-btn[data-sort="company"]) {
+  --sort-left: 241.5;
+  --sort-span: 261.5;
+}
+.ads-th-line.is-sortable:not(.is-wrapped-sort) {
+  width: calc(var(--sort-span) * var(--px));
+}
+.ads-th-line.is-wrapped-sort .ads-th-last-row {
+  width: calc(var(--sort-span) * var(--px));
 }
 .ads-sort-btn.is-asc {
-  background-image: url("../icons/compiled-ads/sort-az.svg");
+  -webkit-mask-image: url("../icons/compiled-ads/sort-az.svg");
+  mask-image: url("../icons/compiled-ads/sort-az.svg");
 }
 .ads-sort-btn.is-desc {
-  background-image: url("../icons/compiled-ads/sort-za.svg");
+  -webkit-mask-image: url("../icons/compiled-ads/sort-za.svg");
+  mask-image: url("../icons/compiled-ads/sort-za.svg");
 }
 .ads-sort-btn:hover {
-  filter: brightness(0) saturate(100%) invert(40%) sepia(98%) saturate(2476%)
-    hue-rotate(186deg) brightness(101%) contrast(101%);
+  background-color: var(--c-link);
 }
 .ads-sort-btn:focus {
   outline: none;
@@ -1229,19 +1296,22 @@ body.ads-col-resizing * {
   overflow: hidden;
 }
 .ads-search-field + .ads-search-field {
-  border-top: var(--dpx, 1px) solid var(--c-border-table);
+  border-top: var(--dpx, 1px) solid transparent;
+  box-shadow: inset 0 var(--dpx, 1px) 0 var(--c-border-table);
 }
 .ads-search-field .ads-search-ico {
   position: absolute;
-  left: calc(10 * var(--px));
-  top: 50%;
-  transform: translateY(-50%);
+  left: calc(10 * var(--px) + var(--table-icon-phase));
+  top: calc(13.5 * var(--px) + var(--table-icon-phase));
+  transform: none;
   z-index: 2;
   width: calc(23 * var(--px));
   height: calc(23 * var(--px));
   pointer-events: none;
-  background: url("../icons/compiled-ads/search.svg?v=2") center/contain
+  background-color: var(--c-placeholder);
+  -webkit-mask: url("../icons/compiled-ads/search.svg?v=2") center / contain
     no-repeat;
+  mask: url("../icons/compiled-ads/search.svg?v=2") center / contain no-repeat;
   transition: none;
 }
 .ads-search-slot {
@@ -1379,9 +1449,9 @@ body.ads-col-resizing * {
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: calc(133 * var(--px));
+  width: calc(130 * var(--px));
   height: calc(31 * var(--px));
-  max-width: 100%;
+  max-width: none;
   margin: 0;
   padding: 0;
   font-size: calc(20 * var(--px));
@@ -1391,6 +1461,12 @@ body.ads-col-resizing * {
   border-radius: 0;
   white-space: nowrap;
   text-align: center;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+  transform: translate(
+    var(--table-icon-phase),
+    calc(2 * var(--table-icon-phase))
+  );
 }
 .ads-status-badge--active {
   color: #0087fc;

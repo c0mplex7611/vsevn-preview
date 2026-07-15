@@ -1612,33 +1612,12 @@ function renderNavIcon(item, hovered = false) {
   const config = navIconConfig[item.dataset.tab];
   if (!icon || !config) return;
 
-  const iconConfig =
-    hovered || item.classList.contains("active")
-      ? config.hover
-      : config.default;
-  const renderKey = `${getTextRenderEngineKey()}:${iconConfig.family}:${iconConfig.code}`;
-  if (
-    icon.dataset.navIconKey === renderKey &&
-    icon.querySelector(".static-icon-svg")
-  )
-    return;
+  const renderKey = `nav-vector-mask:${item.dataset.tab}`;
+  if (icon.dataset.navIconKey === renderKey) return;
 
-  icon.classList.add("has-static-icon");
+  icon.classList.add("has-static-icon", "nav-icon-mask");
   icon.dataset.navIconKey = renderKey;
   icon.textContent = "";
-  icon.append(
-    createStaticIconSvg({
-      className: "static-icon-default",
-      code: iconConfig.code,
-      family: iconConfig.family,
-      width: 44,
-      height: 44,
-      size: 34,
-      x: 22,
-      y: 40,
-      weight: 400,
-    }),
-  );
 }
 
 function renderNavText(item) {
