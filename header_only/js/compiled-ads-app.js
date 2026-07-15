@@ -3448,6 +3448,7 @@
         ? baselineDpr
         : liveDpr;
     const nextFvw = 19.2 / stableDpr + "px";
+    if (root.dataset.lastFvw === nextFvw) return;
     root.dataset.lastFvw = nextFvw;
     root.style.setProperty("--fvw", nextFvw);
   }

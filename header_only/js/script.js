@@ -242,13 +242,17 @@ let zoomFrameResizeObserver = null;
 
 function syncBrowserZoomViewportHeight() {
   const frame = document.getElementById("zoomFrame");
+  const content = document.getElementById("zoomContent");
   const viewport = document.getElementById("zoomViewport");
-  const inverseZoom = parseFloat(appliedBrowserZoomInverse);
-  if (!frame || !viewport || !(inverseZoom > 0)) return;
+  if (!frame || !viewport) return;
 
-  const frameHeight = frame.offsetHeight;
+  // Внешний и внутренний transform взаимно компенсируются в CSS-геометрии,
+  // поэтому скролл-след равен замороженной высоте макета, без множителя zoom.
+  const frameHeight = content
+    ? content.offsetHeight || 0
+    : frame.offsetHeight || 0;
   if (!(frameHeight > 0)) return;
-  const nextHeight = (frameHeight * inverseZoom).toFixed(4) + "px";
+  const nextHeight = frameHeight.toFixed(4) + "px";
   if (viewport.style.height !== nextHeight) {
     viewport.style.height = nextHeight;
   }
@@ -382,22 +386,15 @@ function getLayoutViewportWidth() {
 
 function applyBrowserZoomNeutralizer() {
   const frame = document.getElementById("zoomFrame");
+  const content = document.getElementById("zoomContent");
   const viewport = document.getElementById("zoomViewport");
   const root = document.documentElement;
 
-  if (!frame || !viewport) return;
+  if (!frame || !content || !viewport) return;
 
   captureBaselineDeviceRatio();
 
-  /* Финальная схема зума:
-     1) --dpx и --fvw остаются замороженными на базовом DPR, поэтому дочерняя
-        раскладка не пересчитывается и элементы не прыгают вверх-вниз;
-     2) дополнительный обратный transform НЕ применяется. Браузер сам
-        масштабирует уже готовый кадр в обычном направлении:
-        Ctrl+плюс увеличивает, Ctrl+минус уменьшает.
-
-     Раньше scale(base / dpr) накладывался поверх уже замороженной раскладки и
-     создавал инвертированный зум всей страницы. */
+  // Размеры макета задаются один раз и при Ctrl +/- не пересчитываются.
   if (typeof window.syncDesignViewportUnit === "function") {
     window.syncDesignViewportUnit();
   }
@@ -408,21 +405,38 @@ function applyBrowserZoomNeutralizer() {
       ? window.devicePixelRatio
       : 1;
   const base = baselineDeviceRatio || dpr;
-  const browserZoom = dpr / base;
+  const zoom = dpr / base;
+  const inverse = 1 / zoom;
+  const transformKey = zoom.toFixed(8);
 
-  appliedBrowserZoomInverse = "1.00000000";
-  frame.style.transform = "none";
-  frame.style.transformOrigin = "0 0";
-  root.classList.remove("is-browser-zoom-neutralized");
-  root.style.setProperty("--browser-zoom", browserZoom.toFixed(6));
-  root.style.setProperty("--browser-zoom-inv", "1");
+  if (appliedBrowserZoomInverse !== transformKey) {
+    appliedBrowserZoomInverse = transformKey;
+
+    if (Math.abs(zoom - 1) < 0.0005) {
+      frame.style.transform = "translateZ(0)";
+      content.style.transform = "translateZ(0)";
+      root.classList.remove("is-browser-zoom-neutralized");
+    } else {
+      // Первый слой отменяет нативный browser zoom и не даёт reflow/прыжков.
+      // Второй слой возвращает тот же zoom в нормальном направлении.
+      frame.style.transformOrigin = "0 0";
+      content.style.transformOrigin = "0 0";
+      frame.style.transform =
+        "translateZ(0) scale(" + inverse.toFixed(8) + ")";
+      content.style.transform =
+        "translateZ(0) scale(" + zoom.toFixed(8) + ")";
+      root.classList.add("is-browser-zoom-neutralized");
+    }
+
+    root.style.setProperty("--browser-zoom", zoom.toFixed(8));
+    root.style.setProperty("--browser-zoom-inv", inverse.toFixed(8));
+  }
 
   syncBrowserZoomViewportHeight();
   if (!zoomFrameResizeObserver && typeof ResizeObserver === "function") {
-    zoomFrameResizeObserver = new ResizeObserver(
-      syncBrowserZoomViewportHeight,
-    );
+    zoomFrameResizeObserver = new ResizeObserver(syncBrowserZoomViewportHeight);
     zoomFrameResizeObserver.observe(frame);
+    zoomFrameResizeObserver.observe(content);
   }
 }
 window.applyBrowserZoomNeutralizer = applyBrowserZoomNeutralizer;
@@ -1895,6 +1909,13 @@ function updateSvgTextZoomCompensation() {
 function updateZoomAwareLines() {
   const textRenderModeChanged = updateSvgTextZoomCompensation();
   const root = document.documentElement;
+
+  // Все геометрические переменные должны быть рассчитаны только один раз.
+  // Повторный snap по текущему DPR менял padding/border на каждом шаге zoom
+  // и был источником вертикального микрореflow.
+  if (frozenLayoutPageScale !== null && zoomLineVarsCache["--dpx"]) {
+    return textRenderModeChanged;
+  }
   const dpr =
     Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
       ? window.devicePixelRatio

@@ -508,7 +508,26 @@ body #zoomViewport > #zoomFrame {
     text-rendering: geometricPrecision;
     width: 100%;
     min-height: 100vh;
-    overflow-x: hidden;
+    /* overflow-x:hidden автоматически делает overflow-y:auto и создаёт
+       внутренний scrollbar при transform. Он менял ширину на 15px и дёргал
+       вертикальную геометрию. Клип остаётся на #zoomViewport. */
+    overflow: visible;
+    backface-visibility: hidden;
+    will-change: transform;
+}
+
+/* Два compositor-слоя для браузерного зума:
+   #zoomFrame нейтрализует нативный zoom без reflow,
+   #zoomContent возвращает обычное направление и величину zoom. */
+body #zoomViewport > #zoomFrame > #zoomContent {
+    position: relative;
+    width: 100%;
+    min-height: 100%;
+    transform-origin: 0 0;
+    transform: none;
+    text-rendering: geometricPrecision;
+    backface-visibility: hidden;
+    will-change: transform;
 }
 
 @supports not (zoom: 1) {
