@@ -233,11 +233,12 @@ const zoomLayoutReference = {
 let baselineDevicePixelScale = null;
 let lastKnownBrowserZoom = 1;
 
-/* ТЗ п.1: при браузерном зуме (Ctrl +/-) НЕ пересчитываем масштаб макета —
-   пусть браузер масштабирует готовую страницу нативно, иначе дробный --dpx
-   пересчитывается на каждый шаг зума и текст «прыгает». Зум надёжно детектим по
-   отклонению devicePixelRatio от значения на загрузке (окно-ресайз dpr не меняет). */
+/* ТЗ п.1: на Ctrl +/- не пересчитываем метрики дочерних элементов.
+   Относительный зум определяем по devicePixelRatio и компенсируем одним
+   transform общего кадра. Так HTML-макет сохраняет физический размер без reflow. */
 let baselineDeviceRatio = null;
+let appliedBrowserZoomInverse = null;
+let zoomFrameResizeObserver = null;
 function captureBaselineDeviceRatio() {
   if (baselineDeviceRatio == null) {
     baselineDeviceRatio =
@@ -356,23 +357,48 @@ function getLayoutViewportWidth() {
 
 function applyBrowserZoomNeutralizer() {
   const frame = document.getElementById("zoomFrame");
+  const viewport = document.getElementById("zoomViewport");
   const root = document.documentElement;
 
-  if (!frame) return;
+  if (!frame || !viewport) return;
 
-  /* ТЗ: компенсация зума через CSS `zoom`/`transform` БОЛЬШЕ НЕ НУЖНА и убрана.
-     Статичность дизайна теперь обеспечивается на уровне единицы масштаба
-     (--dpx = 1/devicePixelRatio, см. updateZoomAwareLines): дизайн сам остаётся
-     того же физического размера при любом зуме. Прошлый `frame.style.zoom` —
-     нестандартный и в Firefox работал иначе, из-за чего у клиента всё «плыло».
-     Здесь просто гарантируем, что никакого старого override не осталось. */
-  frame.style.removeProperty("zoom");
-  frame.style.removeProperty("transform");
-  frame.style.removeProperty("width");
-  frame.style.removeProperty("min-height");
-  root.classList.remove("is-browser-zoom-neutralized");
-  root.style.removeProperty("--browser-zoom");
-  root.style.removeProperty("--browser-zoom-inv");
+  captureBaselineDeviceRatio();
+  const currentDeviceRatio =
+    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+      ? window.devicePixelRatio
+      : baselineDeviceRatio || 1;
+  const relativeZoom = Math.max(
+    MIN_PAGE_SCALE,
+    currentDeviceRatio / (baselineDeviceRatio || currentDeviceRatio),
+  );
+  const inverseZoom = 1 / relativeZoom;
+  const inverseValue = inverseZoom.toFixed(8);
+
+  // Keep all child metrics immutable and compensate browser zoom once on the
+  // common frame. The content remains live HTML; only its compositor layer is
+  // scaled, so Firefox cannot reflow text and icons independently.
+  if (appliedBrowserZoomInverse !== inverseValue) {
+    appliedBrowserZoomInverse = inverseValue;
+    frame.style.removeProperty("zoom");
+    root.classList.add("is-browser-zoom-neutralized");
+    root.style.setProperty("--browser-zoom", relativeZoom.toFixed(8));
+    root.style.setProperty("--browser-zoom-inv", inverseValue);
+  }
+
+  const syncViewportHeight = function () {
+    const frameHeight = frame.offsetHeight;
+    if (!(frameHeight > 0)) return;
+    const nextHeight = (frameHeight * inverseZoom).toFixed(4) + "px";
+    if (viewport.style.height !== nextHeight) {
+      viewport.style.height = nextHeight;
+    }
+  };
+
+  syncViewportHeight();
+  if (!zoomFrameResizeObserver && typeof ResizeObserver === "function") {
+    zoomFrameResizeObserver = new ResizeObserver(syncViewportHeight);
+    zoomFrameResizeObserver.observe(frame);
+  }
 }
 window.applyBrowserZoomNeutralizer = applyBrowserZoomNeutralizer;
 
@@ -1972,7 +1998,7 @@ function syncViewportMetrics() {
     viewportUpdateFrame = null;
   }
 
-  // Geometry variables are deliberately immutable after initial layout.
+  applyBrowserZoomNeutralizer();
 }
 
 function applyViewportMetrics() {
@@ -2033,6 +2059,7 @@ function markRealPointerHover(event) {
 }
 
 function markViewportChanging() {
+  applyBrowserZoomNeutralizer();
   setHoverIntent(false);
   armHoverIntentAfterViewportChange();
   activateZoomHoverShield();
