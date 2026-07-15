@@ -1912,7 +1912,9 @@ function updateZoomAwareLines() {
   const nextVars = {
     "--page-scale": pageScale.toFixed(6),
     "--dpx": pageScale.toFixed(6) + "px",
-    "--fvw": pageScale.toFixed(6),
+    // 1vw макета при ширине 1920 design-px = 19.2 design-px.
+    // Обязательно оставляем единицу px; unitless-значение ломает calc() в CSS.
+    "--fvw": (19.2 * pageScale).toFixed(6) + "px",
     "--ui-half-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
     "--ui-hairline": snapPositiveCssPx(pageScale).toFixed(6) + "px",
     "--ui-control-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
