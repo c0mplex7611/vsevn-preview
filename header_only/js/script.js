@@ -379,22 +379,35 @@ function applyBrowserZoomNeutralizer() {
 
   captureBaselineDeviceRatio();
 
-  // Browser zoom changes the CSS viewport and Firefox rounds table/text
-  // layout differently at each scale. Keep the design unit tied to the
-  // current device ratio instead of scaling a finished layer with transform:
-  // every physical design pixel remains one physical pixel, while content
-  // stays live HTML and is laid out only once per viewport update.
+  // Метод Codex: раскладка макета зафиксирована на базовом devicePixelRatio
+  // (updateZoomAwareLines замораживает --dpx), а браузерный зум компенсируется
+  // ОДНИМ transform:scale готового кадра. Кадр не пересчитывается (нет reflow) —
+  // поэтому при зуме ничего не «прыгает»: шапка, иконки, «Активное», экспорт
+  // остаются на месте. Кроссбраузерно (transform одинаков в Chrome и Firefox).
   if (typeof window.syncDesignViewportUnit === "function") {
     window.syncDesignViewportUnit();
   }
   updateZoomAwareLines();
 
-  const inverseValue = "1.00000000";
+  const dpr =
+    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+      ? window.devicePixelRatio
+      : 1;
+  const base = baselineDeviceRatio || dpr;
+  const inverse = base / dpr;
+  const inverseValue = inverse.toFixed(8);
   if (appliedBrowserZoomInverse !== inverseValue) {
     appliedBrowserZoomInverse = inverseValue;
-    root.classList.add("is-browser-zoom-neutralized");
-    root.style.setProperty("--browser-zoom", "1.00000000");
-    root.style.setProperty("--browser-zoom-inv", inverseValue);
+    if (Math.abs(inverse - 1) < 0.0005) {
+      frame.style.transform = "none";
+      root.classList.remove("is-browser-zoom-neutralized");
+    } else {
+      frame.style.transformOrigin = "0 0";
+      frame.style.transform = "scale(" + inverse.toFixed(6) + ")";
+      root.classList.add("is-browser-zoom-neutralized");
+    }
+    root.style.setProperty("--browser-zoom", (dpr / base).toFixed(6));
+    root.style.setProperty("--browser-zoom-inv", inverse.toFixed(6));
   }
 
   syncBrowserZoomViewportHeight();
@@ -1879,7 +1892,11 @@ function updateZoomAwareLines() {
     Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
       ? window.devicePixelRatio
       : 1;
-  const pageScale = 1 / dpr;
+  // Метод Codex: раскладку считаем ОДИН раз на базовом devicePixelRatio и больше
+  // не пересчитываем при зуме — зум компенсируется общим transform:scale кадра.
+  // Так нет reflow → ничего не «прыгает» вверх-вниз при масштабировании.
+  const base = baselineDeviceRatio || dpr;
+  const pageScale = 1 / base;
   frozenLayoutPageScale = pageScale;
   const underlineScreenDotPx = 2;
   const underlineScreenGapPx = 3;
