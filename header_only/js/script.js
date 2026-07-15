@@ -389,11 +389,15 @@ function applyBrowserZoomNeutralizer() {
 
   captureBaselineDeviceRatio();
 
-  // Метод Codex: раскладка макета зафиксирована на базовом devicePixelRatio
-  // (updateZoomAwareLines замораживает --dpx), а браузерный зум компенсируется
-  // ОДНИМ transform:scale готового кадра. Кадр не пересчитывается (нет reflow) —
-  // поэтому при зуме ничего не «прыгает»: шапка, иконки, «Активное», экспорт
-  // остаются на месте. Кроссбраузерно (transform одинаков в Chrome и Firefox).
+  /* Финальная схема зума:
+     1) --dpx и --fvw остаются замороженными на базовом DPR, поэтому дочерняя
+        раскладка не пересчитывается и элементы не прыгают вверх-вниз;
+     2) дополнительный обратный transform НЕ применяется. Браузер сам
+        масштабирует уже готовый кадр в обычном направлении:
+        Ctrl+плюс увеличивает, Ctrl+минус уменьшает.
+
+     Раньше scale(base / dpr) накладывался поверх уже замороженной раскладки и
+     создавал инвертированный зум всей страницы. */
   if (typeof window.syncDesignViewportUnit === "function") {
     window.syncDesignViewportUnit();
   }
@@ -404,21 +408,14 @@ function applyBrowserZoomNeutralizer() {
       ? window.devicePixelRatio
       : 1;
   const base = baselineDeviceRatio || dpr;
-  const inverse = base / dpr;
-  const inverseValue = inverse.toFixed(8);
-  if (appliedBrowserZoomInverse !== inverseValue) {
-    appliedBrowserZoomInverse = inverseValue;
-    if (Math.abs(inverse - 1) < 0.0005) {
-      frame.style.transform = "none";
-      root.classList.remove("is-browser-zoom-neutralized");
-    } else {
-      frame.style.transformOrigin = "0 0";
-      frame.style.transform = "scale(" + inverse.toFixed(6) + ")";
-      root.classList.add("is-browser-zoom-neutralized");
-    }
-    root.style.setProperty("--browser-zoom", (dpr / base).toFixed(6));
-    root.style.setProperty("--browser-zoom-inv", inverse.toFixed(6));
-  }
+  const browserZoom = dpr / base;
+
+  appliedBrowserZoomInverse = "1.00000000";
+  frame.style.transform = "none";
+  frame.style.transformOrigin = "0 0";
+  root.classList.remove("is-browser-zoom-neutralized");
+  root.style.setProperty("--browser-zoom", browserZoom.toFixed(6));
+  root.style.setProperty("--browser-zoom-inv", "1");
 
   syncBrowserZoomViewportHeight();
   if (!zoomFrameResizeObserver && typeof ResizeObserver === "function") {
