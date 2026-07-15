@@ -506,7 +506,12 @@ body #zoomViewport > #zoomFrame {
     zoom: 1;
     transform: none;
     text-rendering: geometricPrecision;
-    width: 100%;
+    /* ТЗ: кадр — ФИКСИРОВАННАЯ ширина дизайна (1920 design-px), а не 100% вьюпорта.
+       Иначе шапка/кадр (100%) уже постоянны при зуме и transform их компенсирует
+       повторно → масштаб инвертируется (зум-аут увеличивает). С фикс. шириной
+       transform:scale масштабирует весь кадр равномерно и корректно. */
+    width: calc(1920 * var(--dpx, 1px));
+    max-width: none;
     min-height: 100vh;
     overflow-x: hidden;
 }
