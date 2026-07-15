@@ -271,6 +271,9 @@ function isBrowserZoomed() {
   return Math.abs(dpr / baselineDeviceRatio - 1) > 0.02;
 }
 window.isBrowserZoomed = isBrowserZoomed;
+window.__baselineDpr = function () {
+  return baselineDeviceRatio;
+};
 
 function captureZoomLayoutReference(force) {
   const outerWidth = window.outerWidth;
@@ -1909,6 +1912,7 @@ function updateZoomAwareLines() {
   const nextVars = {
     "--page-scale": pageScale.toFixed(6),
     "--dpx": pageScale.toFixed(6) + "px",
+    "--fvw": pageScale.toFixed(6),
     "--ui-half-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
     "--ui-hairline": snapPositiveCssPx(pageScale).toFixed(6) + "px",
     "--ui-control-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
@@ -3882,7 +3886,7 @@ function renderLogTables() {
     if (showTitles) {
       const title = document.createElement("h2");
       title.className = "log-title";
-      title.textContent = `Импорт  ${cfg.tableTitle}`;
+      title.textContent = `Импорт  ${cfg.tableTitle}`;
       section.appendChild(title);
     }
 
