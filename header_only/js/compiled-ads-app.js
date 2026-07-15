@@ -3431,27 +3431,26 @@
 
   function syncDesignViewportUnit() {
     const root = document.documentElement;
-    const exposedScale =
-      typeof window.__baselinePageScale === "function"
-        ? Number(window.__baselinePageScale())
-        : NaN;
-    const cssDpx = parseFloat(
-      getComputedStyle(root).getPropertyValue("--dpx"),
-    );
-    const layoutScale =
-      Number.isFinite(exposedScale) && exposedScale > 0
-        ? exposedScale
-        : Number.isFinite(cssDpx) && cssDpx > 0
-          ? cssDpx
-          : Math.max(0.05, (root.clientWidth || window.innerWidth || 1920) / 1920);
+    const liveDpr =
+      Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+        ? window.devicePixelRatio
+        : 1;
+    const baselineDpr =
+      typeof window.__baselineDpr === "function"
+        ? window.__baselineDpr()
+        : liveDpr;
 
-    // --fvw является замороженной design-единицей. Текущий DPR здесь не
-    // используется: браузерный зум компенсирует transform у #zoomFrame.
-    const nextFvw = (19.2 * layoutScale).toFixed(8) + "px";
+    /* Не пересчитываем --fvw на Ctrl +/-: общий transform уже компенсирует
+       браузерный зум. Живой DPR здесь давал вторую компенсацию только для
+       шапки и старых fvw-элементов, из-за чего направление зума инвертировалось. */
+    const stableDpr =
+      Number.isFinite(baselineDpr) && baselineDpr > 0
+        ? baselineDpr
+        : liveDpr;
+    const nextFvw = 19.2 / stableDpr + "px";
     root.dataset.lastFvw = nextFvw;
     root.style.setProperty("--fvw", nextFvw);
   }
-
 
   window.syncDesignViewportUnit = syncDesignViewportUnit;
 

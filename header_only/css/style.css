@@ -494,7 +494,7 @@ body {
 #zoomViewport {
     position: relative;
     width: 100%;
-    height: var(--baseline-viewport-height, 100vh);
+    height: 100vh;
     overflow: hidden;
 }
 
@@ -506,15 +506,9 @@ body #zoomViewport > #zoomFrame {
     zoom: 1;
     transform: none;
     text-rendering: geometricPrecision;
-    /* ТЗ: кадр — ФИКСИРОВАННАЯ ширина дизайна (1920 design-px), а не 100% вьюпорта.
-       Иначе шапка/кадр (100%) уже постоянны при зуме и transform их компенсирует
-       повторно → масштаб инвертируется (зум-аут увеличивает). С фикс. шириной
-       transform:scale масштабирует весь кадр равномерно и корректно. */
-    width: calc(1920 * var(--dpx, 1px));
-    max-width: none;
-    min-height: var(--baseline-viewport-height, 100vh);
+    width: 100%;
+    min-height: 100vh;
     overflow-x: hidden;
-    will-change: transform;
 }
 
 @supports not (zoom: 1) {
