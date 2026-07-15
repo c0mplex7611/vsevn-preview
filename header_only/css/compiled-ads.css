@@ -2254,11 +2254,10 @@ body:has(.ads-page) {
   min-height: 100%;
 }
 body:has(.ads-page) #zoomFrame {
-  position: relative;
+  position: absolute;
   height: auto;
   max-height: none;
-  overflow-x: hidden;
-  overflow-y: visible;
-  min-height: calc(100vh * var(--browser-zoom, 1));
+  overflow: visible;
+  min-height: 0;
   background: #fffcec;
 }

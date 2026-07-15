@@ -463,6 +463,15 @@
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+:root {
+    --dpx: 1px;
+    --fvw: 19.2px;
+    --browser-zoom: 1;
+    --browser-zoom-inv: 1;
+    --static-frame-width: 1920px;
+    --static-frame-height: 100vh;
+}
+
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -476,6 +485,7 @@ html {
     overflow-y: scroll;
     scrollbar-gutter: stable;
     scrollbar-width: none;
+    overflow-anchor: none;
 }
 
 html::-webkit-scrollbar {
@@ -487,42 +497,35 @@ body {
     min-height: 100%;
     overflow-x: hidden;
     overflow-y: visible;
-    overflow-anchor: none;
     -webkit-text-size-adjust: none;
     -moz-text-size-adjust: none;
     text-size-adjust: none;
+    overflow-anchor: none;
 }
 
 #zoomViewport {
     position: relative;
-    width: 100%;
-    min-height: 100vh;
-    height: auto;
+    width: calc(var(--static-frame-width, 1920px) * var(--browser-zoom-inv, 1));
+    max-width: none;
+    min-height: 0;
+    height: calc(var(--static-frame-height, 100vh) * var(--browser-zoom-inv, 1));
     overflow: visible;
     overflow-anchor: none;
 }
 
 body #zoomViewport > #zoomFrame {
-    position: relative;
-    top: auto;
-    left: auto;
-    transform-origin: 0 0;
-    zoom: 1;
-    transform: none !important;
-    text-rendering: geometricPrecision;
+    position: absolute;
+    top: 0;
+    left: 0;
     width: calc(1920 * var(--dpx, 1px));
     max-width: none;
     min-height: 0;
-    overflow-x: hidden;
-    overflow-y: visible;
+    overflow: visible;
+    transform: scale(var(--browser-zoom-inv, 1)) !important;
+    transform-origin: 0 0;
+    zoom: 1;
+    text-rendering: geometricPrecision;
     overflow-anchor: none;
-}
-
-@supports not (zoom: 1) {
-    body #zoomViewport > #zoomFrame {
-        zoom: 1;
-        transform: none;
-    }
 }
 
 body {
@@ -557,9 +560,9 @@ a {
     align-items: center;
     text-rendering: geometricPrecision;
     isolation: isolate;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    will-change: transform;
+    transform: none;
+    backface-visibility: visible;
+    will-change: auto;
 }
 
 .main-nav {
@@ -661,7 +664,7 @@ a {
     position: absolute;
     left: 0;
     top: 0;
-    transform: translateZ(0);
+    transform: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2506,30 +2509,6 @@ html.is-zoom-hover-blocked .icon-wrapper:hover > .tooltip {
     display: none !important;
 }
 
-html.is-zoom-hover-blocked .nav-link,
-html.is-zoom-hover-blocked .date-field,
-html.is-zoom-hover-blocked .date-calendar,
-html.is-zoom-hover-blocked .check-field,
-html.is-zoom-hover-blocked .check-input,
-html.is-zoom-hover-blocked .select-trigger,
-html.is-zoom-hover-blocked .select-option,
-html.is-zoom-hover-blocked .select-clear-wrapper,
-html.is-zoom-hover-blocked .filepath-input-wrapper,
-html.is-zoom-hover-blocked .filepath-clear-wrapper,
-html.is-zoom-hover-blocked .folder-wrapper,
-html.is-zoom-hover-blocked .paperclip-wrapper,
-html.is-zoom-hover-blocked .source-choice-menu,
-html.is-zoom-hover-blocked .import-btn,
-html.is-zoom-hover-blocked .file-icon-btn,
-html.is-zoom-hover-blocked .rollback-btn,
-html.is-zoom-hover-blocked .delete-btn,
-html.is-zoom-hover-blocked .log-preview-close {
-    pointer-events: none !important;
-}
-
-html.is-zoom-hover-blocked .date-calendar:not([hidden]) {
-    display: none !important;
-}
 
 .rollback-wrapper .tooltip,
 .delete-wrapper .tooltip,

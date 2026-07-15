@@ -3431,23 +3431,17 @@
 
   function syncDesignViewportUnit() {
     const root = document.documentElement;
-    const liveDpr =
-      Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-        ? window.devicePixelRatio
-        : 1;
-    const exposedBaseline =
-      typeof window.__baselineDpr === "function"
-        ? Number(window.__baselineDpr())
-        : NaN;
-    const layoutDpr =
-      Number.isFinite(exposedBaseline) && exposedBaseline > 0
-        ? exposedBaseline
-        : liveDpr;
-    const nextFvw = 19.2 / layoutDpr + "px";
-    if (root.dataset.lastFvw !== nextFvw) {
-      root.dataset.lastFvw = nextFvw;
-      root.style.setProperty("--fvw", nextFvw);
-    }
+    const baseDpr =
+      typeof window.__staticBaseDpr === "function"
+        ? window.__staticBaseDpr()
+        : Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+          ? window.devicePixelRatio
+          : 1;
+    const nextFvw = (19.2 / baseDpr).toFixed(6) + "px";
+    const nextDpx = (1 / baseDpr).toFixed(6) + "px";
+    root.dataset.lastFvw = nextFvw;
+    root.style.setProperty("--fvw", nextFvw);
+    root.style.setProperty("--dpx", nextDpx);
   }
 
   window.syncDesignViewportUnit = syncDesignViewportUnit;
@@ -3461,28 +3455,7 @@
         applyFormControlVerticalCssVars(document.querySelector(".ads-page"));
       }
     }
-    window.addEventListener("resize", function () {
-      if (typeof window.markViewportChanging === "function") {
-        window.markViewportChanging();
-        return;
-      }
-      syncDesignViewportUnit();
-      if (typeof applyFormControlVerticalCssVars === "function") {
-        applyFormControlVerticalCssVars(document.querySelector(".ads-page"));
-      }
-    });
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", function () {
-        if (typeof window.markViewportChanging === "function") {
-          window.markViewportChanging();
-          return;
-        }
-        syncDesignViewportUnit();
-        if (typeof applyFormControlVerticalCssVars === "function") {
-          applyFormControlVerticalCssVars(document.querySelector(".ads-page"));
-        }
-      });
-    }
+    syncDesignViewportUnit();
     processAdsData();
     fixNavHeader();
     buildColgroup();
@@ -3508,7 +3481,7 @@
     document.documentElement.style.overflowY = "scroll";
 
     if (typeof renderStaticText === "function") renderStaticText();
-    requestAnimationFrame(applyAdsStatic);
+    applyAdsStatic();
   }
 
   document.addEventListener("DOMContentLoaded", function () {
