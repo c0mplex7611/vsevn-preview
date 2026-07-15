@@ -239,25 +239,61 @@ let lastKnownBrowserZoom = 1;
 let baselineDeviceRatio = null;
 let appliedBrowserZoomInverse = null;
 let zoomFrameResizeObserver = null;
+let lastStableDesignScrollY = 0;
+let zoomScrollTrackingBound = false;
+let suppressZoomScrollTracking = false;
 
-function syncBrowserZoomViewportHeight() {
+function getAppliedBrowserZoomInverse() {
+  const value = parseFloat(appliedBrowserZoomInverse);
+  return Number.isFinite(value) && value > 0 ? value : 1;
+}
+
+function rememberStableZoomScrollPosition() {
+  if (suppressZoomScrollTracking) return;
+  lastStableDesignScrollY = window.scrollY / getAppliedBrowserZoomInverse();
+}
+
+function bindStableZoomScrollTracking() {
+  if (zoomScrollTrackingBound) return;
+  zoomScrollTrackingBound = true;
+  rememberStableZoomScrollPosition();
+  window.addEventListener("scroll", rememberStableZoomScrollPosition, {
+    passive: true,
+  });
+}
+
+function syncBrowserZoomViewportHeight(options) {
   const frame = document.getElementById("zoomFrame");
   const content = document.getElementById("zoomContent");
   const viewport = document.getElementById("zoomViewport");
-  if (!frame || !viewport) return;
+  const inverseZoom = parseFloat(appliedBrowserZoomInverse);
+  if (!frame || !viewport || !(inverseZoom > 0)) return;
 
-  // Внешний и внутренний transform взаимно компенсируются в CSS-геометрии,
-  // поэтому скролл-след равен замороженной высоте макета, без множителя zoom.
-  const frameHeight = content
-    ? content.offsetHeight || 0
-    : frame.offsetHeight || 0;
-  if (!(frameHeight > 0)) return;
-  const nextHeight = frameHeight.toFixed(4) + "px";
+  const contentHeight = content
+    ? content.offsetHeight || content.scrollHeight || 0
+    : frame.offsetHeight || frame.scrollHeight || 0;
+  if (!(contentHeight > 0)) return;
+
+  const nextHeight = (contentHeight * inverseZoom).toFixed(4) + "px";
   if (viewport.style.height !== nextHeight) {
     viewport.style.height = nextHeight;
   }
-}
 
+  /* При смене browser zoom браузер меняет CSS-координату scrollY.
+     Сохраняем тот же design-пиксель у верхнего края экрана. Это не трогает
+     раскладку дочерних элементов и не создаёт вертикального скачка. */
+  if (options && options.preserveScroll) {
+    const nextScrollY = lastStableDesignScrollY * inverseZoom;
+    if (Math.abs(window.scrollY - nextScrollY) > 0.25) {
+      suppressZoomScrollTracking = true;
+      window.scrollTo(window.scrollX, nextScrollY);
+      window.requestAnimationFrame(function () {
+        suppressZoomScrollTracking = false;
+        rememberStableZoomScrollPosition();
+      });
+    }
+  }
+}
 function captureBaselineDeviceRatio() {
   if (baselineDeviceRatio == null) {
     baselineDeviceRatio =
@@ -394,7 +430,9 @@ function applyBrowserZoomNeutralizer() {
 
   captureBaselineDeviceRatio();
 
-  // Размеры макета задаются один раз и при Ctrl +/- не пересчитываются.
+  /* Внутренняя раскладка задаётся только один раз. На Ctrl +/- дочерние
+     элементы не получают новые размеры, поэтому шапка, иконки, статусы,
+     экспорт и таблица не проходят reflow и не прыгают. */
   if (typeof window.syncDesignViewportUnit === "function") {
     window.syncDesignViewportUnit();
   }
@@ -405,37 +443,49 @@ function applyBrowserZoomNeutralizer() {
       ? window.devicePixelRatio
       : 1;
   const base = baselineDeviceRatio || dpr;
-  const zoom = dpr / base;
+  const dprZoom = dpr / base;
+  const measuredZoom = getBrowserZoomScale();
+  const zoom =
+    Number.isFinite(measuredZoom) && measuredZoom > 0
+      ? measuredZoom
+      : dprZoom;
   const inverse = 1 / zoom;
-  const transformKey = zoom.toFixed(8);
+  const inverseValue = inverse.toFixed(8);
+  const zoomChanged = appliedBrowserZoomInverse !== inverseValue;
 
-  if (appliedBrowserZoomInverse !== transformKey) {
-    appliedBrowserZoomInverse = transformKey;
+  bindStableZoomScrollTracking();
 
-    if (Math.abs(zoom - 1) < 0.0005) {
-      frame.style.transform = "translateZ(0)";
-      content.style.transform = "translateZ(0)";
-      root.classList.remove("is-browser-zoom-neutralized");
-    } else {
-      // Первый слой отменяет нативный browser zoom и не даёт reflow/прыжков.
-      // Второй слой возвращает тот же zoom в нормальном направлении.
-      frame.style.transformOrigin = "0 0";
-      content.style.transformOrigin = "0 0";
-      frame.style.transform =
-        "translateZ(0) scale(" + inverse.toFixed(8) + ")";
-      content.style.transform =
-        "translateZ(0) scale(" + zoom.toFixed(8) + ")";
-      root.classList.add("is-browser-zoom-neutralized");
-    }
+  if (zoomChanged) {
+    appliedBrowserZoomInverse = inverseValue;
 
+    /* Единственный масштабный слой. Он ровно отменяет нативный browser zoom.
+       Второго scale(zoom) здесь быть не должно: он возвращал обычное
+       приближение/отдаление. */
+    frame.style.transformOrigin = "0 0";
+    frame.style.transform =
+      Math.abs(inverse - 1) < 0.0005
+        ? "translateZ(0)"
+        : "translateZ(0) scale(" + inverseValue + ")";
+
+    content.style.transformOrigin = "0 0";
+    content.style.transform = "translateZ(0)";
+
+    root.classList.toggle(
+      "is-browser-zoom-neutralized",
+      Math.abs(inverse - 1) >= 0.0005,
+    );
     root.style.setProperty("--browser-zoom", zoom.toFixed(8));
-    root.style.setProperty("--browser-zoom-inv", inverse.toFixed(8));
+    root.style.setProperty("--browser-zoom-inv", inverseValue);
   }
 
-  syncBrowserZoomViewportHeight();
+  syncBrowserZoomViewportHeight({
+    preserveScroll: zoomChanged,
+  });
+
   if (!zoomFrameResizeObserver && typeof ResizeObserver === "function") {
-    zoomFrameResizeObserver = new ResizeObserver(syncBrowserZoomViewportHeight);
-    zoomFrameResizeObserver.observe(frame);
+    zoomFrameResizeObserver = new ResizeObserver(function () {
+      syncBrowserZoomViewportHeight();
+    });
     zoomFrameResizeObserver.observe(content);
   }
 }
@@ -1909,6 +1959,12 @@ function updateSvgTextZoomCompensation() {
 function updateZoomAwareLines() {
   const textRenderModeChanged = updateSvgTextZoomCompensation();
   const root = document.documentElement;
+
+  // Все геометрические переменные уже вычислены на базовом DPR.
+  // Повторный расчёт на шагах browser zoom возвращает reflow и микропрыжки.
+  if (frozenLayoutPageScale !== null && Object.keys(zoomLineVarsCache).length) {
+    return textRenderModeChanged;
+  }
 
   // Все геометрические переменные должны быть рассчитаны только один раз.
   // Повторный snap по текущему DPR менял padding/border на каждом шаге zoom
