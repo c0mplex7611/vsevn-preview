@@ -1826,6 +1826,7 @@ function designPxToViewportPx(px) {
 }
 
 const zoomLineVarsCache = {};
+let frozenTableTextPageScale = null;
 let svgTextZoomProbe = null;
 let svgTextZoomMeasureCanvas = null;
 
@@ -1914,6 +1915,13 @@ function updateZoomAwareLines() {
       ? window.devicePixelRatio
       : 1;
   const pageScale = 1 / dpr;
+  // Keep table text layout in one CSS coordinate system. The table geometry
+  // still follows --dpx, while the already-laid-out HTML text is composited
+  // to the current page scale instead of being reflowed at every zoom step.
+  if (!(frozenTableTextPageScale > 0)) {
+    frozenTableTextPageScale = pageScale;
+  }
+  const tableTextScale = pageScale / frozenTableTextPageScale;
   const underlineScreenDotPx = 2;
   const underlineScreenGapPx = 3;
   const zoomSafeLine = Math.max(MIN_PAGE_SCALE, pageScale);
@@ -1925,6 +1933,8 @@ function updateZoomAwareLines() {
   const nextVars = {
     "--page-scale": pageScale.toFixed(6),
     "--dpx": pageScale.toFixed(6) + "px",
+    "--table-text-px": frozenTableTextPageScale.toFixed(6) + "px",
+    "--table-text-scale": tableTextScale.toFixed(6),
     "--ui-half-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
     "--ui-hairline": snapPositiveCssPx(pageScale).toFixed(6) + "px",
     "--ui-control-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
