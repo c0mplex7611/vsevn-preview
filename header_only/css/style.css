@@ -506,12 +506,11 @@ body #zoomViewport > #zoomFrame {
     zoom: 1;
     transform: none;
     text-rendering: geometricPrecision;
-    /* Fixed 1920-design-pixel canvas. The frame must not track viewport width:
-       browser zoom already changes the viewport, and width:100% plus inverse
-       transform causes the visible zoom direction to become inverted. */
+    /* Fixed 1920-design-pixel canvas. It must not track the live viewport,
+       otherwise width:100% and inverse zoom compensate each other twice. */
     width: calc(1920 * var(--dpx, 1px));
     max-width: none;
-    min-height: 100vh;
+    min-height: var(--layout-viewport-height, 100vh);
     overflow-x: hidden;
 }
 

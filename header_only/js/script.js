@@ -239,6 +239,11 @@ let lastKnownBrowserZoom = 1;
 let baselineDeviceRatio = null;
 let appliedBrowserZoomInverse = null;
 let zoomFrameResizeObserver = null;
+let browserZoomGestureUntil = 0;
+let browserZoomGestureBound = false;
+let browserZoomSettleTimer = null;
+let browserZoomScrollAnchor = null;
+let browserZoomScrollFrame = null;
 
 function syncBrowserZoomViewportHeight() {
   const frame = document.getElementById("zoomFrame");
@@ -261,14 +266,59 @@ function captureBaselineDeviceRatio() {
         ? window.devicePixelRatio
         : 1;
   }
+
+  const root = document.documentElement;
+  if (!root.style.getPropertyValue("--layout-viewport-height")) {
+    const viewportHeight =
+      root.clientHeight || window.innerHeight || 1080;
+    root.style.setProperty(
+      "--layout-viewport-height",
+      Math.max(1, viewportHeight).toFixed(4) + "px",
+    );
+  }
 }
+
+function noteBrowserZoomGesture(event) {
+  if (!event) return;
+  const isKeyboardZoom =
+    event.type === "keydown" &&
+    (event.ctrlKey || event.metaKey) &&
+    (event.key === "+" ||
+      event.key === "=" ||
+      event.key === "-" ||
+      event.key === "_" ||
+      event.key === "0");
+  const isWheelZoom = event.type === "wheel" && event.ctrlKey;
+  if (isKeyboardZoom || isWheelZoom) {
+    browserZoomGestureUntil = performance.now() + 1600;
+    const currentInverse = parseFloat(appliedBrowserZoomInverse);
+    browserZoomScrollAnchor = {
+      y: window.scrollY || window.pageYOffset || 0,
+      inverse:
+        Number.isFinite(currentInverse) && currentInverse > 0
+          ? currentInverse
+          : 1,
+    };
+    // Some desktop configurations report DPR late or not at all. Re-read the
+    // viewport after the browser has applied its own zoom, without preventing it.
+    window.setTimeout(markViewportChanging, 0);
+    if (browserZoomSettleTimer) window.clearTimeout(browserZoomSettleTimer);
+    browserZoomSettleTimer = window.setTimeout(markViewportChanging, 180);
+  }
+}
+
+function bindBrowserZoomGestureDetection() {
+  if (browserZoomGestureBound) return;
+  browserZoomGestureBound = true;
+  window.addEventListener("keydown", noteBrowserZoomGesture, true);
+  window.addEventListener("wheel", noteBrowserZoomGesture, {
+    capture: true,
+    passive: true,
+  });
+}
+
 function isBrowserZoomed() {
-  if (baselineDeviceRatio == null) return false;
-  const dpr =
-    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-      ? window.devicePixelRatio
-      : 1;
-  return Math.abs(dpr / baselineDeviceRatio - 1) > 0.02;
+  return Math.abs(getBrowserZoomScale() - 1) > 0.02;
 }
 window.isBrowserZoomed = isBrowserZoomed;
 window.__baselineDpr = function () {
@@ -309,59 +359,74 @@ function getBrowserZoomScale() {
     window.visualViewport.scale > 0
       ? window.visualViewport.scale
       : 1;
+
+  const currentDpr =
+    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+      ? window.devicePixelRatio
+      : 1;
+  const baseDpr = baselineDeviceRatio || currentDpr;
+  const dprScale = currentDpr / baseDpr;
+
+  const currentInner = window.innerWidth || 0;
+  const currentClient = document.documentElement.clientWidth || currentInner;
+  const currentOuter = window.outerWidth || 0;
+  const baseInner = zoomLayoutReference.innerWidth || currentInner;
+  const baseClient = zoomLayoutReference.clientWidth || currentClient;
+  const baseOuter = zoomLayoutReference.outerWidth || currentOuter;
+
+  const rawInnerScale =
+    baseInner > 0 && currentInner > 0 ? baseInner / currentInner : 1;
+  const rawClientScale =
+    baseClient > 0 && currentClient > 0 ? baseClient / currentClient : 1;
+
+  // Отношение outer/inner отделяет браузерный зум от обычного изменения
+  // размера окна: при resize обе ширины меняются вместе, при page zoom — нет.
+  const normalizedWindowScale =
+    baseOuter > 0 && currentOuter > 0 && baseInner > 0 && currentInner > 0
+      ? (currentOuter / currentInner) / (baseOuter / baseInner)
+      : 1;
+
+  const gestureActive = performance.now() < browserZoomGestureUntil;
+  let zoomScale = 1;
+
   if (Math.abs(visualScale - 1) > 0.008) {
-    lastKnownBrowserZoom = visualScale;
-    return visualScale;
+    zoomScale = visualScale;
+  } else if (
+    Math.abs(normalizedWindowScale - 1) > 0.008 &&
+    Math.abs(dprScale - 1) > 0.008
+  ) {
+    // Prefer exact DPR when both signals agree. If DPR is rounded or stale,
+    // viewport geometry wins instead.
+    const relativeDifference =
+      Math.abs(normalizedWindowScale - dprScale) /
+      Math.max(normalizedWindowScale, dprScale);
+    zoomScale = relativeDifference < 0.003 ? dprScale : normalizedWindowScale;
+  } else if (Math.abs(normalizedWindowScale - 1) > 0.008) {
+    zoomScale = normalizedWindowScale;
+  } else if (Math.abs(dprScale - 1) > 0.008) {
+    zoomScale = dprScale;
+  } else if (gestureActive) {
+    zoomScale =
+      Math.abs(rawClientScale - 1) >= Math.abs(rawInnerScale - 1)
+        ? rawClientScale
+        : rawInnerScale;
+  } else if (
+    baseOuter > 0 &&
+    currentOuter > 0 &&
+    Math.abs(currentOuter - baseOuter) < 6
+  ) {
+    zoomScale =
+      Math.abs(rawClientScale - 1) >= Math.abs(rawInnerScale - 1)
+        ? rawClientScale
+        : rawInnerScale;
   }
 
-  if (zoomLayoutReference.innerWidth > 0) {
-    const outerDelta = Math.abs(
-      window.outerWidth - zoomLayoutReference.outerWidth,
-    );
-    if (outerDelta < 6) {
-      const innerWidth = window.innerWidth;
-      if (innerWidth > 0) {
-        const innerZoom = zoomLayoutReference.innerWidth / innerWidth;
-        if (
-          Number.isFinite(innerZoom) &&
-          innerZoom > 0 &&
-          Math.abs(innerZoom - 1) > 0.008
-        ) {
-          lastKnownBrowserZoom = innerZoom;
-          return innerZoom;
-        }
-      }
+  if (!Number.isFinite(zoomScale) || zoomScale <= 0) zoomScale = 1;
+  zoomScale = Math.min(10, Math.max(0.1, zoomScale));
+  if (Math.abs(zoomScale - 1) < 0.004) zoomScale = 1;
 
-      const clientWidth =
-        document.documentElement.clientWidth || window.innerWidth;
-      if (clientWidth > 0) {
-        const clientZoom = zoomLayoutReference.clientWidth / clientWidth;
-        if (
-          Number.isFinite(clientZoom) &&
-          clientZoom > 0 &&
-          Math.abs(clientZoom - 1) > 0.008
-        ) {
-          lastKnownBrowserZoom = clientZoom;
-          return clientZoom;
-        }
-      }
-    }
-  }
-
-  if (baselineDevicePixelScale && baselineDevicePixelScale > 0) {
-    const dprZoom = (window.devicePixelRatio || 1) / baselineDevicePixelScale;
-    if (
-      Number.isFinite(dprZoom) &&
-      dprZoom > 0 &&
-      Math.abs(dprZoom - 1) > 0.008
-    ) {
-      lastKnownBrowserZoom = dprZoom;
-      return dprZoom;
-    }
-  }
-
-  lastKnownBrowserZoom = 1;
-  return 1;
+  lastKnownBrowserZoom = zoomScale;
+  return zoomScale;
 }
 
 function getLayoutViewportWidth() {
@@ -371,6 +436,21 @@ function getLayoutViewportWidth() {
     DESIGN_VIEWPORT_WIDTH;
   if (raw <= 0) return DESIGN_VIEWPORT_WIDTH;
   return raw * getBrowserZoomScale();
+}
+
+function restoreBrowserZoomScroll(anchor, nextInverse) {
+  if (!anchor || !(nextInverse > 0) || !(anchor.inverse > 0)) return;
+  const nextScrollY = Math.max(0, anchor.y * (nextInverse / anchor.inverse));
+
+  if (browserZoomScrollFrame !== null) {
+    window.cancelAnimationFrame(browserZoomScrollFrame);
+  }
+  browserZoomScrollFrame = window.requestAnimationFrame(function () {
+    browserZoomScrollFrame = null;
+    if (Math.abs((window.scrollY || 0) - nextScrollY) > 0.25) {
+      window.scrollTo(window.scrollX || 0, nextScrollY);
+    }
+  });
 }
 
 function applyBrowserZoomNeutralizer() {
@@ -392,14 +472,21 @@ function applyBrowserZoomNeutralizer() {
   }
   updateZoomAwareLines();
 
-  const dpr =
-    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-      ? window.devicePixelRatio
-      : 1;
-  const base = baselineDeviceRatio || dpr;
-  const inverse = base / dpr;
+  // Не полагаемся только на devicePixelRatio: в некоторых конфигурациях
+  // Chrome/Windows он не меняется синхронно с page zoom. Используем единый
+  // коэффициент, подтверждённый DPR, геометрией окна или Ctrl+/Ctrl− жестом.
+  const browserZoom = getBrowserZoomScale();
+  const inverse = 1 / browserZoom;
   const inverseValue = inverse.toFixed(8);
   if (appliedBrowserZoomInverse !== inverseValue) {
+    const previousInverse = parseFloat(appliedBrowserZoomInverse);
+    const scrollAnchor = browserZoomScrollAnchor || {
+      y: window.scrollY || window.pageYOffset || 0,
+      inverse:
+        Number.isFinite(previousInverse) && previousInverse > 0
+          ? previousInverse
+          : 1,
+    };
     appliedBrowserZoomInverse = inverseValue;
     if (Math.abs(inverse - 1) < 0.0005) {
       frame.style.transform = "none";
@@ -409,8 +496,10 @@ function applyBrowserZoomNeutralizer() {
       frame.style.transform = "scale(" + inverse.toFixed(6) + ")";
       root.classList.add("is-browser-zoom-neutralized");
     }
-    root.style.setProperty("--browser-zoom", (dpr / base).toFixed(6));
+    root.style.setProperty("--browser-zoom", browserZoom.toFixed(6));
     root.style.setProperty("--browser-zoom-inv", inverse.toFixed(6));
+    browserZoomScrollAnchor = null;
+    restoreBrowserZoomScroll(scrollAnchor, inverse);
   }
 
   syncBrowserZoomViewportHeight();
@@ -1891,37 +1980,49 @@ function updateSvgTextZoomCompensation() {
 function updateZoomAwareLines() {
   const textRenderModeChanged = updateSvgTextZoomCompensation();
   const root = document.documentElement;
-  const dpr =
+
+  // Все геометрические переменные создаются ровно один раз. На последующих
+  // resize/page-zoom меняется только compositor-transform #zoomFrame, поэтому
+  // дочерние элементы не проходят reflow и не могут прыгать вверх/вниз.
+  if (frozenLayoutPageScale !== null && zoomLineVarsCache["--dpx"]) {
+    return textRenderModeChanged;
+  }
+
+  const liveDpr =
     Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
       ? window.devicePixelRatio
       : 1;
-  // Метод Codex: раскладку считаем ОДИН раз на базовом devicePixelRatio и больше
-  // не пересчитываем при зуме — зум компенсируется общим transform:scale кадра.
-  // Так нет reflow → ничего не «прыгает» вверх-вниз при масштабировании.
-  const base = baselineDeviceRatio || dpr;
+  const base = baselineDeviceRatio || liveDpr;
   const pageScale = 1 / base;
   frozenLayoutPageScale = pageScale;
+
+  function snapAtBaseline(value) {
+    if (!Number.isFinite(value) || value <= 0) return value;
+    const physicalPixel = 1 / base;
+    return Math.max(physicalPixel, Math.round(value * base) / base);
+  }
+
   const underlineScreenDotPx = 2;
   const underlineScreenGapPx = 3;
   const zoomSafeLine = Math.max(MIN_PAGE_SCALE, pageScale);
-  const dotSize = snapPositiveCssPx(zoomSafeLine * underlineScreenDotPx);
-  const dotStep = snapPositiveCssPx(
+  const dotSize = snapAtBaseline(zoomSafeLine * underlineScreenDotPx);
+  const dotStep = snapAtBaseline(
     dotSize + zoomSafeLine * underlineScreenGapPx,
   );
-  const checkboxFillLine = snapPositiveCssPx(pageScale * 6);
+  const checkboxFillLine = snapAtBaseline(pageScale * 6);
   const nextVars = {
     "--page-scale": pageScale.toFixed(6),
     "--dpx": pageScale.toFixed(6) + "px",
-    "--ui-half-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
-    "--ui-hairline": snapPositiveCssPx(pageScale).toFixed(6) + "px",
-    "--ui-control-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
+    "--ui-half-line": snapAtBaseline(pageScale * 0.5).toFixed(6) + "px",
+    "--ui-hairline": snapAtBaseline(pageScale).toFixed(6) + "px",
+    "--ui-control-line": snapAtBaseline(pageScale * 0.5).toFixed(6) + "px",
     "--ui-control-strong-line":
-      snapPositiveCssPx(pageScale * 1.5).toFixed(6) + "px",
+      snapAtBaseline(pageScale * 1.5).toFixed(6) + "px",
     "--ui-checkbox-line":
-      snapPositiveCssPx(pageScale * 1.25).toFixed(6) + "px",
+      snapAtBaseline(pageScale * 1.25).toFixed(6) + "px",
     "--ui-checkbox-fill-line": checkboxFillLine.toFixed(6) + "px",
-    "--ui-strong-line": snapPositiveCssPx(pageScale * 2).toFixed(6) + "px",
-    "--zoom-safe-line": snapPositiveCssPx(zoomSafeLine).toFixed(6) + "px",
+    "--ui-strong-line": snapAtBaseline(pageScale * 2).toFixed(6) + "px",
+    "--zoom-safe-line": snapAtBaseline(zoomSafeLine).toFixed(6) + "px",
     "--zoom-dot-size": dotSize.toFixed(6) + "px",
     "--zoom-dot-radius": (dotSize / 2).toFixed(6) + "px",
     "--zoom-dot-edge": (dotSize * 0.55).toFixed(6) + "px",
@@ -1929,7 +2030,6 @@ function updateZoomAwareLines() {
   };
 
   Object.keys(nextVars).forEach(function (name) {
-    if (zoomLineVarsCache[name] === nextVars[name]) return;
     zoomLineVarsCache[name] = nextVars[name];
     root.style.setProperty(name, nextVars[name]);
   });
@@ -7138,6 +7238,7 @@ function bindBitmapTextFontRefresh() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+  bindBrowserZoomGestureDetection();
   captureBaselineDeviceRatio();
   captureZoomLayoutReference(true);
   applyBrowserZoomNeutralizer();

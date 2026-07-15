@@ -3443,12 +3443,14 @@
       Number.isFinite(exposedBaseline) && exposedBaseline > 0
         ? exposedBaseline
         : liveDpr;
-
-    // Freeze the design viewport unit on the DPR captured at page load.
-    // Browser zoom is compensated only by #zoomFrame's single transform.
     const nextFvw = 19.2 / layoutDpr + "px";
-    root.dataset.lastFvw = nextFvw;
-    root.style.setProperty("--fvw", nextFvw);
+
+    // Freeze viewport-derived design units. Browser zoom is handled only by
+    // the single #zoomFrame transform, never by recalculating child metrics.
+    if (root.dataset.lastFvw !== nextFvw) {
+      root.dataset.lastFvw = nextFvw;
+      root.style.setProperty("--fvw", nextFvw);
+    }
   }
 
   window.syncDesignViewportUnit = syncDesignViewportUnit;

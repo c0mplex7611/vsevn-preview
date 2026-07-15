@@ -38,8 +38,6 @@
 
 /* PerfectPixel: холст 1920 design px = ширина артборда Figma */
 body:has(#adsTable) #zoomFrame {
-  /* Keep this rule aligned with style.css: the whole canvas uses the frozen
-     design-pixel unit and never follows the live viewport width. */
   width: calc(1920 * var(--dpx, 1px));
   max-width: none;
 }
@@ -2261,6 +2259,6 @@ body:has(.ads-page) #zoomFrame {
   max-height: none;
   overflow-x: hidden;
   overflow-y: visible;
-  min-height: calc(100vh * var(--browser-zoom, 1));
+  min-height: var(--layout-viewport-height, 100vh);
   background: #fffcec;
 }
