@@ -548,6 +548,11 @@ a {
     box-sizing: border-box;
     display: flex;
     align-items: center;
+    text-rendering: geometricPrecision;
+    isolation: isolate;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform;
 }
 
 .main-nav {
@@ -616,7 +621,7 @@ a {
 .nav-text {
     position: absolute;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translate3d(0, -50%, 0);
     display: inline-flex;
     align-items: center;
     font-size: 0;
@@ -649,7 +654,7 @@ a {
     position: absolute;
     left: 0;
     top: 0;
-    transform: none;
+    transform: translateZ(0);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -663,6 +668,7 @@ a {
     text-transform: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    backface-visibility: hidden;
 }
 
 .nav-icon-mask {
