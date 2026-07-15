@@ -3416,21 +3416,16 @@
   }
 
   function syncDesignViewportUnit() {
-    // ТЗ п.1: на браузерном зуме единицу макета --fvw НЕ пересчитываем —
-    // браузер масштабирует страницу нативно, иначе текст прыгает на каждом шаге зума.
-    if (typeof window.isBrowserZoomed === "function" && window.isBrowserZoomed()) {
-      return;
-    }
-    const browserZoom =
-      typeof window.getBrowserZoomScale === "function"
-        ? window.getBrowserZoomScale()
+    // ТЗ: СТАТИЧЕСКИЙ дизайн — единица --fvw привязана к физическому пикселю,
+    // согласованно с --dpx (= 1/dpr). 1% ширины артборда 1920px = 19.2 design-px,
+    // поэтому --fvw = 19.2 / devicePixelRatio (в CSS-px). Дизайн не масштабируется
+    // при браузерном зуме (остаётся того же физического размера) и работает
+    // одинаково во всех браузерах, без нестандартного CSS `zoom`.
+    const dpr =
+      Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+        ? window.devicePixelRatio
         : 1;
-    const w = document.documentElement.clientWidth || window.innerWidth || 1920;
-    const layoutWidth =
-      typeof window.snapLayoutCssPx === "function"
-        ? window.snapLayoutCssPx(w * browserZoom)
-        : w * browserZoom;
-    const nextFvw = layoutWidth / 100 + "px";
+    const nextFvw = 19.2 / dpr + "px";
     if (document.documentElement.dataset.lastFvw === nextFvw) return;
     document.documentElement.dataset.lastFvw = nextFvw;
     document.documentElement.style.setProperty("--fvw", nextFvw);

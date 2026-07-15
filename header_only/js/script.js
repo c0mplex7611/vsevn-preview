@@ -360,47 +360,19 @@ function applyBrowserZoomNeutralizer() {
 
   if (!frame) return;
 
-  /* ТЗ: СТАТИЧЕСКИЙ дизайн должен ОСТАВАТЬСЯ НА МЕСТЕ при браузерном зуме —
-     не масштабироваться вместе со страницей и не дёргаться. Компенсируем зум,
-     масштабируя #zoomFrame ровно на обратный коэффициент. Коэффициент берём из
-     devicePixelRatio: он меняется СТРОГО пропорционально зуму и без «гуляния»
-     (в отличие от старой эвристики по innerWidth/outerWidth, которая и давала
-     дёрганье). --dpx/--fvw при зуме заморожены (см. isBrowserZoomed), поэтому
-     раскладка макета не пересчитывается — только целиком «отменяется» зум. */
-  const dpr =
-    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-      ? window.devicePixelRatio
-      : 1;
-  const base = baselineDeviceRatio || dpr;
-  const zoomRatio = dpr / base;
-
-  const nextZoom =
-    Math.abs(zoomRatio - 1) < 0.005 ? "" : (1 / zoomRatio).toFixed(6);
-  const currentZoom = frame.style.zoom || "";
-  if (nextZoom === currentZoom) return; // масштаб не изменился — скролл не трогаем
-
-  // Компенсация зума меняет высоту страницы → чтобы прокрученная страница не
-  // «прыгала» вверх (ТЗ п.2), сохраняем относительную позицию прокрутки вокруг
-  // смены масштаба фрейма.
-  const scroller = document.scrollingElement || document.documentElement;
-  const prevTop = scroller.scrollTop;
-  const prevH = scroller.scrollHeight || 1;
-
-  if (nextZoom === "") {
-    frame.style.removeProperty("zoom");
-    root.classList.remove("is-browser-zoom-neutralized");
-    root.style.removeProperty("--browser-zoom");
-    captureZoomLayoutReference(true);
-  } else {
-    frame.style.zoom = nextZoom;
-    root.classList.add("is-browser-zoom-neutralized");
-    root.style.setProperty("--browser-zoom", zoomRatio.toFixed(6));
-  }
-
-  const newH = scroller.scrollHeight || 1;
-  if (prevH > 0 && Math.abs(newH - prevH) > 1) {
-    scroller.scrollTop = prevTop * (newH / prevH);
-  }
+  /* ТЗ: компенсация зума через CSS `zoom`/`transform` БОЛЬШЕ НЕ НУЖНА и убрана.
+     Статичность дизайна теперь обеспечивается на уровне единицы масштаба
+     (--dpx = 1/devicePixelRatio, см. updateZoomAwareLines): дизайн сам остаётся
+     того же физического размера при любом зуме. Прошлый `frame.style.zoom` —
+     нестандартный и в Firefox работал иначе, из-за чего у клиента всё «плыло».
+     Здесь просто гарантируем, что никакого старого override не осталось. */
+  frame.style.removeProperty("zoom");
+  frame.style.removeProperty("transform");
+  frame.style.removeProperty("width");
+  frame.style.removeProperty("min-height");
+  root.classList.remove("is-browser-zoom-neutralized");
+  root.style.removeProperty("--browser-zoom");
+  root.style.removeProperty("--browser-zoom-inv");
 }
 window.applyBrowserZoomNeutralizer = applyBrowserZoomNeutralizer;
 
@@ -1950,12 +1922,18 @@ function updateSvgTextZoomCompensation() {
 
 function updateZoomAwareLines() {
   const textRenderModeChanged = updateSvgTextZoomCompensation();
-  // ТЗ п.1: на браузерном зуме масштаб макета НЕ трогаем (иначе текст прыгает) —
-  // браузер масштабирует страницу нативно, --dpx остаётся с последнего не-зум состояния.
-  if (isBrowserZoomed()) return textRenderModeChanged;
   const root = document.documentElement;
-  const layoutWidth = snapLayoutCssPx(getLayoutViewportWidth());
-  const pageScale = layoutWidth / DESIGN_VIEWPORT_WIDTH;
+  // ТЗ: СТАТИЧЕСКИЙ дизайн. Единица дизайна = 1 физический пиксель:
+  //   --dpx = 1 / devicePixelRatio (в CSS-px).
+  // Тогда 1 design-px = 1 физический px при любом браузерном зуме → дизайн
+  // остаётся ТОГО ЖЕ размера (стоит на месте), а целые координаты ложатся на
+  // целые физические пиксели (нет дробных смещений). Работает одинаково во всех
+  // браузерах, т.к. не использует нестандартный CSS `zoom`/`transform`.
+  const dpr =
+    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+      ? window.devicePixelRatio
+      : 1;
+  const pageScale = 1 / dpr;
   const underlineScreenDotPx = 2;
   const underlineScreenGapPx = 3;
   const zoomSafeLine = Math.max(MIN_PAGE_SCALE, pageScale);
@@ -2080,41 +2058,17 @@ function syncViewportMetrics() {
   captureZoomLayoutReference(false);
   applyBrowserZoomNeutralizer();
 
-  // ТЗ: при браузерном зуме (Ctrl +/-) НИЧЕГО не перерисовываем и не
-  // пересчитываем. Живой текст масштабируется браузером сам, а любой ре-рендер
-  // на зуме двигает DOM: меняется радиокнопка, произвольно всплывает подсказка,
-  // дёргается открытый селект. Оставляем только компенсацию зума (выше) — макет
-  // остаётся статичным, без визуальных изменений.
-  if (isBrowserZoomed()) return;
-
+  // Держим единицы масштаба (--dpx = 1/dpr, --fvw = 19.2/dpr) в актуальном
+  // состоянии по devicePixelRatio.
   if (typeof window.syncDesignViewportUnit === "function") {
     window.syncDesignViewportUnit();
   }
+  updateZoomAwareLines();
 
-  const viewportSignature = getViewportTextSignature();
-  const viewportChanged = viewportSignature !== lastViewportTextSignature;
-  if (viewportChanged) {
-    lastViewportTextSignature = viewportSignature;
-    viewportTextVersion += 1;
-  }
-
-  const textRenderModeChanged = updateZoomAwareLines();
-  const needStaticRefresh = textRenderModeChanged || viewportChanged;
-
-  if (needStaticRefresh) {
-    if (viewportChanged && !textRenderModeChanged) {
-      invalidateRenderedStaticText(document);
-    }
-    renderStaticText();
-    if (dateCalendarState.field) renderDateCalendar();
-  } else if (document.getElementById("adsTable")) {
-    if (typeof applyFormControlVerticalCssVars === "function") {
-      applyFormControlVerticalCssVars(document.querySelector(".ads-page"));
-    }
-    if (typeof window.__applyAdsStatic === "function") {
-      window.__applyAdsStatic();
-    }
-  }
+  // ТЗ: живой HTML-текст масштабируется через CSS-переменные, поэтому на
+  // изменение вьюпорта/зума его НЕ перерисовываем — иначе на зуме дёргаются
+  // радиокнопки, произвольно всплывают подсказки, дёргается открытый селект.
+  // Раскладка задана в design-px и инвариантна к зуму — пересчитывать нечего.
   refreshFilenameUnderlineWidths(document);
 }
 
