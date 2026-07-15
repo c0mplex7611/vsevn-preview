@@ -2259,6 +2259,6 @@ body:has(.ads-page) #zoomFrame {
   max-height: none;
   overflow-x: hidden;
   overflow-y: visible;
-  min-height: var(--layout-viewport-height, 100vh);
+  min-height: calc(100vh * var(--browser-zoom, 1));
   background: #fffcec;
 }

@@ -3444,9 +3444,6 @@
         ? exposedBaseline
         : liveDpr;
     const nextFvw = 19.2 / layoutDpr + "px";
-
-    // Freeze viewport-derived design units. Browser zoom is handled only by
-    // the single #zoomFrame transform, never by recalculating child metrics.
     if (root.dataset.lastFvw !== nextFvw) {
       root.dataset.lastFvw = nextFvw;
       root.style.setProperty("--fvw", nextFvw);
