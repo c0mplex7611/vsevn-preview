@@ -8,6 +8,27 @@
       content="width=device-width, initial-scale=1, user-scalable=yes"
     />
     <title>vsevn.ru — Объявления скомпонованные</title>
+    <style id="adsBootStyle">
+      html { background: #fffcec; }
+      html:not(.ads-app-ready) #zoomViewport {
+        visibility: hidden !important;
+      }
+    </style>
+    <script>
+      (function () {
+        function revealAdsApp() {
+          document.documentElement.classList.add("ads-app-ready");
+        }
+        window.__revealAdsApp = revealAdsApp;
+        window.addEventListener(
+          "load",
+          function () {
+            window.setTimeout(revealAdsApp, 3000);
+          },
+          { once: true },
+        );
+      })();
+    </script>
     <!-- ТЗ п.3/п.5: убран внешний render-blocking запрос Google Fonts.
          Шрифт Roboto подключён локально через @font-face в css/style.css,
          шрифт Inter в вёрстке не используется. Страница полностью самодостаточна. -->
@@ -18,7 +39,14 @@
       type="font/woff2"
       crossorigin
     />
-    <link rel="stylesheet" href="css/style.css?v=433" />
+    <link
+      rel="preload"
+      href="fonts/roboto-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="css/style.css?v=434" />
     <link rel="stylesheet" href="css/compiled-ads.css?v=221" />
   </head>
   <body>
@@ -59,6 +87,7 @@
 
       <div class="page-wrapper ads-page">
         <div class="ads-card">
+          <div class="ads-card-content">
           <!-- Заголовок -->
           <h1 class="ads-title" data-text="Объявления скомпонованные">
             Объявления скомпонованные
@@ -258,17 +287,18 @@
               <tbody id="adsTableBody"></tbody>
             </table>
           </div>
+          </div>
         </div>
       </div>
       </div>
     </div>
 
-    <script src="js/data/legal-forms.js"></script>
-    <script src="js/data/figma-colors.js"></script>
-    <script src="js/data/figma-columns.js?v=14"></script>
-    <script src="js/data/ads-data.js?v=9"></script>
-    <script src="js/data/select-options.js"></script>
-    <script src="js/script.js?v=364"></script>
-    <script src="js/compiled-ads-app.js?v=191"></script>
+    <script src="js/data/legal-forms.js" defer></script>
+    <script src="js/data/figma-colors.js" defer></script>
+    <script src="js/data/figma-columns.js?v=14" defer></script>
+    <script src="js/data/ads-data.js?v=9" defer></script>
+    <script src="js/data/select-options.js" defer></script>
+    <script src="js/script.js?v=364" defer></script>
+    <script src="js/compiled-ads-app.js?v=192" defer></script>
   </body>
 </html>

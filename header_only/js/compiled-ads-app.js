@@ -383,9 +383,11 @@
       '<div class="ads-cell-line ads-status-line">' +
       '<span class="ads-status-badge ' +
       getStatusBadgeClass(status) +
+      '"><span class="ads-status-text" data-text="' +
+      escHtml(text) +
       '">' +
       escHtml(text) +
-      "</span></div>"
+      "</span></span></div>"
     );
   }
 
@@ -1062,9 +1064,14 @@
   const ADS_WRAP_WEIGHT = 300;
   const ADS_WRAP_EDGE = 1;
 
+  let adsWrapMeasureContext = null;
   function wrapTextWidth(text, size, weight) {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+    if (!adsWrapMeasureContext) {
+      const canvas = document.createElement("canvas");
+      adsWrapMeasureContext = canvas.getContext("2d");
+    }
+    const ctx = adsWrapMeasureContext;
+    if (!ctx) return String(text || "").length * Number(size || 0) * 0.55;
     const family =
       typeof STATIC_TEXT_FAMILY !== "undefined"
         ? STATIC_TEXT_FAMILY
@@ -2051,8 +2058,15 @@
       let lineY = TH_LINE_TOP;
       const lines = (col.titleLines || [])
         .map(function (ln) {
-          const top = ln.y !== undefined ? ln.y : lineY;
-          const h = ln.h || 29;
+          const rawTop = ln.y !== undefined ? ln.y : lineY;
+          const rawHeight = ln.h || TH_LINE_STEP;
+          const top =
+            TH_LINE_TOP +
+            Math.round((rawTop - TH_LINE_TOP) / TH_LINE_STEP) * TH_LINE_STEP;
+          const h = Math.max(
+            TH_LINE_STEP,
+            Math.round(rawHeight / TH_LINE_STEP) * TH_LINE_STEP,
+          );
           lineY = top + h;
           const sortBtn = ln.sort
             ? '<button type="button" class="ads-sort-btn" data-sort="' +
@@ -2137,6 +2151,35 @@
   }
 
   /* ---------- Рендер ---------- */
+  let initialPageRevealed = false;
+  let initialRevealScheduled = false;
+
+  function scheduleAfterTableLayout() {
+    if (initialPageRevealed) {
+      window.requestAnimationFrame(afterTableCellLayout);
+      return;
+    }
+    if (initialRevealScheduled) return;
+    initialRevealScheduled = true;
+
+    const fontsReady =
+      document.fonts && document.fonts.ready
+        ? document.fonts.ready.catch(function () {})
+        : Promise.resolve();
+
+    fontsReady.then(function () {
+      window.requestAnimationFrame(function () {
+        afterTableCellLayout();
+        applyAdsStatic();
+        initialPageRevealed = true;
+        document.documentElement.classList.add("ads-app-ready");
+        if (typeof window.__revealAdsApp === "function") {
+          window.__revealAdsApp();
+        }
+      });
+    });
+  }
+
   function renderTable() {
     hideAdsTip();
     const tbody = document.getElementById("adsTableBody");
@@ -2166,7 +2209,7 @@
     updateCount(page.total);
     renderPagination(page.totalPages);
     bindRowInteractions();
-    requestAnimationFrame(afterTableCellLayout);
+    scheduleAfterTableLayout();
   }
 
   function getFilteredCount() {
@@ -3341,10 +3384,10 @@
 
   function stabilizeStatusBadges() {
     if (!staticAvailable()) return;
-    document.querySelectorAll(".ads-status-badge").forEach(function (badge) {
-      const text = badge.dataset.text || badge.textContent.trim();
+    document.querySelectorAll(".ads-status-text").forEach(function (label) {
+      const text = label.dataset.text || label.textContent.trim();
       if (!text) return;
-      renderElementText(badge, {
+      renderElementText(label, {
         text: text,
         size: 20,
         width: 130,
@@ -3502,7 +3545,7 @@
     document.documentElement.style.overflowY = "scroll";
 
     if (typeof renderStaticText === "function") renderStaticText();
-    requestAnimationFrame(applyAdsStatic);
+    /* Initial static pass and reveal are handled by scheduleAfterTableLayout(). */
   }
 
   document.addEventListener("DOMContentLoaded", function () {

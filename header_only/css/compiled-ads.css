@@ -1355,9 +1355,7 @@ body.ads-col-resizing * {
   position: absolute;
   left: 0;
   right: 0;
-  /* 50px field - 24px text band = 13px on both sides.
-     A fixed text band is more stable than top:50% + transform in Firefox. */
-  top: calc(13 * var(--px));
+  top: 50%;
   z-index: 1;
   width: 100%;
   border: 0;
@@ -1371,11 +1369,7 @@ body.ads-col-resizing * {
   margin: 0;
   padding: 0;
   line-height: calc(24 * var(--px));
-  transform: none;
-  appearance: none;
-  -moz-appearance: none;
-  font-synthesis: none;
-  text-rendering: geometricPrecision;
+  transform: translateY(-50%);
   caret-color: var(--c-text);
   box-sizing: border-box;
 }
@@ -1385,23 +1379,15 @@ body.ads-col-resizing * {
 }
 .ads-search-ph {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(13 * var(--px));
-  bottom: auto;
+  inset: 0;
   z-index: 2;
-  display: block;
-  height: calc(24 * var(--px));
   color: var(--c-placeholder);
   font-size: calc(24 * var(--px));
   font-weight: 300;
   line-height: calc(24 * var(--px));
-  font-synthesis: none;
-  text-rendering: geometricPrecision;
   pointer-events: none;
   white-space: nowrap;
   min-width: 0;
-  box-sizing: border-box;
 }
 .ads-search-field.is-focused .ads-search-ph,
 .ads-search-field.has-value .ads-search-ph {
@@ -2305,4 +2291,154 @@ body:has(.ads-page) #zoomFrame {
   overflow-y: visible;
   min-height: calc(100vh * var(--browser-zoom, 1));
   background: #fffcec;
+}
+
+
+/* ============================================================
+   FINAL CLIENT POLISH (2026-07-16)
+   ============================================================ */
+
+/* One deliberately thin reference line from the first paint onward.
+   --px already follows the design unit, therefore 0.3 remains 0.3 design px
+   at browser zoom and does not flash as a temporary 1px border. */
+.ads-page {
+  --design-line: calc(0.3 * var(--px));
+  --design-line-neg: calc(0px - var(--design-line));
+}
+
+/* Move the complete card interface 15 design px upward while the white card
+   background (.ads-card) stays exactly where it was. */
+.ads-card-content {
+  position: relative;
+  top: calc(-15 * var(--px));
+  width: 100%;
+  min-height: inherit;
+}
+
+/* Regular field outlines: reference thickness 0.3 design px. */
+.ads-dropdown:not(.is-open),
+.ads-page .ads-date-field.date-field:not(.is-calendar-open),
+.ads-count-box,
+.ads-delete-btn,
+.ads-export-btn,
+.ads-pagination button,
+.ads-dropdown:not(.is-open) > .ads-dropdown-menu {
+  border-width: var(--design-line);
+}
+
+.ads-dropdown-option + .ads-dropdown-option {
+  border-top-width: var(--design-line);
+}
+
+/* Table grid: the same 0.3 design-px line on every edge, including the
+   initial frame before JavaScript calculates --dpx. */
+.ads-table th,
+.ads-table td {
+  border-width: var(--design-line);
+  box-shadow:
+    inset var(--design-line-neg) 0 0 var(--c-border-table),
+    inset 0 var(--design-line-neg) 0 var(--c-border-table);
+}
+.ads-table tr > :first-child {
+  box-shadow:
+    inset var(--design-line) 0 0 var(--c-border-table),
+    inset var(--design-line-neg) 0 0 var(--c-border-table),
+    inset 0 var(--design-line-neg) 0 var(--c-border-table);
+}
+.ads-table thead tr:first-child > th {
+  box-shadow:
+    inset var(--design-line-neg) 0 0 var(--c-border-table),
+    inset 0 var(--design-line) 0 var(--c-border-table),
+    inset 0 var(--design-line-neg) 0 var(--c-border-table);
+}
+.ads-table thead tr:first-child > th:first-child {
+  box-shadow:
+    inset var(--design-line) 0 0 var(--c-border-table),
+    inset var(--design-line-neg) 0 0 var(--c-border-table),
+    inset 0 var(--design-line) 0 var(--c-border-table),
+    inset 0 var(--design-line-neg) 0 var(--c-border-table);
+}
+.ads-search-field + .ads-search-field {
+  border-top-width: var(--design-line);
+  box-shadow: inset 0 var(--design-line) 0 var(--c-border-table);
+}
+
+/* Quick-search input and its static placeholder share one and the same
+   24px text band: 13px above + 24px band + 13px below = 50px. */
+.ads-search-slot {
+  top: calc(13 * var(--px));
+  height: calc(24 * var(--px));
+  display: block;
+  align-items: initial;
+}
+.ads-search-field input {
+  top: 0;
+  height: calc(24 * var(--px));
+  line-height: calc(24 * var(--px));
+  transform: none;
+}
+.ads-search-ph {
+  inset: auto 0 auto 0;
+  top: 0;
+  height: calc(24 * var(--px));
+  line-height: calc(24 * var(--px));
+  display: flex;
+  align-items: center;
+}
+.ads-search-ph svg {
+  top: 0;
+  transform: none;
+}
+
+/* Every title row uses the same 29px text band. Remove the old one-off
+   vacancy offsets that caused visible deviations from the common red line. */
+.ads-table th.col-vacancy .ads-th-line:nth-child(1) .ads-th-last-row,
+.ads-table th.col-vacancy .ads-th-line:nth-child(2) > .ads-th-text,
+.ads-table th.col-vacancy .ads-th-line:nth-child(2) .ads-th-last-row {
+  transform: none !important;
+}
+.ads-th-text,
+.ads-th-text-line,
+.ads-th-text-last,
+.ads-th-last-row {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: calc(29 * var(--px));
+}
+.ads-th-last-row {
+  align-items: flex-start;
+}
+
+/* All A-Я / Я-А glyphs and their arrows use the requested neutral grey in
+   every state; zoom-hover cannot temporarily switch them to another colour. */
+.ads-sort-btn,
+.ads-sort-btn:hover,
+.ads-sort-btn:focus,
+.ads-sort-btn.is-asc,
+.ads-sort-btn.is-desc {
+  background-color: #808080;
+}
+
+/* Move only the status text one design pixel upward; badge backgrounds stay
+   fixed. This applies to every status class and to collapsed rows as well. */
+.ads-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.ads-status-text,
+.ads-status-text.plain-text-render {
+  position: relative;
+  top: calc(0px - var(--px));
+  display: inline-block;
+  width: 100%;
+  height: calc(23 * var(--px));
+  font-size: calc(20 * var(--px)) !important;
+  font-weight: 400 !important;
+  line-height: calc(23 * var(--px)) !important;
+  text-align: center;
+  white-space: nowrap;
 }
