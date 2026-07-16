@@ -3399,14 +3399,12 @@
     }
     /* Заголовки колонок — живой текст для выделения/копирования (замечание заказчика п.5) */
     document.querySelectorAll(".ads-search-ph").forEach(function (el) {
-      const field = el.closest(".ads-search-field");
-      const isPhone = field && field.dataset.ctrlMode === "phone";
       maskEl(el, {
-        size: 20,
+        size: 21.6,
         weight: 300,
         color: C.placeholder || "#B0AB87",
         maxW: 260,
-        ctrlLayout: isPhone ? "20-cap" : "20-lc",
+        ctrlLayout: "216-lc",
         lineBandCenter: true,
       });
     });

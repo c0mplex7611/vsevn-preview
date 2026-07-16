@@ -241,6 +241,14 @@ let appliedBrowserZoomInverse = null;
 let zoomFrameResizeObserver = null;
 let lastAppliedEffectiveDpr = null;
 let pendingZoomScrollAnchor = null;
+let stableZoomScrollAnchor = null;
+let stableZoomScrollFrame = null;
+let textZoomProbe = null;
+let textZoomObserver = null;
+let textZoomUpdateTimer = null;
+let lastTextZoomRatio = 1;
+
+const TEXT_ZOOM_PROBE_TEXT = "ШЩЖФMwm0123456789";
 
 function getDocumentScrollPosition() {
   const scrollingElement = document.scrollingElement || document.documentElement;
@@ -254,16 +262,57 @@ function getDocumentScrollPosition() {
   };
 }
 
-function captureZoomScrollAnchor() {
-  if (pendingZoomScrollAnchor) return;
+function rememberStableZoomScrollAnchor() {
+  const currentScale = getEffectiveDevicePixelRatio();
+  if (
+    Number.isFinite(lastAppliedEffectiveDpr) &&
+    lastAppliedEffectiveDpr > 0 &&
+    Math.abs(currentScale / lastAppliedEffectiveDpr - 1) > 0.002
+  ) {
+    return;
+  }
+
   const position = getDocumentScrollPosition();
   const scale =
     Number.isFinite(lastAppliedEffectiveDpr) && lastAppliedEffectiveDpr > 0
       ? lastAppliedEffectiveDpr
-      : getEffectiveDevicePixelRatio();
-  pendingZoomScrollAnchor = {
+      : currentScale;
+  stableZoomScrollAnchor = {
     leftPhysical: position.left * scale,
     topPhysical: position.top * scale,
+  };
+}
+
+function scheduleStableZoomScrollAnchor() {
+  if (pendingZoomScrollAnchor || stableZoomScrollFrame !== null) return;
+  stableZoomScrollFrame = window.requestAnimationFrame(function () {
+    stableZoomScrollFrame = null;
+    rememberStableZoomScrollAnchor();
+  });
+}
+
+function captureZoomScrollAnchor(force) {
+  if (pendingZoomScrollAnchor) return;
+  const currentScale = getEffectiveDevicePixelRatio();
+  const previousScale =
+    Number.isFinite(lastAppliedEffectiveDpr) && lastAppliedEffectiveDpr > 0
+      ? lastAppliedEffectiveDpr
+      : currentScale;
+
+  if (!force && Math.abs(currentScale / previousScale - 1) <= 0.002) return;
+
+  if (stableZoomScrollAnchor) {
+    pendingZoomScrollAnchor = {
+      leftPhysical: stableZoomScrollAnchor.leftPhysical,
+      topPhysical: stableZoomScrollAnchor.topPhysical,
+    };
+    return;
+  }
+
+  const position = getDocumentScrollPosition();
+  pendingZoomScrollAnchor = {
+    leftPhysical: position.left * previousScale,
+    topPhysical: position.top * previousScale,
   };
 }
 
@@ -281,8 +330,130 @@ function restoreZoomScrollAnchor() {
   window.scrollTo(left, top);
   window.requestAnimationFrame(function () {
     window.scrollTo(left, top);
+    rememberStableZoomScrollAnchor();
   });
 }
+
+function installTextZoomAwareFontRules() {
+  function visitRules(rules) {
+    if (!rules) return;
+    Array.from(rules).forEach(function (rule) {
+      if (rule.cssRules) {
+        visitRules(rule.cssRules);
+        return;
+      }
+      if (!rule.style) return;
+      const value = rule.style.getPropertyValue("font-size");
+      if (
+        !value ||
+        value.indexOf("--text-zoom-inv") !== -1 ||
+        !/var\(--(?:fvw|dpx|px)\b/.test(value)
+      ) {
+        return;
+      }
+      const priority = rule.style.getPropertyPriority("font-size");
+      rule.style.setProperty(
+        "font-size",
+        "calc(" + value + " * var(--text-zoom-inv, 1))",
+        priority,
+      );
+    });
+  }
+
+  Array.from(document.styleSheets).forEach(function (sheet) {
+    try {
+      visitRules(sheet.cssRules);
+    } catch (error) {
+      // Cross-origin stylesheets are not used by this project, but ignoring
+      // an inaccessible sheet keeps the page safe if one is added later.
+    }
+  });
+}
+
+function ensureTextZoomProbe() {
+  if (textZoomProbe && textZoomProbe.isConnected) return textZoomProbe;
+  const probe = document.createElement("span");
+  probe.id = "textZoomProbe";
+  probe.setAttribute("aria-hidden", "true");
+  probe.textContent = TEXT_ZOOM_PROBE_TEXT;
+  probe.style.cssText = [
+    "position:fixed!important",
+    "left:-10000px!important",
+    "top:-10000px!important",
+    "display:inline-block!important",
+    "width:max-content!important",
+    "height:auto!important",
+    "padding:0!important",
+    "margin:0!important",
+    "border:0!important",
+    "font-family:Roboto,Arial,sans-serif!important",
+    "font-size:100px!important",
+    "font-weight:400!important",
+    "font-style:normal!important",
+    "font-stretch:normal!important",
+    "line-height:1!important",
+    "letter-spacing:0!important",
+    "white-space:nowrap!important",
+    "visibility:hidden!important",
+    "pointer-events:none!important",
+    "text-size-adjust:auto!important",
+    "-moz-text-size-adjust:auto!important",
+    "-webkit-text-size-adjust:auto!important",
+  ].join(";");
+  document.body.appendChild(probe);
+  textZoomProbe = probe;
+  return probe;
+}
+
+function measureTextOnlyZoomRatio() {
+  const probe = ensureTextZoomProbe();
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) return 1;
+  context.font = '400 100px Roboto, Arial, sans-serif';
+  const expected = context.measureText(TEXT_ZOOM_PROBE_TEXT).width;
+  const rendered = probe.getBoundingClientRect().width;
+  if (!(expected > 0) || !(rendered > 0)) return 1;
+
+  let ratio = rendered / expected;
+  if (!Number.isFinite(ratio) || ratio < 0.5 || ratio > 5) return 1;
+  if (Math.abs(ratio - 1) < 0.015) ratio = 1;
+  return Math.round(ratio * 1000) / 1000;
+}
+
+function updateTextOnlyZoomCompensation() {
+  textZoomUpdateTimer = null;
+  const ratio = measureTextOnlyZoomRatio();
+  const inverse = 1 / ratio;
+  document.documentElement.style.setProperty(
+    "--text-zoom-inv",
+    inverse.toFixed(8),
+  );
+  document.documentElement.dataset.textZoomRatio = ratio.toFixed(3);
+  lastTextZoomRatio = ratio;
+}
+
+function scheduleTextOnlyZoomCompensation() {
+  if (textZoomUpdateTimer !== null) window.clearTimeout(textZoomUpdateTimer);
+  textZoomUpdateTimer = window.setTimeout(updateTextOnlyZoomCompensation, 0);
+}
+
+function initTextOnlyZoomCompensation() {
+  installTextZoomAwareFontRules();
+  const probe = ensureTextZoomProbe();
+  updateTextOnlyZoomCompensation();
+  if (!textZoomObserver && typeof ResizeObserver === "function") {
+    textZoomObserver = new ResizeObserver(scheduleTextOnlyZoomCompensation);
+    textZoomObserver.observe(probe);
+  }
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(updateTextOnlyZoomCompensation);
+  }
+}
+
+window.getTextOnlyZoomRatio = function () {
+  return lastTextZoomRatio;
+};
 
 function syncBrowserZoomViewportHeight() {
   const frame = document.getElementById("zoomFrame");
@@ -700,7 +871,11 @@ function createStaticIconSvg(icon) {
       icon.family || "vsevn-icons",
       "important",
     );
-    label.style.setProperty("font-size", iconSize + "px", "important");
+    label.style.setProperty(
+      "font-size",
+      "calc(" + iconSize + "px * var(--text-zoom-inv, 1))",
+      "important",
+    );
     label.style.setProperty(
       "font-weight",
       String(icon.weight || 400),
@@ -1899,7 +2074,7 @@ function updateFilePathCaret(input, maxTextWidthOverride) {
 
 function pxToVw(px) {
   return (
-    "calc(var(--dpx) * " +
+    "calc(var(--dpx) * var(--text-zoom-inv, 1) * " +
     Number(px)
       .toFixed(5)
       .replace(/\.?0+$/, "") +
@@ -2114,6 +2289,7 @@ function markRealPointerHover(event) {
 function markViewportChanging() {
   captureZoomScrollAnchor();
   applyBrowserZoomNeutralizer();
+  scheduleTextOnlyZoomCompensation();
   setHoverIntent(false);
   armHoverIntentAfterViewportChange();
   activateZoomHoverShield();
@@ -7170,6 +7346,31 @@ function bindBitmapTextFontRefresh() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+  initTextOnlyZoomCompensation();
+  rememberStableZoomScrollAnchor();
+  window.addEventListener("scroll", scheduleStableZoomScrollAnchor, {
+    passive: true,
+    capture: true,
+  });
+  document.addEventListener(
+    "keydown",
+    function (event) {
+      if (!(event.ctrlKey || event.metaKey)) return;
+      if (!["+", "-", "=", "0"].includes(event.key)) return;
+      captureZoomScrollAnchor(true);
+      scheduleTextOnlyZoomCompensation();
+    },
+    true,
+  );
+  window.addEventListener(
+    "wheel",
+    function (event) {
+      if (!event.ctrlKey) return;
+      captureZoomScrollAnchor(true);
+      scheduleTextOnlyZoomCompensation();
+    },
+    { passive: true, capture: true },
+  );
   captureBaselineDeviceRatio();
   captureZoomLayoutReference(true);
   applyBrowserZoomNeutralizer();

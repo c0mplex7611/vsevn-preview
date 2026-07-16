@@ -574,7 +574,7 @@ body:has(#adsTable) #zoomFrame {
 }
 .ads-export-icon-wrap {
   position: absolute;
-  right: calc(10.3 * var(--px) + var(--table-icon-phase));
+  right: calc(10 * var(--px) + var(--table-icon-phase));
   top: calc(7 * var(--px) + var(--table-icon-phase));
   transform: none;
   width: calc(36 * var(--px));
@@ -876,9 +876,7 @@ body:has(#adsTable) #zoomFrame {
   background: #fff;
   box-sizing: border-box;
   flex-shrink: 0;
-  transition:
-    border-width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 /* Figma Ellipse 24: 28×28, stroke #0087FC weight 9 INSIDE — кольцо с белым центром */
 .ads-radio:hover .ads-radio-dot {
@@ -947,9 +945,7 @@ body:has(#adsTable) #zoomFrame {
   background: #fff;
   box-sizing: border-box;
   box-shadow: inset 0 0 0 0 var(--c-link);
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.15s ease;
 }
 .ads-check:hover .check-input:not(:checked) + .ads-check-label::before {
   border-color: var(--c-link);
@@ -970,9 +966,7 @@ body:has(#adsTable) #zoomFrame {
   background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 15' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M2 8l4.5 4.5L16 2.5'/></svg>")
     center/calc(16 * var(--px)) no-repeat;
   pointer-events: none;
-  transition:
-    transform 0.16s ease 0.07s,
-    opacity 0.16s ease 0.07s;
+  transition: none;
 }
 .ads-check .check-input:checked + .ads-check-label::after {
   transform: scale(1);
@@ -1320,7 +1314,7 @@ body.ads-col-resizing * {
 .ads-search-field .ads-search-ico {
   position: absolute;
   left: calc(10 * var(--px) + var(--table-icon-phase));
-  top: calc(13.5 * var(--px) + var(--table-icon-phase));
+  top: calc(14 * var(--px) + var(--table-icon-phase));
   transform: none;
   z-index: 2;
   width: calc(23 * var(--px));
@@ -1360,13 +1354,13 @@ body.ads-col-resizing * {
   outline: 0;
   background: transparent;
   font-family: "Roboto", sans-serif;
-  font-size: calc(20 * var(--px));
+  font-size: calc(21.6 * var(--px));
   font-weight: 300;
   color: var(--c-text);
-  height: calc(20 * var(--px));
+  height: calc(24 * var(--px));
   margin: 0;
   padding: 0;
-  line-height: calc(20 * var(--px));
+  line-height: calc(24 * var(--px));
   transform: translateY(-50%);
   caret-color: var(--c-text);
   box-sizing: border-box;
@@ -1380,9 +1374,9 @@ body.ads-col-resizing * {
   inset: 0;
   z-index: 2;
   color: var(--c-placeholder);
-  font-size: calc(20 * var(--px));
+  font-size: calc(21.6 * var(--px));
   font-weight: 300;
-  line-height: calc(20 * var(--px));
+  line-height: calc(24 * var(--px));
   pointer-events: none;
   white-space: nowrap;
   min-width: 0;
@@ -1457,15 +1451,13 @@ body.ads-col-resizing * {
 .ads-table tbody td.col-contact .ads-status-line {
   display: block;
   width: 100%;
-  margin: calc(-2 * var(--px));
+  margin: 0;
   padding: 0;
   line-height: calc(24 * var(--px));
   margin-top: calc(5 * var(--px));
 }
 .ads-status-badge {
-  display: inline-flex;
-  align-items: flex-start;
-  justify-content: center;
+  display: inline-block;
   box-sizing: border-box;
   width: calc(130 * var(--px));
   height: calc(31 * var(--px));
@@ -1484,9 +1476,7 @@ body.ads-col-resizing * {
   transform: none;
 }
 .ads-status-badge.plain-text-render {
-  display: inline-flex;
-  align-items: flex-start;
-  justify-content: center;
+  display: inline-block;
   font-size: calc(20 * var(--px)) !important;
   line-height: calc(23 * var(--px)) !important;
   font-weight: 400 !important;
@@ -1495,8 +1485,15 @@ body.ads-col-resizing * {
 .ads-table.collapsed tbody td.col-contact .ads-contact-body .ads-status-badge.plain-text-render {
   height: calc(24 * var(--px));
   padding: 0;
-  align-items: flex-start;
   line-height: calc(23 * var(--px)) !important;
+}
+
+html.is-zoom-hover-blocked .ads-radio-dot,
+html.is-zoom-hover-blocked .ads-check .ads-check-label::before,
+html.is-zoom-hover-blocked .ads-check .ads-check-label::after,
+html.is-zoom-hover-blocked .ads-export-icon-wrap,
+html.is-zoom-hover-blocked .ads-search-ico {
+  transition: none !important;
 }
 .ads-status-badge--active {
   color: #0087fc;
