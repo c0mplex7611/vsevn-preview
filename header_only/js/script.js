@@ -1685,7 +1685,7 @@ function applyFormControlVerticalCssVars(root) {
   });
   if (layouts.toolbar) {
     /* Строка периода: по п.5 ТЗ + правка заказчика — поднять текст на 1px */
-    const periodRowTop = Math.max(0, layouts.toolbar.paddingTop - 1);
+    const periodRowTop = Math.max(0, layouts.toolbar.paddingTop - 2);
     root.style.setProperty(
       "--fc-toolbar-top",
       "calc(" + periodRowTop + " * var(--px))",
@@ -2425,6 +2425,7 @@ function markViewportChanging() {
   scheduleTextOnlyZoomCompensation();
   setHoverIntent(false);
   armHoverIntentAfterViewportChange();
+  if (typeof window.__hideAdsTip === "function") window.__hideAdsTip();
   activateZoomHoverShield();
   if (viewportUpdateFrame !== null) return;
   viewportUpdateFrame = window.requestAnimationFrame(applyViewportMetrics);

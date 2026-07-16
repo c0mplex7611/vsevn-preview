@@ -20,12 +20,12 @@
   --c-date4: #ff7903;
   --c-date5: #1f08ee;
   --c-fio: #a006f8;
-  --c-border: rgba(98, 86, 14, 0.45);
+  --c-border: rgba(98, 86, 14, 0.3);
   --c-border-table: rgba(98, 86, 14, 0.7);
   --c-border-dropdown: #b0ab87;
   --c-border-dropdown-divider: #cccccc;
   --c-zebra: #fffefb;
-  --c-placeholder: #b0ab87;
+  --c-placeholder: #bdbdbd;
   --c-checkbox: #86868a;
   --c-dropdown-hover-bg: #fed839;
   position: relative;
@@ -102,7 +102,7 @@ body:has(#adsTable) #zoomFrame {
   user-select: none;
 }
 .ads-dropdown--xml {
-  left: calc(36 * var(--px));
+  left: calc(18 * var(--px));
   top: calc(275 * var(--px));
   z-index: 5;
   width: calc(891 * var(--px));
@@ -352,10 +352,10 @@ body:has(#adsTable) #zoomFrame {
   transition: border-color 0.15s ease;
 }
 .ads-page .ads-date-field.date-field[data-date-role="from"] {
-  left: calc(33 * var(--px));
+  left: calc(18 * var(--px));
 }
 .ads-page .ads-date-field.date-field[data-date-role="to"] {
-  left: calc(259 * var(--px));
+  left: calc(244 * var(--px));
 }
 .ads-page .ads-date-field.date-field:hover {
   border-color: var(--c-link);
@@ -399,9 +399,9 @@ body:has(#adsTable) #zoomFrame {
 /* ---------- Счётчик (Figma 10:90) ---------- */
 .ads-count-box {
   position: absolute;
-  left: calc(488 * var(--px));
+  left: calc(473 * var(--px));
   top: calc(99 * var(--px));
-  width: calc(301 * var(--px));
+  width: calc(364 * var(--px));
   height: calc(50 * var(--px));
   padding: var(--fc-toolbar-top, calc(10 * var(--px))) calc(14 * var(--px)) 0;
   background: #ffffff;
@@ -437,7 +437,7 @@ body:has(#adsTable) #zoomFrame {
 /* ---------- Кнопка delete (Figma 10:204) ---------- */
 .ads-delete-btn {
   position: absolute;
-  left: calc(899 * var(--px));
+  left: calc(947 * var(--px));
   top: calc(99 * var(--px));
   width: calc(60 * var(--px));
   height: calc(50 * var(--px));
@@ -630,7 +630,7 @@ body:has(#adsTable) #zoomFrame {
 /* ---------- Селект «строк на странице» (ТЗ п.11, п.17) ---------- */
 .ads-rows-select {
   position: absolute;
-  left: calc(798 * var(--px));
+  left: calc(846 * var(--px));
   top: calc(99 * var(--px));
   z-index: 2;
 }
@@ -1100,7 +1100,7 @@ body:has(#adsTable) #zoomFrame {
   border-collapse: collapse;
   table-layout: fixed;
   width: calc(1849 * var(--px));
-  font-size: calc(20 * var(--px));
+  font-size: calc(22 * var(--px));
   font-synthesis: none;
   font-kerning: none;
   font-variant-ligatures: none;
@@ -1383,14 +1383,15 @@ body.ads-col-resizing * {
   outline: 0;
   background: transparent;
   font-family: "Roboto", sans-serif;
-  font-size: calc(24 * var(--px));
+  font-size: calc(22 * var(--px));
   font-weight: 300;
   color: var(--c-text);
-  height: calc(24 * var(--px));
+  height: calc(22 * var(--px));
   margin: 0;
   padding: 0;
-  line-height: calc(24 * var(--px));
-  transform: translateY(-50%);
+  line-height: calc(22 * var(--px));
+  /* правка заказчика: текст в полях поиска на 1px выше (центр по строчным) */
+  transform: translateY(calc(-50% - 1 * var(--px)));
   caret-color: var(--c-text);
   box-sizing: border-box;
 }
@@ -1403,9 +1404,10 @@ body.ads-col-resizing * {
   inset: 0;
   z-index: 2;
   color: var(--c-placeholder);
-  font-size: calc(24 * var(--px));
+  font-size: calc(22 * var(--px));
   font-weight: 300;
-  line-height: calc(24 * var(--px));
+  line-height: calc(22 * var(--px));
+  margin-top: calc(-1 * var(--px));
   pointer-events: none;
   white-space: nowrap;
   min-width: 0;
@@ -2473,10 +2475,10 @@ body:has(.ads-page) #zoomFrame {
    Shift only the second checkbox row and both filter dropdowns
    15 design px left. Other card geometry stays unchanged.
    ============================================================ */
-.ads-check--responses { left: calc(21 * var(--px)); }
-.ads-check--wrap { left: calc(380 * var(--px)); }
-.ads-check--collapse { left: calc(557 * var(--px)); }
-.ads-check--notags { left: calc(751 * var(--px)); }
-.ads-check--changed { left: calc(910 * var(--px)); }
-.ads-dropdown--xml { left: calc(21 * var(--px)); }
-.ads-dropdown--groups { left: calc(924 * var(--px)); }
+.ads-check--responses { left: calc(18 * var(--px)); }
+.ads-check--wrap { left: calc(377 * var(--px)); }
+.ads-check--collapse { left: calc(554 * var(--px)); }
+.ads-check--notags { left: calc(748 * var(--px)); }
+.ads-check--changed { left: calc(907 * var(--px)); }
+.ads-dropdown--xml { left: calc(18 * var(--px)); }
+.ads-dropdown--groups { left: calc(921 * var(--px)); }

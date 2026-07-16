@@ -1060,7 +1060,7 @@
     if (url) linkEl.setAttribute("href", url);
   }
 
-  const ADS_WRAP_FONT = 20;
+  const ADS_WRAP_FONT = 22;
   const ADS_WRAP_WEIGHT = 300;
   const ADS_WRAP_EDGE = 1;
 
@@ -2392,6 +2392,15 @@
   function showAdsTip(anchor, text, opts) {
     hideAdsTip();
     if (!text || !anchor) return;
+    /* правка заказчика (п.3.3/5): подсказки таблицы не должны всплывать сами
+       при зуме — показываем только при осознанном наведении мышью. */
+    var tipRoot = document.documentElement;
+    if (
+      tipRoot.classList.contains("is-zoom-hover-blocked") ||
+      !tipRoot.classList.contains("has-hover-intent")
+    ) {
+      return;
+    }
     opts = opts || {};
     const tip = document.createElement("div");
     tip.className = "ads-tip" + (opts.multiline ? " is-wrapped" : "");
@@ -2415,6 +2424,8 @@
       adsTipEl = null;
     }
   }
+  // зум-обработчик интерфейсного модуля снимает подсказку таблицы
+  window.__hideAdsTip = hideAdsTip;
 
   function initAdsTipViewportSync() {
     function syncAdsTipPosition() {
@@ -3279,7 +3290,9 @@
     const lineH = line
       ? parseInt((line.style.height || "").replace(/[^\d]/g, ""), 10) || 29
       : 29;
-    const c = el.dataset.color || C.textPrimary || "#62560E";
+    /* правка заказчика: базовый (коричневый) цвет названий колонок -> как на референсе */
+    let c = el.dataset.color || "#4E4A4A";
+    if (String(c).toUpperCase() === "#62560E") c = "#4E4A4A";
     const text = (el.dataset.text || el.textContent || "").trim();
     if (!text) return;
     el.style.color = c;
@@ -3443,9 +3456,9 @@
     /* Заголовки колонок — живой текст для выделения/копирования (замечание заказчика п.5) */
     document.querySelectorAll(".ads-search-ph").forEach(function (el) {
       maskEl(el, {
-        size: 24,
+        size: 22,
         weight: 300,
-        color: C.placeholder || "#B0AB87",
+        color: C.placeholder || "#BDBDBD",
         maxW: 260,
         ctrlLayout: "216-lc",
         lineBandCenter: true,

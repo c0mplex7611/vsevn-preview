@@ -31,7 +31,7 @@ window.FIGMA_COLUMNS = (function () {
         { t: "СТАТУС", c: C.muted },
       ],
       search: [
-        { key: "phone", placeholder: "По телеф." },
+        { key: "phone", placeholder: "По тел." },
         { key: "email", placeholder: "По email" },
       ],
     },
@@ -199,7 +199,7 @@ window.FIGMA_LAYOUT = {
     white: "#FFFFFF",
     border: "rgba(98, 86, 14, 0.3)",
     placeholder: "#B0AB87",
-    searchPlaceholder: "#B0AB87",
+    searchPlaceholder: "#BDBDBD",
   },
 };
 
