@@ -20,9 +20,9 @@
   --c-date4: #ff7903;
   --c-date5: #1f08ee;
   --c-fio: #a006f8;
-  --c-border: rgba(98, 86, 14, 0.3);
+  --c-border: var(--c-border-table);
   --c-border-table: rgba(98, 86, 14, 0.7);
-  --c-border-dropdown: #b0ab87;
+  --c-border-dropdown: var(--c-border-table);
   --c-border-dropdown-divider: #cccccc;
   --c-zebra: #fffefb;
   --c-placeholder: #bdbdbd;
