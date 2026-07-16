@@ -239,6 +239,50 @@ let lastKnownBrowserZoom = 1;
 let baselineDeviceRatio = null;
 let appliedBrowserZoomInverse = null;
 let zoomFrameResizeObserver = null;
+let lastAppliedEffectiveDpr = null;
+let pendingZoomScrollAnchor = null;
+
+function getDocumentScrollPosition() {
+  const scrollingElement = document.scrollingElement || document.documentElement;
+  return {
+    left: Number.isFinite(window.scrollX)
+      ? window.scrollX
+      : scrollingElement.scrollLeft || 0,
+    top: Number.isFinite(window.scrollY)
+      ? window.scrollY
+      : scrollingElement.scrollTop || 0,
+  };
+}
+
+function captureZoomScrollAnchor() {
+  if (pendingZoomScrollAnchor) return;
+  const position = getDocumentScrollPosition();
+  const scale =
+    Number.isFinite(lastAppliedEffectiveDpr) && lastAppliedEffectiveDpr > 0
+      ? lastAppliedEffectiveDpr
+      : getEffectiveDevicePixelRatio();
+  pendingZoomScrollAnchor = {
+    leftPhysical: position.left * scale,
+    topPhysical: position.top * scale,
+  };
+}
+
+function restoreZoomScrollAnchor() {
+  const anchor = pendingZoomScrollAnchor;
+  if (!anchor) return;
+  pendingZoomScrollAnchor = null;
+
+  const scale = getEffectiveDevicePixelRatio();
+  const maxLeft = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
+  const maxTop = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+  const left = Math.min(maxLeft, Math.max(0, anchor.leftPhysical / scale));
+  const top = Math.min(maxTop, Math.max(0, anchor.topPhysical / scale));
+
+  window.scrollTo(left, top);
+  window.requestAnimationFrame(function () {
+    window.scrollTo(left, top);
+  });
+}
 
 function syncBrowserZoomViewportHeight() {
   const frame = document.getElementById("zoomFrame");
@@ -415,6 +459,7 @@ function applyBrowserZoomNeutralizer() {
   }
 
   syncBrowserZoomViewportHeight();
+  lastAppliedEffectiveDpr = getEffectiveDevicePixelRatio();
   if (!zoomFrameResizeObserver && typeof ResizeObserver === "function") {
     zoomFrameResizeObserver = new ResizeObserver(
       syncBrowserZoomViewportHeight,
@@ -2011,6 +2056,7 @@ function syncViewportMetrics() {
 function applyViewportMetrics() {
   viewportUpdateFrame = null;
   syncViewportMetrics();
+  restoreZoomScrollAnchor();
   if (dateCalendarState.field) positionDateCalendar(dateCalendarState.field);
 }
 
@@ -2066,6 +2112,7 @@ function markRealPointerHover(event) {
 }
 
 function markViewportChanging() {
+  captureZoomScrollAnchor();
   applyBrowserZoomNeutralizer();
   setHoverIntent(false);
   armHoverIntentAfterViewportChange();
