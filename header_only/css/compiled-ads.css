@@ -578,7 +578,14 @@ body:has(#adsTable) #zoomFrame {
 .ads-export-icon-wrap {
   position: absolute;
   right: calc(10 * var(--px) + var(--table-icon-phase));
-  top: calc(7 * var(--px) + var(--table-icon-phase));
+  /* ТЗ: вертикальное центрирование иконки геометрически (auto-margins между
+     top:0 и bottom:0), а не абсолютным top в px с сабпиксельной фазой — так
+     иконка центрируется одинаково во ВСЕХ браузерах (не зависит от того, как
+     Firefox/Chrome округляют дробные пиксели). */
+  top: 0;
+  bottom: 0;
+  margin-top: auto;
+  margin-bottom: auto;
   width: calc(36 * var(--baseline-dpx, var(--px)));
   height: calc(36 * var(--baseline-dpx, var(--px)));
   aspect-ratio: 1 / 1;
