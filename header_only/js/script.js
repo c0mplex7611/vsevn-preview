@@ -357,25 +357,27 @@ function installTextZoomAwareFontRules() {
   function visitRules(rules) {
     if (!rules) return;
     Array.from(rules).forEach(function (rule) {
-      if (rule.cssRules) {
+      // ВАЖНО: у обычного CSSStyleRule в современных браузерах (CSS Nesting)
+      // rule.cssRules существует всегда (пустой список), поэтому сначала
+      // обрабатываем стиль самого правила и лишь потом рекурсим во вложенные.
+      if (rule.style) {
+        const value = rule.style.getPropertyValue("font-size");
+        if (
+          value &&
+          value.indexOf("--text-zoom-inv") === -1 &&
+          /var\(--(?:fvw|dpx|px)\b/.test(value)
+        ) {
+          const priority = rule.style.getPropertyPriority("font-size");
+          rule.style.setProperty(
+            "font-size",
+            "calc(" + value + " * var(--text-zoom-inv, 1))",
+            priority,
+          );
+        }
+      }
+      if (rule.cssRules && rule.cssRules.length) {
         visitRules(rule.cssRules);
-        return;
       }
-      if (!rule.style) return;
-      const value = rule.style.getPropertyValue("font-size");
-      if (
-        !value ||
-        value.indexOf("--text-zoom-inv") !== -1 ||
-        !/var\(--(?:fvw|dpx|px)\b/.test(value)
-      ) {
-        return;
-      }
-      const priority = rule.style.getPropertyPriority("font-size");
-      rule.style.setProperty(
-        "font-size",
-        "calc(" + value + " * var(--text-zoom-inv, 1))",
-        priority,
-      );
     });
   }
 
@@ -424,15 +426,40 @@ function ensureTextZoomProbe() {
   return probe;
 }
 
+let textZoomMeasureCanvasCtx = null;
+
+function getTextZoomCanvasWidth() {
+  // Canvas — растровый API, режим Firefox «масштабировать только текст» на его
+  // метрики не действует. Поэтому отношение DOM-ширины пробника к canvas-ширине
+  // того же текста тем же шрифтом = точный коэффициент текст-зума.
+  if (!textZoomMeasureCanvasCtx) {
+    const canvas = document.createElement("canvas");
+    textZoomMeasureCanvasCtx = canvas.getContext("2d");
+  }
+  if (!textZoomMeasureCanvasCtx) return 0;
+  textZoomMeasureCanvasCtx.font = "400 100px Roboto, Arial, sans-serif";
+  const metrics = textZoomMeasureCanvasCtx.measureText(TEXT_ZOOM_PROBE_TEXT);
+  return metrics && Number.isFinite(metrics.width) ? metrics.width : 0;
+}
+
 function measureTextOnlyZoomRatio() {
   const probe = ensureTextZoomProbe();
   const rect = probe.getBoundingClientRect();
 
-  // Firefox applies "Zoom text only" to Canvas text metrics as well, so a
-  // DOM-width / Canvas-width comparison remains close to 1 and cannot detect
-  // the mode. The probe has a unitless line-height and a fixed declared
-  // 100px font size; its used line-box height follows text-only zoom while a
-  // normal page zoom continues to report 100 CSS px.
+  // Основной сигнал: ширина текста в DOM (растёт при «Zoom Text Only» — в этом
+  // суть режима) против ширины того же текста в canvas (текст-зум не действует).
+  // Полный зум страницы меняет обе величины одинаково (CSS px) → отношение 1.
+  const canvasWidth = getTextZoomCanvasWidth();
+  if (canvasWidth > 0 && rect.width > 0) {
+    let widthRatio = rect.width / canvasWidth;
+    if (Number.isFinite(widthRatio) && widthRatio > 0.1 && widthRatio < 10) {
+      if (Math.abs(widthRatio - 1) < 0.015) widthRatio = 1;
+      if (widthRatio !== 1) return Math.round(widthRatio * 1000) / 1000;
+    }
+  }
+
+  // Фолбэк: высота строки пробника (line-height:1, font-size:100px) — в части
+  // браузеров текст-зум отражается в used line-box height.
   let ratio = rect.height / 100;
   if (!Number.isFinite(ratio) || ratio < 0.1 || ratio > 10) return 1;
   if (Math.abs(ratio - 1) < 0.015) ratio = 1;
