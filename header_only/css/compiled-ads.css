@@ -1355,7 +1355,9 @@ body.ads-col-resizing * {
   position: absolute;
   left: 0;
   right: 0;
-  top: 50%;
+  /* 50px field - 24px text band = 13px on both sides.
+     A fixed text band is more stable than top:50% + transform in Firefox. */
+  top: calc(13 * var(--px));
   z-index: 1;
   width: 100%;
   border: 0;
@@ -1369,7 +1371,11 @@ body.ads-col-resizing * {
   margin: 0;
   padding: 0;
   line-height: calc(24 * var(--px));
-  transform: translateY(-50%);
+  transform: none;
+  appearance: none;
+  -moz-appearance: none;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
   caret-color: var(--c-text);
   box-sizing: border-box;
 }
@@ -1379,15 +1385,23 @@ body.ads-col-resizing * {
 }
 .ads-search-ph {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  top: calc(13 * var(--px));
+  bottom: auto;
   z-index: 2;
+  display: block;
+  height: calc(24 * var(--px));
   color: var(--c-placeholder);
   font-size: calc(24 * var(--px));
   font-weight: 300;
   line-height: calc(24 * var(--px));
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
   pointer-events: none;
   white-space: nowrap;
   min-width: 0;
+  box-sizing: border-box;
 }
 .ads-search-field.is-focused .ads-search-ph,
 .ads-search-field.has-value .ads-search-ph {

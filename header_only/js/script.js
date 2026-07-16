@@ -284,11 +284,16 @@ function rememberStableZoomScrollAnchor() {
 }
 
 function scheduleStableZoomScrollAnchor() {
-  if (pendingZoomScrollAnchor || stableZoomScrollFrame !== null) return;
-  stableZoomScrollFrame = window.requestAnimationFrame(function () {
+  if (pendingZoomScrollAnchor) return;
+
+  // Store the user's real position immediately. A deferred rAF snapshot can
+  // still contain the previous scroll value when Ctrl +/- is pressed directly
+  // after a small wheel scroll, which makes Firefox jump back up.
+  if (stableZoomScrollFrame !== null) {
+    window.cancelAnimationFrame(stableZoomScrollFrame);
     stableZoomScrollFrame = null;
-    rememberStableZoomScrollAnchor();
-  });
+  }
+  rememberStableZoomScrollAnchor();
 }
 
 function captureZoomScrollAnchor(force) {
@@ -300,6 +305,22 @@ function captureZoomScrollAnchor(force) {
       : currentScale;
 
   if (!force && Math.abs(currentScale / previousScale - 1) <= 0.002) return;
+
+  // Keyboard/wheel zoom is captured before Firefox changes the viewport.
+  // Use the current scroll position directly instead of a potentially stale
+  // rAF snapshot left from the preceding small scroll.
+  if (force) {
+    if (stableZoomScrollFrame !== null) {
+      window.cancelAnimationFrame(stableZoomScrollFrame);
+      stableZoomScrollFrame = null;
+    }
+    const position = getDocumentScrollPosition();
+    pendingZoomScrollAnchor = {
+      leftPhysical: position.left * previousScale,
+      topPhysical: position.top * previousScale,
+    };
+    return;
+  }
 
   if (stableZoomScrollAnchor) {
     pendingZoomScrollAnchor = {
@@ -321,36 +342,33 @@ function restoreZoomScrollAnchor() {
   if (!anchor) return;
   pendingZoomScrollAnchor = null;
 
-  let attempt = 0;
-  function restoreAfterLayout() {
-    const scale = getEffectiveDevicePixelRatio();
-    const maxLeft = Math.max(
-      0,
-      document.documentElement.scrollWidth - window.innerWidth,
-    );
-    const maxTop = Math.max(
-      0,
-      document.documentElement.scrollHeight - window.innerHeight,
-    );
-    const left = Math.min(
-      maxLeft,
-      Math.max(0, anchor.leftPhysical / scale),
-    );
-    const top = Math.min(maxTop, Math.max(0, anchor.topPhysical / scale));
-    window.scrollTo(left, top);
+  const scrollingElement =
+    document.scrollingElement || document.documentElement;
+  const scale = getEffectiveDevicePixelRatio();
+  const maxLeft = Math.max(
+    0,
+    scrollingElement.scrollWidth - window.innerWidth,
+  );
+  const maxTop = Math.max(
+    0,
+    scrollingElement.scrollHeight - window.innerHeight,
+  );
+  const left = Math.min(maxLeft, Math.max(0, anchor.leftPhysical / scale));
+  const top = Math.min(maxTop, Math.max(0, anchor.topPhysical / scale));
 
-    // Firefox can update the frame height one or two frames after the zoom
-    // event. Recalculate the limits each time so scrollTo is never clamped
-    // against the old document height.
-    attempt += 1;
-    if (attempt < 4) {
-      window.requestAnimationFrame(restoreAfterLayout);
-    } else {
-      rememberStableZoomScrollAnchor();
-    }
+  // Apply in the same resize task, before Firefox paints the zoomed viewport.
+  // Four delayed scrollTo calls caused the visible up/down movement.
+  if (Math.abs(scrollingElement.scrollLeft - left) > 0.01) {
+    scrollingElement.scrollLeft = left;
+  }
+  if (Math.abs(scrollingElement.scrollTop - top) > 0.01) {
+    scrollingElement.scrollTop = top;
   }
 
-  restoreAfterLayout();
+  stableZoomScrollAnchor = {
+    leftPhysical: left * scale,
+    topPhysical: top * scale,
+  };
 }
 
 function installTextZoomAwareFontRules() {
@@ -2301,7 +2319,6 @@ function syncViewportMetrics() {
 function applyViewportMetrics() {
   viewportUpdateFrame = null;
   syncViewportMetrics();
-  restoreZoomScrollAnchor();
   if (dateCalendarState.field) positionDateCalendar(dateCalendarState.field);
 }
 
@@ -2359,6 +2376,12 @@ function markRealPointerHover(event) {
 function markViewportChanging() {
   captureZoomScrollAnchor();
   applyBrowserZoomNeutralizer();
+
+  // Restore immediately after the new design unit is applied. This keeps the
+  // same physical point at the top of the viewport before Firefox can paint an
+  // intermediate scroll position.
+  restoreZoomScrollAnchor();
+
   scheduleTextOnlyZoomCompensation();
   setHoverIntent(false);
   armHoverIntentAfterViewportChange();
