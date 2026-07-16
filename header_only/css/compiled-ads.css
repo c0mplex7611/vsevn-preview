@@ -2313,6 +2313,9 @@ body:has(.ads-page) #zoomFrame {
   top: calc(-15 * var(--px));
   width: 100%;
   min-height: inherit;
+  /* Prevent the table wrapper's 350px top margin from collapsing through
+     this container and shifting all absolutely positioned controls down. */
+  display: flow-root;
 }
 
 /* Regular field outlines: reference thickness 0.3 design px. */
