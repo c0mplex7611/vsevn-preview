@@ -794,7 +794,7 @@ function createSvgText(text, options = {}) {
     options.family || STATIC_TEXT_FAMILY,
     "important",
   );
-  label.style.setProperty("font-size", pxToVw(fontSize), "important");
+  label.style.setProperty("font-size", pxToVwFont(fontSize), "important");
   label.style.setProperty(
     "font-weight",
     String(options.weight || 300),
@@ -1228,7 +1228,9 @@ const fixedTextMetricRules = [
 function lockTextMetricElement(element, rule) {
   if (!element || !rule) return;
   element.style.setProperty("font-family", rule.family, "important");
-  element.style.setProperty("font-size", pxToVw(rule.size), "important");
+  /* font-size — с компенсацией текст-зума; line-height (px) текст-зум не
+     масштабирует, поэтому оставляем чистую геометрию — бокс не меняется. */
+  element.style.setProperty("font-size", pxToVwFont(rule.size), "important");
   element.style.setProperty("line-height", pxToVw(rule.line), "important");
   element.style.setProperty("font-weight", String(rule.weight), "important");
   element.style.setProperty("text-size-adjust", "none", "important");
@@ -1388,10 +1390,12 @@ function renderPlainElementText(element, text, options = {}) {
   element.classList.add("plain-text-render");
   element.dataset.plainTextKey = renderKey;
   element.textContent = text;
-  element.style.setProperty("--plain-font-size", pxToVw(size));
+  element.style.setProperty("--plain-font-size", pxToVwFont(size));
   element.style.setProperty("--plain-line-height", pxToVw(height));
   element.style.setProperty("--plain-font-weight", String(weight));
-  element.style.setProperty("font-size", pxToVw(size), "important");
+  /* font-size — с компенсацией текст-зума; line-height (px) при текст-зуме
+     браузер не масштабирует → оставляем чистым, геометрия строк неизменна. */
+  element.style.setProperty("font-size", pxToVwFont(size), "important");
   element.style.setProperty("line-height", pxToVw(height), "important");
   element.style.setProperty("font-weight", String(weight), "important");
   element.style.removeProperty("color");
@@ -2117,7 +2121,23 @@ function updateFilePathCaret(input, maxTextWidthOverride) {
   wrapper.style.setProperty("--filepath-caret-x", pxToVw(caretWidth));
 }
 
+/* pxToVw — ЧИСТАЯ геометрия (ширины/позиции/размеры блоков). Компенсацию
+   текст-зума сюда включать НЕЛЬЗЯ: режим Firefox «только текст» масштабирует
+   ТОЛЬКО шрифты, а не геометрию. Если сжимать и геометрию, inline-размеры
+   уезжают относительно CSS-размеров и макет «разъезжается». */
 function pxToVw(px) {
+  return (
+    "calc(var(--dpx) * " +
+    Number(px)
+      .toFixed(5)
+      .replace(/\.?0+$/, "") +
+    ")"
+  );
+}
+
+/* pxToVwFont — ТОЛЬКО для font-size: включает обратный коэффициент текст-зума,
+   чтобы при «Zoom Text Only» глифы оставались исходного размера. */
+function pxToVwFont(px) {
   return (
     "calc(var(--dpx) * var(--text-zoom-inv, 1) * " +
     Number(px)
