@@ -360,20 +360,24 @@ function installTextZoomAwareFontRules() {
       // ВАЖНО: у обычного CSSStyleRule в современных браузерах (CSS Nesting)
       // rule.cssRules существует всегда (пустой список), поэтому сначала
       // обрабатываем стиль самого правила и лишь потом рекурсим во вложенные.
+      // Firefox «только текст» масштабирует и font-size, и px line-height —
+      // компенсируем оба свойства.
       if (rule.style) {
-        const value = rule.style.getPropertyValue("font-size");
-        if (
-          value &&
-          value.indexOf("--text-zoom-inv") === -1 &&
-          /var\(--(?:fvw|dpx|px)\b/.test(value)
-        ) {
-          const priority = rule.style.getPropertyPriority("font-size");
-          rule.style.setProperty(
-            "font-size",
-            "calc(" + value + " * var(--text-zoom-inv, 1))",
-            priority,
-          );
-        }
+        ["font-size", "line-height"].forEach(function (prop) {
+          const value = rule.style.getPropertyValue(prop);
+          if (
+            value &&
+            value.indexOf("--text-zoom-inv") === -1 &&
+            /var\(--(?:fvw|dpx|px)\b/.test(value)
+          ) {
+            const priority = rule.style.getPropertyPriority(prop);
+            rule.style.setProperty(
+              prop,
+              "calc(" + value + " * var(--text-zoom-inv, 1))",
+              priority,
+            );
+          }
+        });
       }
       if (rule.cssRules && rule.cssRules.length) {
         visitRules(rule.cssRules);
@@ -800,7 +804,7 @@ function createSvgText(text, options = {}) {
     String(options.weight || 300),
     "important",
   );
-  label.style.setProperty("line-height", pxToVw(lineHeight), "important");
+  label.style.setProperty("line-height", pxToVwFont(lineHeight), "important");
 
   if (lines.length > 1) {
     lines.forEach(function (line) {
@@ -1228,10 +1232,10 @@ const fixedTextMetricRules = [
 function lockTextMetricElement(element, rule) {
   if (!element || !rule) return;
   element.style.setProperty("font-family", rule.family, "important");
-  /* font-size — с компенсацией текст-зума; line-height (px) текст-зум не
-     масштабирует, поэтому оставляем чистую геометрию — бокс не меняется. */
+  /* Firefox «только текст» масштабирует и font-size, и px line-height —
+     компенсируем оба, чтобы ни глифы, ни межстрочка не менялись. */
   element.style.setProperty("font-size", pxToVwFont(rule.size), "important");
-  element.style.setProperty("line-height", pxToVw(rule.line), "important");
+  element.style.setProperty("line-height", pxToVwFont(rule.line), "important");
   element.style.setProperty("font-weight", String(rule.weight), "important");
   element.style.setProperty("text-size-adjust", "none", "important");
   element.style.setProperty("-moz-text-size-adjust", "none", "important");
@@ -1391,12 +1395,13 @@ function renderPlainElementText(element, text, options = {}) {
   element.dataset.plainTextKey = renderKey;
   element.textContent = text;
   element.style.setProperty("--plain-font-size", pxToVwFont(size));
-  element.style.setProperty("--plain-line-height", pxToVw(height));
+  element.style.setProperty("--plain-line-height", pxToVwFont(height));
   element.style.setProperty("--plain-font-weight", String(weight));
-  /* font-size — с компенсацией текст-зума; line-height (px) при текст-зуме
-     браузер не масштабирует → оставляем чистым, геометрия строк неизменна. */
+  /* Firefox «только текст» масштабирует и font-size, и px line-height —
+     компенсируем оба (глифы и межстрочка остаются исходными), а геометрию
+     блоков (pxToVw) не трогаем — её текст-зум не масштабирует. */
   element.style.setProperty("font-size", pxToVwFont(size), "important");
-  element.style.setProperty("line-height", pxToVw(height), "important");
+  element.style.setProperty("line-height", pxToVwFont(height), "important");
   element.style.setProperty("font-weight", String(weight), "important");
   element.style.removeProperty("color");
 }
