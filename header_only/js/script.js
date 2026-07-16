@@ -426,16 +426,15 @@ function ensureTextZoomProbe() {
 
 function measureTextOnlyZoomRatio() {
   const probe = ensureTextZoomProbe();
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-  if (!context) return 1;
-  context.font = '400 100px Roboto, Arial, sans-serif';
-  const expected = context.measureText(TEXT_ZOOM_PROBE_TEXT).width;
-  const rendered = probe.getBoundingClientRect().width;
-  if (!(expected > 0) || !(rendered > 0)) return 1;
+  const rect = probe.getBoundingClientRect();
 
-  let ratio = rendered / expected;
-  if (!Number.isFinite(ratio) || ratio < 0.5 || ratio > 5) return 1;
+  // Firefox applies "Zoom text only" to Canvas text metrics as well, so a
+  // DOM-width / Canvas-width comparison remains close to 1 and cannot detect
+  // the mode. The probe has a unitless line-height and a fixed declared
+  // 100px font size; its used line-box height follows text-only zoom while a
+  // normal page zoom continues to report 100 CSS px.
+  let ratio = rect.height / 100;
+  if (!Number.isFinite(ratio) || ratio < 0.1 || ratio > 10) return 1;
   if (Math.abs(ratio - 1) < 0.015) ratio = 1;
   return Math.round(ratio * 1000) / 1000;
 }
