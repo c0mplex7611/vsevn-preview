@@ -2445,3 +2445,17 @@ body:has(.ads-page) #zoomFrame {
   text-align: center;
   white-space: nowrap;
 }
+
+
+/* ============================================================
+   LEFT ALIGNMENT HOTFIX (2026-07-16)
+   Shift only the second checkbox row and both filter dropdowns
+   15 design px left. Other card geometry stays unchanged.
+   ============================================================ */
+.ads-check--responses { left: calc(21 * var(--px)); }
+.ads-check--wrap { left: calc(380 * var(--px)); }
+.ads-check--collapse { left: calc(557 * var(--px)); }
+.ads-check--notags { left: calc(751 * var(--px)); }
+.ads-check--changed { left: calc(910 * var(--px)); }
+.ads-dropdown--xml { left: calc(21 * var(--px)); }
+.ads-dropdown--groups { left: calc(924 * var(--px)); }
