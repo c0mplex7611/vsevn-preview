@@ -38,7 +38,7 @@
 
 /* PerfectPixel: холст 1920 design px = ширина артборда Figma */
 body:has(#adsTable) #zoomFrame {
-  width: calc(1920 * var(--dpx, 1px));
+  width: calc(1920 * var(--fvw, 1vw) / 19.2);
   max-width: none;
 }
 
@@ -794,11 +794,6 @@ body:has(#adsTable) #zoomFrame {
   border-radius: 0;
   pointer-events: none;
   white-space: nowrap;
-}
-/* ТЗ п.3.3: во время зум-блокировки скрываем подсказку таблицы, чтобы она не
-   всплывала сама при масштабировании (таблица — отдельный модуль от интерфейса). */
-html.is-zoom-hover-blocked .ads-tip {
-  display: none !important;
 }
 .ads-tip.is-wrapped,
 .ads-page-tip.is-wrapped {
@@ -2254,10 +2249,11 @@ body:has(.ads-page) {
   min-height: 100%;
 }
 body:has(.ads-page) #zoomFrame {
-  position: absolute;
+  position: relative;
   height: auto;
   max-height: none;
-  overflow: visible;
-  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: visible;
+  min-height: calc(100vh * var(--browser-zoom, 1));
   background: #fffcec;
 }

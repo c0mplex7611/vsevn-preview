@@ -225,296 +225,187 @@ const STATIC_TEXT_FAMILY = "Roboto, Arial, sans-serif";
 const TEXT_RENDER_ENGINE = "html-text-v1";
 const DESIGN_VIEWPORT_WIDTH = 1920;
 const MIN_PAGE_SCALE = 0.05;
-const staticZoomState = {
-  initialized: false,
-  baseDpr: 1,
-  baseOuterWidth: 0,
-  baseInnerWidth: 0,
-  baseClientWidth: 0,
-  browserZoom: 1,
-  inverseZoom: 1,
-  stableDesignScrollY: 0,
-  applying: false,
-  suppressScrollCaptureUntil: 0,
-  resolutionMedia: null,
-  resolutionListener: null,
-  rootResizeObserver: null,
-  frameResizeObserver: null,
-  listenersBound: false,
-  zoomGestureUntil: 0,
+const zoomLayoutReference = {
+  outerWidth: 0,
+  innerWidth: 0,
+  clientWidth: 0,
 };
+let baselineDevicePixelScale = null;
+let lastKnownBrowserZoom = 1;
 
+/* ТЗ п.1: на Ctrl +/- не пересчитываем метрики дочерних элементов.
+   Относительный зум определяем по devicePixelRatio и компенсируем одним
+   transform общего кадра. Так HTML-макет сохраняет физический размер без reflow. */
 let baselineDeviceRatio = null;
-let appliedBrowserZoomInverse = "1.00000000";
+let appliedBrowserZoomInverse = null;
+let zoomFrameResizeObserver = null;
 
-function readDevicePixelRatio() {
-  return Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-    ? window.devicePixelRatio
-    : 1;
-}
+function syncBrowserZoomViewportHeight() {
+  const frame = document.getElementById("zoomFrame");
+  const viewport = document.getElementById("zoomViewport");
+  const inverseZoom = parseFloat(appliedBrowserZoomInverse);
+  if (!frame || !viewport || !(inverseZoom > 0)) return;
 
-function readClientWidth() {
-  return (
-    document.documentElement.clientWidth ||
-    window.innerWidth ||
-    DESIGN_VIEWPORT_WIDTH
-  );
+  const frameHeight = frame.offsetHeight;
+  if (!(frameHeight > 0)) return;
+  const nextHeight = (frameHeight * inverseZoom).toFixed(4) + "px";
+  if (viewport.style.height !== nextHeight) {
+    viewport.style.height = nextHeight;
+  }
 }
 
 function captureBaselineDeviceRatio() {
-  if (staticZoomState.initialized) return;
-
-  const dpr = readDevicePixelRatio();
-  baselineDeviceRatio = dpr;
-  staticZoomState.baseDpr = dpr;
-  staticZoomState.baseOuterWidth = window.outerWidth || 0;
-  staticZoomState.baseInnerWidth = window.innerWidth || readClientWidth();
-  staticZoomState.baseClientWidth = readClientWidth();
-  staticZoomState.browserZoom = 1;
-  staticZoomState.inverseZoom = 1;
-  staticZoomState.stableDesignScrollY = window.scrollY || 0;
-  staticZoomState.initialized = true;
+  if (baselineDeviceRatio == null) {
+    baselineDeviceRatio =
+      Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+        ? window.devicePixelRatio
+        : 1;
+  }
 }
-
-window.__staticBaseDpr = function () {
-  captureBaselineDeviceRatio();
-  return staticZoomState.baseDpr;
-};
-
-function captureZoomLayoutReference() {
-  captureBaselineDeviceRatio();
+function isBrowserZoomed() {
+  if (baselineDeviceRatio == null) return false;
+  const dpr =
+    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+      ? window.devicePixelRatio
+      : 1;
+  return Math.abs(dpr / baselineDeviceRatio - 1) > 0.02;
 }
+window.isBrowserZoomed = isBrowserZoomed;
 
-function getGeometryZoomScale() {
-  const baseOuter = staticZoomState.baseOuterWidth;
-  const currentOuter = window.outerWidth || 0;
-  const baseInner = staticZoomState.baseInnerWidth;
-  const currentInner = window.innerWidth || readClientWidth();
-  const baseClient = staticZoomState.baseClientWidth;
-  const currentClient = readClientWidth();
+function captureZoomLayoutReference(force) {
+  const outerWidth = window.outerWidth;
+  const innerWidth = window.innerWidth;
+  const clientWidth =
+    document.documentElement.clientWidth || innerWidth || DESIGN_VIEWPORT_WIDTH;
 
-  const outerStable =
-    baseOuter > 0 && currentOuter > 0 && Math.abs(currentOuter - baseOuter) <= 8;
-  if (!outerStable && performance.now() > staticZoomState.zoomGestureUntil) {
-    return 1;
+  if (force || !zoomLayoutReference.innerWidth) {
+    zoomLayoutReference.outerWidth = outerWidth;
+    zoomLayoutReference.innerWidth = innerWidth;
+    zoomLayoutReference.clientWidth = clientWidth;
+    if (baselineDevicePixelScale == null) {
+      baselineDevicePixelScale = window.devicePixelRatio || 1;
+    }
+    return;
   }
 
-  const innerRatio =
-    baseInner > 0 && currentInner > 0 ? baseInner / currentInner : 1;
-  const clientRatio =
-    baseClient > 0 && currentClient > 0 ? baseClient / currentClient : 1;
-
-  const candidates = [innerRatio, clientRatio].filter(function (value) {
-    return Number.isFinite(value) && value > 0.1 && value < 10;
-  });
-  if (!candidates.length) return 1;
-  return candidates.reduce(function (sum, value) {
-    return sum + value;
-  }, 0) / candidates.length;
+  if (Math.abs(outerWidth - zoomLayoutReference.outerWidth) > 6) {
+    zoomLayoutReference.outerWidth = outerWidth;
+    zoomLayoutReference.innerWidth = Math.round(innerWidth * lastKnownBrowserZoom);
+    zoomLayoutReference.clientWidth = Math.round(
+      clientWidth * lastKnownBrowserZoom,
+    );
+    baselineDevicePixelScale =
+      (window.devicePixelRatio || 1) / lastKnownBrowserZoom;
+  }
 }
 
 function getBrowserZoomScale() {
-  captureBaselineDeviceRatio();
-
-  const dprRatio = readDevicePixelRatio() / staticZoomState.baseDpr;
-  const geometryRatio = getGeometryZoomScale();
   const visualScale =
     window.visualViewport &&
     Number.isFinite(window.visualViewport.scale) &&
     window.visualViewport.scale > 0
       ? window.visualViewport.scale
       : 1;
-
-  let pageZoom = dprRatio;
-  if (Math.abs(dprRatio - 1) < 0.008 && Math.abs(geometryRatio - 1) >= 0.008) {
-    pageZoom = geometryRatio;
+  if (Math.abs(visualScale - 1) > 0.008) {
+    lastKnownBrowserZoom = visualScale;
+    return visualScale;
   }
 
-  // visualViewport.scale is normally 1 for desktop page zoom and changes for
-  // pinch zoom. Multiplying it here keeps the same physical design size.
-  const combined = pageZoom * visualScale;
-  return Number.isFinite(combined) && combined > 0.1 && combined < 10
-    ? combined
-    : 1;
-}
+  if (zoomLayoutReference.innerWidth > 0) {
+    const outerDelta = Math.abs(
+      window.outerWidth - zoomLayoutReference.outerWidth,
+    );
+    if (outerDelta < 6) {
+      const innerWidth = window.innerWidth;
+      if (innerWidth > 0) {
+        const innerZoom = zoomLayoutReference.innerWidth / innerWidth;
+        if (
+          Number.isFinite(innerZoom) &&
+          innerZoom > 0 &&
+          Math.abs(innerZoom - 1) > 0.008
+        ) {
+          lastKnownBrowserZoom = innerZoom;
+          return innerZoom;
+        }
+      }
 
-function isBrowserZoomed() {
-  return Math.abs(getBrowserZoomScale() - 1) > 0.01;
+      const clientWidth =
+        document.documentElement.clientWidth || window.innerWidth;
+      if (clientWidth > 0) {
+        const clientZoom = zoomLayoutReference.clientWidth / clientWidth;
+        if (
+          Number.isFinite(clientZoom) &&
+          clientZoom > 0 &&
+          Math.abs(clientZoom - 1) > 0.008
+        ) {
+          lastKnownBrowserZoom = clientZoom;
+          return clientZoom;
+        }
+      }
+    }
+  }
+
+  if (baselineDevicePixelScale && baselineDevicePixelScale > 0) {
+    const dprZoom = (window.devicePixelRatio || 1) / baselineDevicePixelScale;
+    if (
+      Number.isFinite(dprZoom) &&
+      dprZoom > 0 &&
+      Math.abs(dprZoom - 1) > 0.008
+    ) {
+      lastKnownBrowserZoom = dprZoom;
+      return dprZoom;
+    }
+  }
+
+  lastKnownBrowserZoom = 1;
+  return 1;
 }
-window.isBrowserZoomed = isBrowserZoomed;
-window.getBrowserZoomScale = getBrowserZoomScale;
 
 function getLayoutViewportWidth() {
-  captureBaselineDeviceRatio();
-  return DESIGN_VIEWPORT_WIDTH / staticZoomState.baseDpr;
-}
-
-function hideZoomTriggeredTooltips() {
-  if (typeof hideAllTooltips === "function") hideAllTooltips();
-  if (typeof window.__hideAdsTip === "function") window.__hideAdsTip();
-  document.documentElement.classList.add("is-zoom-hover-blocked");
-}
-
-function syncStaticFrameMetrics() {
-  const frame = document.getElementById("zoomFrame");
-  if (!frame) return;
-  const root = document.documentElement;
-  const width = Math.max(1, frame.offsetWidth);
-  const height = Math.max(1, frame.scrollHeight, frame.offsetHeight);
-  root.style.setProperty("--static-frame-width", width.toFixed(4) + "px");
-  root.style.setProperty("--static-frame-height", height.toFixed(4) + "px");
-}
-
-function restoreStableScroll(inverseZoom) {
-  const expected = staticZoomState.stableDesignScrollY * inverseZoom;
-  if (!Number.isFinite(expected)) return;
-
-  // Reading a layout metric commits CSS zoom before the scroll correction.
-  const frame = document.getElementById("zoomFrame");
-  if (frame) void frame.offsetHeight;
-
-  if (Math.abs(window.scrollY - expected) > 0.25) {
-    staticZoomState.suppressScrollCaptureUntil = performance.now() + 120;
-    window.scrollTo(window.scrollX, expected);
-  }
+  const raw =
+    document.documentElement.clientWidth ||
+    window.innerWidth ||
+    DESIGN_VIEWPORT_WIDTH;
+  if (raw <= 0) return DESIGN_VIEWPORT_WIDTH;
+  return raw * getBrowserZoomScale();
 }
 
 function applyBrowserZoomNeutralizer() {
   const frame = document.getElementById("zoomFrame");
+  const viewport = document.getElementById("zoomViewport");
   const root = document.documentElement;
-  if (!frame) return;
+
+  if (!frame || !viewport) return;
 
   captureBaselineDeviceRatio();
-  updateZoomAwareLines();
+
+  // Browser zoom changes the CSS viewport and Firefox rounds table/text
+  // layout differently at each scale. Keep the design unit tied to the
+  // current device ratio instead of scaling a finished layer with transform:
+  // every physical design pixel remains one physical pixel, while content
+  // stays live HTML and is laid out only once per viewport update.
   if (typeof window.syncDesignViewportUnit === "function") {
     window.syncDesignViewportUnit();
   }
+  updateZoomAwareLines();
 
-  const browserZoom = getBrowserZoomScale();
-  const inverse = 1 / browserZoom;
-  const inverseValue = inverse.toFixed(8);
+  const inverseValue = "1.00000000";
+  if (appliedBrowserZoomInverse !== inverseValue) {
+    appliedBrowserZoomInverse = inverseValue;
+    root.classList.add("is-browser-zoom-neutralized");
+    root.style.setProperty("--browser-zoom", "1.00000000");
+    root.style.setProperty("--browser-zoom-inv", inverseValue);
+  }
 
-  if (appliedBrowserZoomInverse === inverseValue) return;
-
-  staticZoomState.applying = true;
-  staticZoomState.browserZoom = browserZoom;
-  staticZoomState.inverseZoom = inverse;
-  appliedBrowserZoomInverse = inverseValue;
-
-  // The internal layout never changes. Only one compositor transform is updated.
-  // The wrapper size is derived from the untransformed frame metrics in CSS, so
-  // there is one native document scrollbar and no height feedback loop.
-  frame.style.setProperty("zoom", "1");
-  frame.style.setProperty("transform-origin", "0 0");
-  frame.style.setProperty("transform", "scale(" + inverseValue + ")", "important");
-  root.style.setProperty("--browser-zoom", browserZoom.toFixed(8));
-  root.style.setProperty("--browser-zoom-inv", inverseValue);
-  root.classList.toggle("is-browser-zoom-neutralized", Math.abs(inverse - 1) > 0.0005);
-
-  syncStaticFrameMetrics();
-  hideZoomTriggeredTooltips();
-  restoreStableScroll(inverse);
-
-  queueMicrotask(function () {
-    staticZoomState.applying = false;
-  });
+  syncBrowserZoomViewportHeight();
+  if (!zoomFrameResizeObserver && typeof ResizeObserver === "function") {
+    zoomFrameResizeObserver = new ResizeObserver(
+      syncBrowserZoomViewportHeight,
+    );
+    zoomFrameResizeObserver.observe(frame);
+  }
 }
 window.applyBrowserZoomNeutralizer = applyBrowserZoomNeutralizer;
-
-function bindResolutionWatcher() {
-  if (!window.matchMedia) return;
-
-  if (staticZoomState.resolutionMedia && staticZoomState.resolutionListener) {
-    const oldMedia = staticZoomState.resolutionMedia;
-    const oldListener = staticZoomState.resolutionListener;
-    if (oldMedia.removeEventListener) oldMedia.removeEventListener("change", oldListener);
-    else if (oldMedia.removeListener) oldMedia.removeListener(oldListener);
-  }
-
-  const media = window.matchMedia("(resolution: " + readDevicePixelRatio() + "dppx)");
-  const listener = function () {
-    markViewportChanging();
-    bindResolutionWatcher();
-  };
-  staticZoomState.resolutionMedia = media;
-  staticZoomState.resolutionListener = listener;
-  if (media.addEventListener) media.addEventListener("change", listener);
-  else if (media.addListener) media.addListener(listener);
-}
-
-function rememberZoomGesture() {
-  staticZoomState.zoomGestureUntil = performance.now() + 1000;
-  staticZoomState.stableDesignScrollY =
-    (window.scrollY || 0) / (staticZoomState.inverseZoom || 1);
-  hideZoomTriggeredTooltips();
-}
-
-function bindStaticZoomListeners() {
-  if (staticZoomState.listenersBound) return;
-  staticZoomState.listenersBound = true;
-
-  bindResolutionWatcher();
-
-  if (typeof ResizeObserver === "function") {
-    staticZoomState.rootResizeObserver = new ResizeObserver(function () {
-      applyBrowserZoomNeutralizer();
-    });
-    staticZoomState.rootResizeObserver.observe(document.documentElement);
-
-    const frame = document.getElementById("zoomFrame");
-    if (frame) {
-      staticZoomState.frameResizeObserver = new ResizeObserver(function () {
-        syncStaticFrameMetrics();
-      });
-      staticZoomState.frameResizeObserver.observe(frame);
-    }
-  }
-  syncStaticFrameMetrics();
-
-  document.addEventListener(
-    "keydown",
-    function (event) {
-      if (!(event.ctrlKey || event.metaKey)) return;
-      if (!["+", "=", "-", "_", "0"].includes(event.key)) return;
-      rememberZoomGesture();
-      setTimeout(applyBrowserZoomNeutralizer, 0);
-    },
-    true,
-  );
-
-  document.addEventListener(
-    "wheel",
-    function (event) {
-      if (!event.ctrlKey) return;
-      rememberZoomGesture();
-      setTimeout(applyBrowserZoomNeutralizer, 0);
-    },
-    { capture: true, passive: true },
-  );
-
-  window.addEventListener(
-    "scroll",
-    function () {
-      if (staticZoomState.applying) return;
-      if (performance.now() < staticZoomState.suppressScrollCaptureUntil) return;
-
-      const detectedZoom = getBrowserZoomScale();
-      if (Math.abs(detectedZoom - staticZoomState.browserZoom) > 0.008) {
-        applyBrowserZoomNeutralizer();
-        return;
-      }
-
-      staticZoomState.stableDesignScrollY =
-        (window.scrollY || 0) / (staticZoomState.inverseZoom || 1);
-    },
-    { passive: true },
-  );
-
-  document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) applyBrowserZoomNeutralizer();
-  });
-}
-
 
 function getCurrentPageScale() {
   const value = parseFloat(
@@ -1984,39 +1875,33 @@ function updateSvgTextZoomCompensation() {
 function updateZoomAwareLines() {
   const textRenderModeChanged = updateSvgTextZoomCompensation();
   const root = document.documentElement;
-  captureBaselineDeviceRatio();
-
-  if (frozenLayoutPageScale !== null) return textRenderModeChanged;
-
-  const base = staticZoomState.baseDpr;
-  const pageScale = 1 / base;
+  const dpr =
+    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+      ? window.devicePixelRatio
+      : 1;
+  const pageScale = 1 / dpr;
   frozenLayoutPageScale = pageScale;
-
-  function snapAtBase(value) {
-    return Math.round(value * base) / base;
-  }
-  function positiveAtBase(value) {
-    return Math.max(1 / base, snapAtBase(value));
-  }
-
   const underlineScreenDotPx = 2;
   const underlineScreenGapPx = 3;
   const zoomSafeLine = Math.max(MIN_PAGE_SCALE, pageScale);
-  const dotSize = positiveAtBase(zoomSafeLine * underlineScreenDotPx);
-  const dotStep = positiveAtBase(dotSize + zoomSafeLine * underlineScreenGapPx);
-  const checkboxFillLine = positiveAtBase(pageScale * 6);
+  const dotSize = snapPositiveCssPx(zoomSafeLine * underlineScreenDotPx);
+  const dotStep = snapPositiveCssPx(
+    dotSize + zoomSafeLine * underlineScreenGapPx,
+  );
+  const checkboxFillLine = snapPositiveCssPx(pageScale * 6);
   const nextVars = {
     "--page-scale": pageScale.toFixed(6),
     "--dpx": pageScale.toFixed(6) + "px",
-    "--fvw": (19.2 * pageScale).toFixed(6) + "px",
-    "--ui-half-line": positiveAtBase(pageScale * 0.5).toFixed(6) + "px",
-    "--ui-hairline": positiveAtBase(pageScale).toFixed(6) + "px",
-    "--ui-control-line": positiveAtBase(pageScale * 0.5).toFixed(6) + "px",
-    "--ui-control-strong-line": positiveAtBase(pageScale * 1.5).toFixed(6) + "px",
-    "--ui-checkbox-line": positiveAtBase(pageScale * 1.25).toFixed(6) + "px",
+    "--ui-half-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
+    "--ui-hairline": snapPositiveCssPx(pageScale).toFixed(6) + "px",
+    "--ui-control-line": snapPositiveCssPx(pageScale * 0.5).toFixed(6) + "px",
+    "--ui-control-strong-line":
+      snapPositiveCssPx(pageScale * 1.5).toFixed(6) + "px",
+    "--ui-checkbox-line":
+      snapPositiveCssPx(pageScale * 1.25).toFixed(6) + "px",
     "--ui-checkbox-fill-line": checkboxFillLine.toFixed(6) + "px",
-    "--ui-strong-line": positiveAtBase(pageScale * 2).toFixed(6) + "px",
-    "--zoom-safe-line": positiveAtBase(zoomSafeLine).toFixed(6) + "px",
+    "--ui-strong-line": snapPositiveCssPx(pageScale * 2).toFixed(6) + "px",
+    "--zoom-safe-line": snapPositiveCssPx(zoomSafeLine).toFixed(6) + "px",
     "--zoom-dot-size": dotSize.toFixed(6) + "px",
     "--zoom-dot-radius": (dotSize / 2).toFixed(6) + "px",
     "--zoom-dot-edge": (dotSize * 0.55).toFixed(6) + "px",
@@ -2024,6 +1909,7 @@ function updateZoomAwareLines() {
   };
 
   Object.keys(nextVars).forEach(function (name) {
+    if (zoomLineVarsCache[name] === nextVars[name]) return;
     zoomLineVarsCache[name] = nextVars[name];
     root.style.setProperty(name, nextVars[name]);
   });
@@ -2032,30 +1918,74 @@ function updateZoomAwareLines() {
 }
 
 let viewportUpdateFrame = null;
+let zoomHoverShield = null;
+let zoomHoverShieldTimer = null;
 let zoomHoverReleaseBound = false;
 
-function releaseZoomHoverBlock(event) {
-  if (event && event.type === "pointermove") {
-    markRealPointerHover(event);
-    if (!hasHoverIntent()) return;
-  }
+function ensureZoomHoverShield() {
+  if (zoomHoverShield || !document.body) return zoomHoverShield;
+  zoomHoverShield = document.createElement("div");
+  zoomHoverShield.className = "zoom-hover-shield";
+  zoomHoverShield.setAttribute("aria-hidden", "true");
+  zoomHoverShield.hidden = true;
+  document.body.appendChild(zoomHoverShield);
+  return zoomHoverShield;
+}
+
+function releaseZoomHoverBlock() {
+  if (zoomHoverShield && !zoomHoverShield.hidden) return;
+
+  hideAllTooltips();
   document.documentElement.classList.remove("is-zoom-hover-blocked");
   if (!zoomHoverReleaseBound) return;
+
   window.removeEventListener("pointermove", releaseZoomHoverBlock, true);
-  window.removeEventListener("pointerdown", releaseZoomHoverBlock, true);
+  window.removeEventListener("mousedown", releaseZoomHoverBlock, true);
+  window.removeEventListener("keydown", releaseZoomHoverBlock, true);
   zoomHoverReleaseBound = false;
 }
 
 function armZoomHoverRelease() {
   if (zoomHoverReleaseBound) return;
+
   zoomHoverReleaseBound = true;
   window.addEventListener("pointermove", releaseZoomHoverBlock, true);
-  window.addEventListener("pointerdown", releaseZoomHoverBlock, true);
+  window.addEventListener("mousedown", releaseZoomHoverBlock, true);
+  window.addEventListener("keydown", releaseZoomHoverBlock, true);
+}
+
+function resetTransientHoverState() {
+  hideAllTooltips();
+
+  document
+    .querySelectorAll(".delete-btn.is-pressed")
+    .forEach(function (button) {
+      button.classList.remove("is-pressed");
+    });
+
+  const selectEl = document.getElementById("typeSelect");
+  if (selectEl) selectEl.classList.remove("open", "is-preparing");
+
+  const sourceChoiceMenu = document.getElementById("sourceChoiceMenu");
+  if (sourceChoiceMenu) sourceChoiceMenu.hidden = true;
+
+  const calendar = document.querySelector(".date-calendar");
+  if (calendar && !calendar.hidden) closeDateCalendar();
 }
 
 function activateZoomHoverShield() {
-  hideZoomTriggeredTooltips();
-  armZoomHoverRelease();
+  const shield = ensureZoomHoverShield();
+  if (!shield) return;
+
+  resetTransientHoverState();
+  document.documentElement.classList.add("is-zoom-hover-blocked");
+  shield.hidden = false;
+  if (zoomHoverShieldTimer) clearTimeout(zoomHoverShieldTimer);
+  zoomHoverShieldTimer = setTimeout(function () {
+    shield.hidden = true;
+    zoomHoverShieldTimer = null;
+    releaseZoomHoverBlock();
+  }, 260);
 }
 
 function areTooltipsSuppressed() {
@@ -2063,6 +1993,11 @@ function areTooltipsSuppressed() {
 }
 
 function syncViewportMetrics() {
+  if (viewportUpdateFrame !== null) {
+    window.cancelAnimationFrame(viewportUpdateFrame);
+    viewportUpdateFrame = null;
+  }
+
   applyBrowserZoomNeutralizer();
 }
 
@@ -2072,7 +2007,10 @@ function applyViewportMetrics() {
   if (dateCalendarState.field) positionDateCalendar(dateCalendarState.field);
 }
 
-/* Tooltips become eligible again only after a real pointer movement. */
+/* ТЗ п.1: тултипы должны появляться только при реальном наведении мышью,
+   а не когда лейаут «подъезжает» под неподвижный курсор при зуме/пересчёте.
+   Флаг hover-intent ставится по настоящему движению указателя и сбрасывается
+   на каждое изменение вьюпорта — до следующего реального движения мыши. */
 let hoverIntentActive = false;
 let lastPointerPosition = null;
 let hoverIntentArmPosition = null;
@@ -2087,8 +2025,13 @@ function hasHoverIntent() {
 }
 
 function rememberPointerPosition(event) {
-  if (!event || !Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return;
-  lastPointerPosition = { x: event.clientX, y: event.clientY };
+  if (!event || !Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) {
+    return;
+  }
+  lastPointerPosition = {
+    x: event.clientX,
+    y: event.clientY,
+  };
 }
 
 function armHoverIntentAfterViewportChange() {
@@ -2109,16 +2052,19 @@ function markRealPointerHover(event) {
   const dy = event.clientY - hoverIntentArmPosition.y;
   const threshold = Math.max(2, 1 / getDevicePixelScale());
   rememberPointerPosition(event);
+
   if (Math.sqrt(dx * dx + dy * dy) < threshold) return;
   hoverIntentArmPosition = null;
   setHoverIntent(true);
 }
 
 function markViewportChanging() {
+  applyBrowserZoomNeutralizer();
   setHoverIntent(false);
   armHoverIntentAfterViewportChange();
   activateZoomHoverShield();
-  applyBrowserZoomNeutralizer();
+  if (viewportUpdateFrame !== null) return;
+  viewportUpdateFrame = window.requestAnimationFrame(applyViewportMetrics);
 }
 
 function getTableHeaderKey(th) {
@@ -7172,7 +7118,6 @@ function bindBitmapTextFontRefresh() {
 document.addEventListener("DOMContentLoaded", function () {
   captureBaselineDeviceRatio();
   captureZoomLayoutReference(true);
-  bindStaticZoomListeners();
   applyBrowserZoomNeutralizer();
   if (typeof window.syncDesignViewportUnit === "function") {
     window.syncDesignViewportUnit();

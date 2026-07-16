@@ -2371,10 +2371,6 @@
       adsTipEl = null;
     }
   }
-  // ТЗ п.3.3: даём интерфейсному модулю (script.js) снимать подсказку таблицы
-  // при зуме — таблица и интерфейс это разные модули, и раньше подсказка таблицы
-  // не снималась при масштабировании.
-  window.__hideAdsTip = hideAdsTip;
 
   function initAdsTipViewportSync() {
     function syncAdsTipPosition() {
@@ -2406,24 +2402,12 @@
     adsTipTimer = setTimeout(hideAdsTip, ms || 5000);
   }
 
-  // ТЗ п.1/3.3: подсказки таблицы показываем только при осознанном наведении
-  // мышью (реальное движение указателя), а не когда при зуме CSS-позиции меняются
-  // и ложно срабатывает mouseenter. Таблица и интерфейс — разные модули, поэтому
-  // дублируем ту же защиту, что и у интерфейсных подсказок.
-  function hoverTipsAllowed() {
-    const root = document.documentElement;
-    return (
-      !root.classList.contains("is-zoom-hover-blocked") &&
-      root.classList.contains("has-hover-intent")
-    );
-  }
-
   function bindTip(el, text, opts) {
     if (!el || el.dataset.tipBound) return;
     el.dataset.tipBound = "1";
     opts = opts || {};
     el.addEventListener("mouseenter", function () {
-      if (el.dataset.tipLocked || !hoverTipsAllowed()) return;
+      if (el.dataset.tipLocked) return;
       showAdsTip(el, typeof text === "function" ? text() : text, opts);
     });
     el.addEventListener("mouseleave", function () {
@@ -2436,7 +2420,7 @@
     if (!el || el.dataset.copyBound) return;
     el.dataset.copyBound = "1";
     el.addEventListener("mouseenter", function () {
-      if (el.dataset.tipLocked || !hoverTipsAllowed()) return;
+      if (el.dataset.tipLocked) return;
       const txt = el.dataset.copy || "";
       const isLink = /^https?:\/\//i.test(txt);
       showAdsTip(el, isLink ? "Скопировать ссылку" : "Скопировать");
@@ -3431,17 +3415,13 @@
 
   function syncDesignViewportUnit() {
     const root = document.documentElement;
-    const baseDpr =
-      typeof window.__staticBaseDpr === "function"
-        ? window.__staticBaseDpr()
-        : Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-          ? window.devicePixelRatio
-          : 1;
-    const nextFvw = (19.2 / baseDpr).toFixed(6) + "px";
-    const nextDpx = (1 / baseDpr).toFixed(6) + "px";
+    const dpr =
+      Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+        ? window.devicePixelRatio
+        : 1;
+    const nextFvw = 19.2 / dpr + "px";
     root.dataset.lastFvw = nextFvw;
     root.style.setProperty("--fvw", nextFvw);
-    root.style.setProperty("--dpx", nextDpx);
   }
 
   window.syncDesignViewportUnit = syncDesignViewportUnit;
@@ -3455,7 +3435,28 @@
         applyFormControlVerticalCssVars(document.querySelector(".ads-page"));
       }
     }
-    syncDesignViewportUnit();
+    window.addEventListener("resize", function () {
+      if (typeof window.markViewportChanging === "function") {
+        window.markViewportChanging();
+        return;
+      }
+      syncDesignViewportUnit();
+      if (typeof applyFormControlVerticalCssVars === "function") {
+        applyFormControlVerticalCssVars(document.querySelector(".ads-page"));
+      }
+    });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", function () {
+        if (typeof window.markViewportChanging === "function") {
+          window.markViewportChanging();
+          return;
+        }
+        syncDesignViewportUnit();
+        if (typeof applyFormControlVerticalCssVars === "function") {
+          applyFormControlVerticalCssVars(document.querySelector(".ads-page"));
+        }
+      });
+    }
     processAdsData();
     fixNavHeader();
     buildColgroup();
@@ -3481,7 +3482,7 @@
     document.documentElement.style.overflowY = "scroll";
 
     if (typeof renderStaticText === "function") renderStaticText();
-    applyAdsStatic();
+    requestAnimationFrame(applyAdsStatic);
   }
 
   document.addEventListener("DOMContentLoaded", function () {
