@@ -6,7 +6,9 @@
 
 .ads-page {
   --px: var(--dpx, calc(var(--fvw, 1vw) / 19.2));
-  --table-icon-phase: calc(var(--dpx, 1px) - 1px);
+  /* Icon coordinates stay in design pixels; a DPR-dependent phase makes
+     them drift horizontally and vertically when browser zoom changes. */
+  --table-icon-phase: 0px;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   --c-text: #62560e;
@@ -544,17 +546,20 @@ body:has(#adsTable) #zoomFrame {
   transition: border-color 0.15s ease;
 }
 .ads-export-line {
-  display: block;
+  display: flex;
+  align-items: center;
   flex: 1;
   min-width: 0;
-  height: auto;
+  height: calc(24 * var(--px));
   padding: 0 calc(47 * var(--px)) 0 calc(18 * var(--px));
   font-size: calc(21 * var(--px));
-  line-height: 1;
+  line-height: calc(24 * var(--px));
   white-space: nowrap;
   pointer-events: none;
   box-sizing: border-box;
   text-align: left;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
 }
 .ads-export-text {
   font-weight: 200;
@@ -713,10 +718,9 @@ body:has(#adsTable) #zoomFrame {
   font-weight: 300;
   color: #c6c6c6;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
+  display: block;
+  line-height: calc(22 * var(--px));
+  padding-top: calc(13 * var(--px));
   text-align: center;
   box-sizing: border-box;
   font-variant-numeric: tabular-nums;
@@ -730,7 +734,8 @@ body:has(#adsTable) #zoomFrame {
 .ads-pagination button.is-edge {
   font-size: calc(16 * var(--px));
   letter-spacing: calc(0.1297 * var(--px));
-  line-height: calc(15.565 * var(--px));
+  line-height: calc(16 * var(--px));
+  padding-top: calc(16 * var(--px));
 }
 .ads-pagination button.is-edge.is-active-edge:not(:disabled) {
   color: var(--c-link);
@@ -757,7 +762,8 @@ body:has(#adsTable) #zoomFrame {
   color: #fff;
   font-size: calc(22 * var(--px));
   font-weight: 400;
-  line-height: 1;
+  line-height: calc(22 * var(--px));
+  padding-top: calc(13 * var(--px));
 }
 .ads-pagination button:not(.is-edge):not(.active):not(.ellipsis) {
   color: #c6c6c6;
@@ -765,7 +771,8 @@ body:has(#adsTable) #zoomFrame {
 .ads-pagination button.ellipsis {
   font-size: calc(20 * var(--px));
   font-weight: 400;
-  line-height: 1;
+  line-height: calc(20 * var(--px));
+  padding-top: calc(14 * var(--px));
   background: #fffefb;
   border: var(--dpx, 1px) solid var(--c-border);
 }
@@ -1446,27 +1453,24 @@ body.ads-col-resizing * {
 }
 .ads-status-badge {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   box-sizing: border-box;
   width: calc(130 * var(--px));
   height: calc(31 * var(--px));
   max-width: none;
   margin: 0;
-  padding: 0;
+  padding: calc(4 * var(--px)) 0 0;
   font-size: calc(20 * var(--px));
   font-weight: 400;
-  line-height: calc(24 * var(--px));
+  line-height: calc(23 * var(--px));
   border: 0;
   border-radius: 0;
   white-space: nowrap;
   text-align: center;
   font-synthesis: none;
   text-rendering: geometricPrecision;
-  transform: translate(
-    var(--table-icon-phase),
-    calc(2 * var(--table-icon-phase))
-  );
+  transform: none;
 }
 .ads-status-badge--active {
   color: #0087fc;
