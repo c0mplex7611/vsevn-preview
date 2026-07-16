@@ -1078,6 +1078,16 @@ body:has(#adsTable) #zoomFrame {
   table-layout: fixed;
   width: calc(1849 * var(--px));
   font-size: calc(20 * var(--px));
+  font-synthesis: none;
+  font-kerning: none;
+  font-variant-ligatures: none;
+  text-rendering: geometricPrecision;
+}
+.ads-table * {
+  font-synthesis: none;
+  font-kerning: none;
+  font-variant-ligatures: none;
+  text-rendering: geometricPrecision;
 }
 .ads-table th,
 .ads-table td {
@@ -1472,6 +1482,21 @@ body.ads-col-resizing * {
   font-synthesis: none;
   text-rendering: geometricPrecision;
   transform: none;
+}
+.ads-status-badge.plain-text-render {
+  display: inline-flex;
+  align-items: flex-start;
+  justify-content: center;
+  font-size: calc(20 * var(--px)) !important;
+  line-height: calc(23 * var(--px)) !important;
+  font-weight: 400 !important;
+  text-align: center;
+}
+.ads-table.collapsed tbody td.col-contact .ads-contact-body .ads-status-badge.plain-text-render {
+  height: calc(24 * var(--px));
+  padding: 0;
+  align-items: flex-start;
+  line-height: calc(23 * var(--px)) !important;
 }
 .ads-status-badge--active {
   color: #0087fc;

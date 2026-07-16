@@ -1688,6 +1688,7 @@
   function afterTableCellLayout() {
     applyTableCellWrap();
     applyContactTableCellWrap();
+    stabilizeStatusBadges();
     bindRowInteractions();
   }
 
@@ -3338,6 +3339,24 @@
     }
   }
 
+  function stabilizeStatusBadges() {
+    if (!staticAvailable()) return;
+    document.querySelectorAll(".ads-status-badge").forEach(function (badge) {
+      const text = badge.dataset.text || badge.textContent.trim();
+      if (!text) return;
+      renderElementText(badge, {
+        text: text,
+        size: 20,
+        width: 130,
+        height: 23,
+        y: 18,
+        weight: 400,
+        color: "currentColor",
+        anchor: "middle",
+      });
+    });
+  }
+
   function applyLegendColors() {
     document.querySelectorAll(".ads-legend-row").forEach(function (el) {
       if (el.dataset.color) el.style.color = el.dataset.color;
@@ -3364,6 +3383,7 @@
     applyLegendColors();
     document.querySelectorAll(".ads-th-text").forEach(maskTableHeaderText);
     if (!staticAvailable()) return;
+    stabilizeStatusBadges();
     maskLegendRows();
     const T = C.textPrimary || "#62560E";
     const title = document.querySelector(".ads-title");
