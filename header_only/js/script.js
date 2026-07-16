@@ -321,17 +321,36 @@ function restoreZoomScrollAnchor() {
   if (!anchor) return;
   pendingZoomScrollAnchor = null;
 
-  const scale = getEffectiveDevicePixelRatio();
-  const maxLeft = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
-  const maxTop = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-  const left = Math.min(maxLeft, Math.max(0, anchor.leftPhysical / scale));
-  const top = Math.min(maxTop, Math.max(0, anchor.topPhysical / scale));
-
-  window.scrollTo(left, top);
-  window.requestAnimationFrame(function () {
+  let attempt = 0;
+  function restoreAfterLayout() {
+    const scale = getEffectiveDevicePixelRatio();
+    const maxLeft = Math.max(
+      0,
+      document.documentElement.scrollWidth - window.innerWidth,
+    );
+    const maxTop = Math.max(
+      0,
+      document.documentElement.scrollHeight - window.innerHeight,
+    );
+    const left = Math.min(
+      maxLeft,
+      Math.max(0, anchor.leftPhysical / scale),
+    );
+    const top = Math.min(maxTop, Math.max(0, anchor.topPhysical / scale));
     window.scrollTo(left, top);
-    rememberStableZoomScrollAnchor();
-  });
+
+    // Firefox can update the frame height one or two frames after the zoom
+    // event. Recalculate the limits each time so scrollTo is never clamped
+    // against the old document height.
+    attempt += 1;
+    if (attempt < 4) {
+      window.requestAnimationFrame(restoreAfterLayout);
+    } else {
+      rememberStableZoomScrollAnchor();
+    }
+  }
+
+  restoreAfterLayout();
 }
 
 function installTextZoomAwareFontRules() {

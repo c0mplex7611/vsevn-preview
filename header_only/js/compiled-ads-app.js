@@ -2200,7 +2200,7 @@
         (disabled ? " disabled" : "") +
         (tip ? ' data-tip="' + escHtml(tip) + '"' : "") +
         ">" +
-        label +
+        '<span class="ads-page-label">' + label + "</span>" +
         "</button>"
       );
     }
@@ -3400,7 +3400,7 @@
     /* Заголовки колонок — живой текст для выделения/копирования (замечание заказчика п.5) */
     document.querySelectorAll(".ads-search-ph").forEach(function (el) {
       maskEl(el, {
-        size: 21.6,
+        size: 24,
         weight: 300,
         color: C.placeholder || "#B0AB87",
         maxW: 260,
