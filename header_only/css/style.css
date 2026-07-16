@@ -551,7 +551,9 @@ a {
 }
 
 .main-nav {
-    position: relative;
+    position: absolute;
+    top: calc(14 / 19.2 * var(--fvw, 1vw));
+    left: 0;
     width: calc(1920 / 19.2 * var(--fvw, 1vw));
     max-width: 100%;
     height: calc(32 / 19.2 * var(--fvw, 1vw));
@@ -615,8 +617,8 @@ a {
 
 .nav-text {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+    top: calc(4 / 19.2 * var(--fvw, 1vw));
+    transform: none;
     display: inline-flex;
     align-items: center;
     font-size: 0;
