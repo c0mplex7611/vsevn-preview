@@ -3416,9 +3416,11 @@
   function syncDesignViewportUnit() {
     const root = document.documentElement;
     const dpr =
-      Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-        ? window.devicePixelRatio
-        : 1;
+      typeof window.getEffectiveDevicePixelRatio === "function"
+        ? window.getEffectiveDevicePixelRatio()
+        : Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+          ? window.devicePixelRatio
+          : 1;
     const nextFvw = 19.2 / dpr + "px";
     root.dataset.lastFvw = nextFvw;
     root.style.setProperty("--fvw", nextFvw);

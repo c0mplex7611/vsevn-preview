@@ -476,6 +476,9 @@ html {
     overflow-y: scroll;
     scrollbar-gutter: stable;
     scrollbar-width: none;
+    -moz-text-size-adjust: none;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
 }
 
 html::-webkit-scrollbar {
@@ -488,6 +491,14 @@ body {
     overflow: hidden;
     -webkit-text-size-adjust: none;
     -moz-text-size-adjust: none;
+    text-size-adjust: none;
+}
+
+#zoomViewport,
+#zoomFrame,
+#zoomFrame * {
+    -moz-text-size-adjust: none;
+    -webkit-text-size-adjust: none;
     text-size-adjust: none;
 }
 

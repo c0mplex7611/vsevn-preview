@@ -9,8 +9,9 @@
   /* Icon coordinates stay in design pixels; a DPR-dependent phase makes
      them drift horizontally and vertically when browser zoom changes. */
   --table-icon-phase: 0px;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
+  -moz-text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
   --c-text: #62560e;
   --c-link: #0087fc;
   --c-muted: #4d4343;

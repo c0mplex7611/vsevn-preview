@@ -234,8 +234,8 @@ let baselineDevicePixelScale = null;
 let lastKnownBrowserZoom = 1;
 
 /* ТЗ п.1: на Ctrl +/- не пересчитываем метрики дочерних элементов.
-   Относительный зум определяем по devicePixelRatio и компенсируем одним
-   transform общего кадра. Так HTML-макет сохраняет физический размер без reflow. */
+   Относительный зум определяется по всем доступным сигналам движка, а
+   design-px пересчитывается одной общей единицей для всего HTML-макета. */
 let baselineDeviceRatio = null;
 let appliedBrowserZoomInverse = null;
 let zoomFrameResizeObserver = null;
@@ -263,12 +263,7 @@ function captureBaselineDeviceRatio() {
   }
 }
 function isBrowserZoomed() {
-  if (baselineDeviceRatio == null) return false;
-  const dpr =
-    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-      ? window.devicePixelRatio
-      : 1;
-  return Math.abs(dpr / baselineDeviceRatio - 1) > 0.02;
+  return Math.abs(getBrowserZoomScale() - 1) > 0.02;
 }
 window.isBrowserZoomed = isBrowserZoomed;
 
@@ -370,6 +365,28 @@ function getLayoutViewportWidth() {
   return raw * getBrowserZoomScale();
 }
 
+/*
+ * One scale source for all desktop engines:
+ * - Firefox can expose Ctrl +/- through devicePixelRatio;
+ * - Chromium/WebKit often expose it only through the CSS viewport width;
+ * - visualViewport.scale covers page/pinch zoom where the engine exposes it.
+ * The baseline DPR keeps Windows display scaling separate from the current
+ * browser zoom while preserving the same physical design pixel everywhere.
+ */
+function getEffectiveDevicePixelRatio() {
+  captureBaselineDeviceRatio();
+  if (!(baselineDevicePixelScale > 0)) {
+    baselineDevicePixelScale =
+      Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+        ? window.devicePixelRatio
+        : 1;
+  }
+  const browserZoom = getBrowserZoomScale();
+  const effective = baselineDevicePixelScale * browserZoom;
+  return Number.isFinite(effective) && effective > 0 ? effective : 1;
+}
+window.getEffectiveDevicePixelRatio = getEffectiveDevicePixelRatio;
+
 function applyBrowserZoomNeutralizer() {
   const frame = document.getElementById("zoomFrame");
   const viewport = document.getElementById("zoomViewport");
@@ -417,17 +434,7 @@ function getCurrentPageScale() {
 }
 
 function getDevicePixelScale() {
-  const deviceScale =
-    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-      ? window.devicePixelRatio
-      : 1;
-  const visualScale =
-    window.visualViewport &&
-    Number.isFinite(window.visualViewport.scale) &&
-    window.visualViewport.scale > 0
-      ? window.visualViewport.scale
-      : 1;
-  const scale = deviceScale * visualScale;
+  const scale = getEffectiveDevicePixelRatio();
   return Number.isFinite(scale) && scale > 0 ? scale : 1;
 }
 
@@ -853,6 +860,7 @@ function renderStaticIcon(element, type) {
   element.style.setProperty("font-size", "0px", "important");
   element.style.setProperty("line-height", "0px", "important");
   element.style.setProperty("text-size-adjust", "none", "important");
+  element.style.setProperty("-moz-text-size-adjust", "none", "important");
   element.style.setProperty("-webkit-text-size-adjust", "none", "important");
   element.textContent = "";
   config.forEach(function (icon) {
@@ -959,6 +967,7 @@ function lockTextMetricElement(element, rule) {
   element.style.setProperty("line-height", pxToVw(rule.line), "important");
   element.style.setProperty("font-weight", String(rule.weight), "important");
   element.style.setProperty("text-size-adjust", "none", "important");
+  element.style.setProperty("-moz-text-size-adjust", "none", "important");
   element.style.setProperty("-webkit-text-size-adjust", "none", "important");
 }
 
@@ -1077,6 +1086,7 @@ function lockScaleCriticalCarriers(root) {
       element.style.setProperty("font-size", "0px", "important");
       element.style.setProperty("line-height", "0px", "important");
       element.style.setProperty("text-size-adjust", "none", "important");
+      element.style.setProperty("-moz-text-size-adjust", "none", "important");
       element.style.setProperty(
         "-webkit-text-size-adjust",
         "none",
@@ -1875,10 +1885,7 @@ function updateSvgTextZoomCompensation() {
 function updateZoomAwareLines() {
   const textRenderModeChanged = updateSvgTextZoomCompensation();
   const root = document.documentElement;
-  const dpr =
-    Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-      ? window.devicePixelRatio
-      : 1;
+  const dpr = getEffectiveDevicePixelRatio();
   const pageScale = 1 / dpr;
   frozenLayoutPageScale = pageScale;
   const underlineScreenDotPx = 2;
