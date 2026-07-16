@@ -576,19 +576,40 @@ body:has(#adsTable) #zoomFrame {
   position: absolute;
   right: calc(10 * var(--px) + var(--table-icon-phase));
   top: calc(7 * var(--px) + var(--table-icon-phase));
-  transform: none;
-  width: calc(36 * var(--px));
-  height: calc(36 * var(--px));
+  width: calc(36 * var(--baseline-dpx, var(--px)));
+  height: calc(36 * var(--baseline-dpx, var(--px)));
+  aspect-ratio: 1 / 1;
   display: block;
+  overflow: hidden;
   pointer-events: none;
-  background-color: #a8d889;
-  -webkit-mask: url("../icons/compiled-ads/export-xml.svg") center / contain
-    no-repeat;
-  mask: url("../icons/compiled-ads/export-xml.svg") center / contain no-repeat;
-  transition: background-color 0.15s ease;
+  background: none;
+  -webkit-mask: none;
+  mask: none;
+  transform-origin: 100% 0;
+  transform: translateZ(0) scale(var(--static-browser-zoom-inv, 1));
+  contain: layout paint size;
+  backface-visibility: hidden;
+  will-change: transform;
 }
+/* Firefox re-rasterizes a CSS mask at every zoom step and rounds its visible
+   width differently. Keep one baseline-sized SVG layer and scale that layer
+   in the compositor; its right/top edge and rasterized outline stay fixed. */
 .ads-export-icon-wrap img {
-  display: none;
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: fill;
+  object-position: center;
+  transform: none;
+  transition: opacity 0.15s ease;
+  image-rendering: auto;
+  backface-visibility: hidden;
+}
+.ads-export-icon-idle {
+  opacity: 1;
 }
 .ads-export-icon-active {
   opacity: 0;
@@ -603,7 +624,7 @@ body:has(#adsTable) #zoomFrame {
   opacity: 1;
 }
 .ads-export-btn:hover .ads-export-icon-wrap {
-  background-color: #67db1a;
+  background: none;
 }
 
 /* ---------- Селект «строк на странице» (ТЗ п.11, п.17) ---------- */

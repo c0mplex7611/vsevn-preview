@@ -242,7 +242,6 @@ let zoomFrameResizeObserver = null;
 let lastAppliedEffectiveDpr = null;
 let pendingZoomScrollAnchor = null;
 let stableZoomScrollAnchor = null;
-let stableZoomScrollFrame = null;
 let textZoomProbe = null;
 let textZoomObserver = null;
 let textZoomUpdateTimer = null;
@@ -251,7 +250,8 @@ let lastTextZoomRatio = 1;
 const TEXT_ZOOM_PROBE_TEXT = "ШЩЖФMwm0123456789";
 
 function getDocumentScrollPosition() {
-  const scrollingElement = document.scrollingElement || document.documentElement;
+  const scrollingElement =
+    document.scrollingElement || document.documentElement;
   return {
     left: Number.isFinite(window.scrollX)
       ? window.scrollX
@@ -259,6 +259,47 @@ function getDocumentScrollPosition() {
     top: Number.isFinite(window.scrollY)
       ? window.scrollY
       : scrollingElement.scrollTop || 0,
+  };
+}
+
+/*
+ * Keep the same live HTML point under the same viewport coordinate while
+ * Firefox changes page zoom. Using scrollTop * oldDpr / newDpr is unreliable:
+ * Firefox already adjusts scrollTop itself, so the second numeric correction
+ * moves the page again. A DOM anchor measures the result Firefox actually
+ * rendered and corrects only the remaining visual delta.
+ */
+function createZoomScrollAnchor() {
+  const position = getDocumentScrollPosition();
+  if (!(position.top > 0 || position.left > 0)) return null;
+
+  const maxY = Math.max(1, window.innerHeight - 2);
+  const probeY = Math.min(maxY, Math.max(1, Math.round(window.innerHeight * 0.22)));
+  const maxX = Math.max(1, window.innerWidth - 2);
+  const probeXs = [
+    Math.min(maxX, Math.max(1, Math.round(window.innerWidth * 0.5))),
+    Math.min(maxX, 24),
+    Math.min(maxX, Math.max(1, Math.round(window.innerWidth * 0.25))),
+  ];
+
+  let element = null;
+  for (let i = 0; i < probeXs.length && !element; i += 1) {
+    const hit = document.elementFromPoint(probeXs[i], probeY);
+    if (!hit || !hit.closest) continue;
+    element = hit.closest(
+      "tr, .ads-table-wrapper, .ads-card-content, .ads-card, #zoomFrame",
+    );
+  }
+
+  if (!element || !element.isConnected) return null;
+  const rect = element.getBoundingClientRect();
+  if (!(rect.height > 0) || !Number.isFinite(rect.top)) return null;
+
+  const ratioY = Math.min(1, Math.max(0, (probeY - rect.top) / rect.height));
+  return {
+    element: element,
+    ratioY: ratioY,
+    viewportY: probeY,
   };
 }
 
@@ -271,16 +312,7 @@ function rememberStableZoomScrollAnchor() {
   ) {
     return;
   }
-
-  const position = getDocumentScrollPosition();
-  const scale =
-    Number.isFinite(lastAppliedEffectiveDpr) && lastAppliedEffectiveDpr > 0
-      ? lastAppliedEffectiveDpr
-      : currentScale;
-  stableZoomScrollAnchor = {
-    leftPhysical: position.left * scale,
-    topPhysical: position.top * scale,
-  };
+  stableZoomScrollAnchor = createZoomScrollAnchor();
 }
 
 function scheduleStableZoomScrollAnchor() {
@@ -290,60 +322,77 @@ function scheduleStableZoomScrollAnchor() {
 
 function captureZoomScrollAnchor(force) {
   if (pendingZoomScrollAnchor) return;
+
+  if (force) {
+    pendingZoomScrollAnchor = createZoomScrollAnchor();
+    return;
+  }
+
   const currentScale = getEffectiveDevicePixelRatio();
   const previousScale =
     Number.isFinite(lastAppliedEffectiveDpr) && lastAppliedEffectiveDpr > 0
       ? lastAppliedEffectiveDpr
       : currentScale;
+  if (Math.abs(currentScale / previousScale - 1) <= 0.002) return;
 
-  if (!force && Math.abs(currentScale / previousScale - 1) <= 0.002) return;
-
-  /* Keyboard/wheel zoom is captured before Firefox changes the viewport, so
-     always use the real current position for a forced capture. A stable anchor
-     is only a fallback for browser-menu zoom, where no key event exists. */
-  if (!force && stableZoomScrollAnchor) {
-    pendingZoomScrollAnchor = {
-      leftPhysical: stableZoomScrollAnchor.leftPhysical,
-      topPhysical: stableZoomScrollAnchor.topPhysical,
-    };
-    return;
-  }
-
-  const position = getDocumentScrollPosition();
-  pendingZoomScrollAnchor = {
-    leftPhysical: position.left * previousScale,
-    topPhysical: position.top * previousScale,
-  };
+  /* Browser-menu zoom has no keydown. Reuse the last anchor captured during
+     normal scrolling, before Firefox starts changing the viewport. */
+  pendingZoomScrollAnchor = stableZoomScrollAnchor;
 }
 
 function restoreZoomScrollAnchor() {
   const anchor = pendingZoomScrollAnchor;
-  if (!anchor) return;
   pendingZoomScrollAnchor = null;
+  if (!anchor || !anchor.element || !anchor.element.isConnected) {
+    rememberStableZoomScrollAnchor();
+    return;
+  }
 
-  const scale = getEffectiveDevicePixelRatio();
-  const maxLeft = Math.max(
-    0,
-    document.documentElement.scrollWidth - window.innerWidth,
-  );
-  const maxTop = Math.max(
-    0,
-    document.documentElement.scrollHeight - window.innerHeight,
-  );
-  const left = Math.min(maxLeft, Math.max(0, anchor.leftPhysical / scale));
-  const top = Math.min(maxTop, Math.max(0, anchor.topPhysical / scale));
+  const rect = anchor.element.getBoundingClientRect();
+  if (!(rect.height > 0) || !Number.isFinite(rect.top)) {
+    rememberStableZoomScrollAnchor();
+    return;
+  }
 
-  /* One synchronous correction in the same resize task. The previous four
-     consecutive requestAnimationFrame scrollTo calls were themselves visible
-     as an up/down movement in Firefox. */
+  const currentPointY = rect.top + rect.height * anchor.ratioY;
+  const deltaY = currentPointY - anchor.viewportY;
   const scrollingElement =
     document.scrollingElement || document.documentElement;
-  scrollingElement.scrollLeft = left;
-  scrollingElement.scrollTop = top;
-  stableZoomScrollAnchor = {
-    leftPhysical: anchor.leftPhysical,
-    topPhysical: anchor.topPhysical,
-  };
+  if (Number.isFinite(deltaY) && Math.abs(deltaY) > 0.01) {
+    const maxTop = Math.max(
+      0,
+      scrollingElement.scrollHeight - document.documentElement.clientHeight,
+    );
+    scrollingElement.scrollTop = Math.min(
+      maxTop,
+      Math.max(0, scrollingElement.scrollTop + deltaY),
+    );
+  }
+
+  /* Firefox quantizes document scrollTop, leaving a visible fraction of a
+     CSS pixel at high zoom. Absorb only that final subpixel in the compositor
+     layer; this does not trigger layout or a second scroll operation. */
+  const frame = document.getElementById("zoomFrame");
+  if (frame && scrollingElement.scrollTop > 0.01) {
+    const settledRect = anchor.element.getBoundingClientRect();
+    const settledPointY =
+      settledRect.top + settledRect.height * anchor.ratioY;
+    const residualY = settledPointY - anchor.viewportY;
+    if (Number.isFinite(residualY) && Math.abs(residualY) <= 1.5) {
+      const currentFine =
+        parseFloat(
+          getComputedStyle(frame).getPropertyValue("--zoom-scroll-fine-y"),
+        ) || 0;
+      frame.style.setProperty(
+        "--zoom-scroll-fine-y",
+        (currentFine - residualY).toFixed(6) + "px",
+      );
+    }
+  } else if (frame) {
+    frame.style.setProperty("--zoom-scroll-fine-y", "0px");
+  }
+
+  rememberStableZoomScrollAnchor();
 }
 
 function installTextZoomAwareFontRules() {
@@ -671,8 +720,24 @@ function applyBrowserZoomNeutralizer() {
     root.style.setProperty("--browser-zoom-inv", inverseValue);
   }
 
+  const effectiveDpr = getEffectiveDevicePixelRatio();
+  const baselineDpr =
+    Number.isFinite(baselineDevicePixelScale) && baselineDevicePixelScale > 0
+      ? baselineDevicePixelScale
+      : Number.isFinite(baselineDeviceRatio) && baselineDeviceRatio > 0
+        ? baselineDeviceRatio
+        : effectiveDpr;
+  root.style.setProperty(
+    "--baseline-dpx",
+    (1 / baselineDpr).toFixed(8) + "px",
+  );
+  root.style.setProperty(
+    "--static-browser-zoom-inv",
+    (baselineDpr / effectiveDpr).toFixed(8),
+  );
+
   syncBrowserZoomViewportHeight();
-  lastAppliedEffectiveDpr = getEffectiveDevicePixelRatio();
+  lastAppliedEffectiveDpr = effectiveDpr;
   if (!zoomFrameResizeObserver && typeof ResizeObserver === "function") {
     zoomFrameResizeObserver = new ResizeObserver(
       syncBrowserZoomViewportHeight,

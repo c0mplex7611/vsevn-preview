@@ -518,6 +518,7 @@ body {
 
 body #zoomViewport > #zoomFrame {
     position: absolute;
+    translate: 0 var(--zoom-scroll-fine-y, 0px);
     top: 0;
     left: 0;
     transform-origin: 0 0;
