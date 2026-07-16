@@ -3490,13 +3490,18 @@
 
   function syncDesignViewportUnit() {
     const root = document.documentElement;
-    const dpr =
+    const effective =
       typeof window.getEffectiveDevicePixelRatio === "function"
         ? window.getEffectiveDevicePixelRatio()
         : Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
           ? window.devicePixelRatio
           : 1;
-    const nextFvw = 19.2 / dpr + "px";
+    // Единица --fvw ЗАМОРОЖЕНА на базовом dpr — раскладка кадра не пересчитывается
+    // при зуме, зум компенсируется transform'ом кадра (нет reflow → нет прыжков).
+    const base =
+      (typeof window.__baselineDpr === "function" && window.__baselineDpr()) ||
+      effective;
+    const nextFvw = 19.2 / base + "px";
     root.dataset.lastFvw = nextFvw;
     root.style.setProperty("--fvw", nextFvw);
   }

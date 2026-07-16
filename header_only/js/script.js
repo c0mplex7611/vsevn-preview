@@ -572,6 +572,13 @@ function isBrowserZoomed() {
   return Math.abs(getBrowserZoomScale() - 1) > 0.02;
 }
 window.isBrowserZoomed = isBrowserZoomed;
+// Базовый devicePixelRatio (на загрузке) — чтобы заморозить единицы масштаба
+// (--fvw/--dpx) и компенсировать зум одним transform кадра.
+window.__baselineDpr = function () {
+  return Number.isFinite(baselineDeviceRatio) && baselineDeviceRatio > 0
+    ? baselineDeviceRatio
+    : null;
+};
 
 function captureZoomLayoutReference(force) {
   const outerWidth = window.outerWidth;
@@ -712,14 +719,6 @@ function applyBrowserZoomNeutralizer() {
   }
   updateZoomAwareLines();
 
-  const inverseValue = "1.00000000";
-  if (appliedBrowserZoomInverse !== inverseValue) {
-    appliedBrowserZoomInverse = inverseValue;
-    root.classList.add("is-browser-zoom-neutralized");
-    root.style.setProperty("--browser-zoom", "1.00000000");
-    root.style.setProperty("--browser-zoom-inv", inverseValue);
-  }
-
   const effectiveDpr = getEffectiveDevicePixelRatio();
   const baselineDpr =
     Number.isFinite(baselineDevicePixelScale) && baselineDevicePixelScale > 0
@@ -727,14 +726,32 @@ function applyBrowserZoomNeutralizer() {
       : Number.isFinite(baselineDeviceRatio) && baselineDeviceRatio > 0
         ? baselineDeviceRatio
         : effectiveDpr;
-  root.style.setProperty(
-    "--baseline-dpx",
-    (1 / baselineDpr).toFixed(8) + "px",
-  );
-  root.style.setProperty(
-    "--static-browser-zoom-inv",
-    (baselineDpr / effectiveDpr).toFixed(8),
-  );
+
+  // Компенсируем браузерный зум ОДНИМ transform:scale всего кадра на обратный
+  // коэффициент. Раскладка (--dpx) заморожена → нет reflow → при зуме ничего не
+  // перекладывается и не прыгает вверх-вниз (Chrome/Firefox/Yandex одинаково).
+  const inverse = baselineDpr / effectiveDpr;
+  const inverseValue = inverse.toFixed(8);
+  frame.style.transformOrigin = "0 0";
+  frame.style.transform = "translateZ(0) scale(" + inverse.toFixed(6) + ")";
+  const inverseChanged = appliedBrowserZoomInverse !== inverseValue;
+  appliedBrowserZoomInverse = inverseValue;
+  if (inverseChanged) {
+    root.classList.toggle(
+      "is-browser-zoom-neutralized",
+      Math.abs(inverse - 1) > 0.0005,
+    );
+    root.style.setProperty(
+      "--browser-zoom",
+      (effectiveDpr / baselineDpr).toFixed(6),
+    );
+    root.style.setProperty("--browser-zoom-inv", inverseValue);
+  }
+
+  root.style.setProperty("--baseline-dpx", (1 / baselineDpr).toFixed(8) + "px");
+  // Весь кадр уже масштабируется transform'ом, поэтому иконкам СВОЯ компенсация
+  // не нужна (иначе двойное масштабирование) — держим её нейтральной.
+  root.style.setProperty("--static-browser-zoom-inv", "1");
 
   syncBrowserZoomViewportHeight();
   lastAppliedEffectiveDpr = effectiveDpr;
@@ -2238,8 +2255,15 @@ function updateSvgTextZoomCompensation() {
 function updateZoomAwareLines() {
   const textRenderModeChanged = updateSvgTextZoomCompensation();
   const root = document.documentElement;
-  const dpr = getEffectiveDevicePixelRatio();
-  const pageScale = 1 / dpr;
+  // Раскладка ЗАМОРОЖЕНА на базовом devicePixelRatio (считается один раз), а
+  // браузерный зум компенсируется одним transform:scale всего кадра (см.
+  // applyBrowserZoomNeutralizer). Так нет reflow при зуме → ничего не прыгает
+  // вверх-вниз ни в одном браузере (Chrome/Firefox/Yandex).
+  const base =
+    Number.isFinite(baselineDeviceRatio) && baselineDeviceRatio > 0
+      ? baselineDeviceRatio
+      : getEffectiveDevicePixelRatio();
+  const pageScale = 1 / base;
   frozenLayoutPageScale = pageScale;
   const underlineScreenDotPx = 2;
   const underlineScreenGapPx = 3;
