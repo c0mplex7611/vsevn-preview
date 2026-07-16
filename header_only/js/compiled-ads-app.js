@@ -330,9 +330,10 @@
       .trim()
       .match(/^(\d{2})\.(\d{2})\.(\d{2,4})$/);
     if (!m) return String(raw || "");
-    let year = m[3];
-    if (year.length === 2) year = (Number(year) >= 70 ? "19" : "20") + year;
-    return m[1] + "." + m[2] + "." + year;
+    // Правка заказчика: формат ДД.ММ.ГГ. (короткий год) — чтобы дата счёта
+    // не переносилась на вторую строку в колонке «НОМЕР И ДАТА СЧЁТА».
+    const yy = m[3].length === 4 ? m[3].slice(-2) : m[3];
+    return m[1] + "." + m[2] + "." + yy;
   }
 
   function renderCompanyLine(ad, query) {

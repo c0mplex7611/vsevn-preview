@@ -95,7 +95,7 @@ body:has(#adsTable) #zoomFrame {
   height: calc(50 * var(--px));
   padding: 0 calc(22 * var(--px));
   background: #ffffff;
-  border: var(--dpx, 1px) solid var(--c-border-dropdown);
+  border: calc(0.3 * var(--px)) solid var(--c-border-dropdown);
   border-radius: 0;
   box-sizing: border-box;
   cursor: pointer;
@@ -149,7 +149,7 @@ body:has(#adsTable) #zoomFrame {
   margin-top: 0;
   max-height: none;
   overflow: visible;
-  border: var(--dpx, 1px) solid var(--c-border-dropdown);
+  border: calc(0.3 * var(--px)) solid var(--c-border-dropdown);
   border-radius: 0;
   box-shadow: none;
 }
@@ -194,11 +194,14 @@ body:has(#adsTable) #zoomFrame {
   line-height: 1.37;
 }
 .ads-dropdown-text {
-  font-size: calc(21.6 * var(--px));
+  font-size: calc(22 * var(--px));
   font-weight: 300;
   line-height: 1;
   color: var(--c-text);
   margin-bottom: 0;
+  /* центровка текста селекта по строчной букве (чуть выше центра) */
+  position: relative;
+  top: calc(-1 * var(--px));
 }
 .ads-dropdown-arrow {
   position: absolute;
@@ -292,7 +295,7 @@ body:has(#adsTable) #zoomFrame {
   max-height: calc(300 * var(--px));
   overflow-y: auto;
   background: #fff;
-  border: var(--dpx, 1px) solid var(--c-border-dropdown);
+  border: calc(0.3 * var(--px)) solid var(--c-border-dropdown);
   border-radius: 0;
   box-shadow: none;
   z-index: 60;
@@ -311,7 +314,7 @@ body:has(#adsTable) #zoomFrame {
     color 0.12s ease;
 }
 .ads-dropdown-option + .ads-dropdown-option {
-  border-top: var(--dpx, 1px) solid var(--c-border-dropdown-divider);
+  border-top: calc(0.3 * var(--px)) solid var(--c-border-dropdown-divider);
 }
 .ads-dropdown-option.is-selected {
   color: var(--c-link);
@@ -339,7 +342,7 @@ body:has(#adsTable) #zoomFrame {
   padding: 0;
   margin: 0;
   background: #ffffff;
-  border: var(--dpx, 1px) solid var(--c-border);
+  border: calc(0.3 * var(--px)) solid var(--c-border);
   border-radius: 0;
   box-shadow: none;
   box-sizing: border-box;
@@ -405,7 +408,7 @@ body:has(#adsTable) #zoomFrame {
   height: calc(50 * var(--px));
   padding: var(--fc-toolbar-top, calc(10 * var(--px))) calc(14 * var(--px)) 0;
   background: #ffffff;
-  border: var(--dpx, 1px) solid var(--c-border);
+  border: calc(0.3 * var(--px)) solid var(--c-border);
   border-radius: 0;
   box-sizing: border-box;
   display: block;
@@ -443,7 +446,7 @@ body:has(#adsTable) #zoomFrame {
   height: calc(50 * var(--px));
   padding: 0;
   background: #ffffff;
-  border: var(--dpx, 1px) solid var(--c-border);
+  border: calc(0.3 * var(--px)) solid var(--c-border);
   border-radius: 0;
   cursor: pointer;
   overflow: visible;
@@ -538,7 +541,7 @@ body:has(#adsTable) #zoomFrame {
   height: calc(50 * var(--px));
   padding: 0;
   background: #ffffff;
-  border: var(--dpx, 1px) solid var(--c-border);
+  border: calc(0.3 * var(--px)) solid var(--c-border);
   border-radius: 0;
   cursor: pointer;
   box-sizing: border-box;
@@ -646,7 +649,7 @@ body:has(#adsTable) #zoomFrame {
   padding: 0 calc(10 * var(--px));
   align-items: center;
   background: #ffffff;
-  border: var(--dpx, 1px) solid var(--c-border-dropdown);
+  border: calc(0.3 * var(--px)) solid var(--c-border-dropdown);
   border-radius: 0;
   box-sizing: border-box;
 }
@@ -690,7 +693,7 @@ body:has(#adsTable) #zoomFrame {
   padding-bottom: 0;
   border-radius: 0;
   box-shadow: none;
-  border: var(--dpx, 1px) solid var(--c-border-dropdown);
+  border: calc(0.3 * var(--px)) solid var(--c-border-dropdown);
   border-top: 0;
   box-sizing: border-box;
 }
@@ -733,7 +736,7 @@ body:has(#adsTable) #zoomFrame {
   height: calc(50 * var(--px));
   padding: 0;
   background: #fffefb;
-  border: var(--dpx, 1px) solid var(--c-border);
+  border: calc(0.3 * var(--px)) solid var(--c-border);
   border-radius: 0;
   font-family: "Roboto", sans-serif;
   font-size: calc(22 * var(--px));
@@ -795,7 +798,7 @@ body:has(#adsTable) #zoomFrame {
   font-weight: 400;
   line-height: 1;
   background: #fffefb;
-  border: var(--dpx, 1px) solid var(--c-border);
+  border: calc(0.3 * var(--px)) solid var(--c-border);
 }
 .ads-pagination button > .ads-page-label {
   display: inline-flex;
@@ -1391,7 +1394,7 @@ body.ads-col-resizing * {
   padding: 0;
   line-height: calc(22 * var(--px));
   /* правка заказчика: текст в полях поиска на 1px выше (центр по строчным) */
-  transform: translateY(calc(-50% - 1 * var(--px)));
+  transform: translateY(-50%);
   caret-color: var(--c-text);
   box-sizing: border-box;
 }
@@ -1407,7 +1410,6 @@ body.ads-col-resizing * {
   font-size: calc(22 * var(--px));
   font-weight: 300;
   line-height: calc(22 * var(--px));
-  margin-top: calc(-1 * var(--px));
   pointer-events: none;
   white-space: nowrap;
   min-width: 0;

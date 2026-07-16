@@ -8,7 +8,7 @@ window.FIGMA_COLUMNS = (function () {
   return [
     {
       key: "num",
-      width: 78,
+      width: 83,
       titleLines: [
         { t: "№", sort: "num", c: C.textPrimary },
         { t: "ID", sort: "id", c: C.link },
@@ -24,7 +24,7 @@ window.FIGMA_COLUMNS = (function () {
     },
     {
       key: "contact",
-      width: 143,
+      width: 148,
       titleLines: [
         { t: "ТЕЛЕФОН(Ы)", c: C.textPrimary },
         { t: "EMAIL", c: C.link },
@@ -158,7 +158,7 @@ window.FIGMA_COLUMNS = (function () {
     },
     {
       key: "text",
-      width: 400,
+      width: 390,
       titleLines: [
         { t: "ИСТОЧНИК", c: C.textPrimary },
         {
