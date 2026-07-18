@@ -240,6 +240,8 @@ let baselineDeviceRatio = null;
 let appliedBrowserZoomInverse = null;
 let zoomFrameResizeObserver = null;
 let lastAppliedBrowserZoom = null;
+let lastStableZoomScrollTop = 0;
+let lastStableZoomMaxScrollTop = 0;
 let textZoomProbe = null;
 let textZoomObserver = null;
 let textZoomUpdateTimer = null;
@@ -260,8 +262,61 @@ function getZoomScrollTopForScale(scrollTop, previousZoom, nextZoom) {
   return (top * previousZoom) / nextZoom;
 }
 
+function getZoomScrollTopForState(
+  scrollTop,
+  previousMaxScrollTop,
+  previousZoom,
+  nextZoom,
+  nextMaxScrollTop,
+) {
+  const nextMax = Number.isFinite(nextMaxScrollTop)
+    ? Math.max(0, nextMaxScrollTop)
+    : 0;
+  const top = Number.isFinite(scrollTop) ? Math.max(0, scrollTop) : 0;
+  const previousMax = Number.isFinite(previousMaxScrollTop)
+    ? Math.max(0, previousMaxScrollTop)
+    : top;
+
+  if (previousMax - top <= 1) return nextMax;
+  if (
+    !Number.isFinite(previousZoom) ||
+    previousZoom <= 0 ||
+    !Number.isFinite(nextZoom) ||
+    nextZoom <= 0
+  ) {
+    return Math.min(nextMax, top);
+  }
+  return Math.min(
+    nextMax,
+    (top * previousZoom) / nextZoom,
+  );
+}
+
 function getZoomScrollContainer() {
   return document.getElementById("zoomViewport");
+}
+
+function rememberZoomScrollState() {
+  const viewport = getZoomScrollContainer();
+  if (!viewport) return;
+
+  const currentZoom =
+    typeof getEffectiveDevicePixelRatio === "function"
+      ? getEffectiveDevicePixelRatio()
+      : 1;
+  if (
+    Number.isFinite(lastAppliedBrowserZoom) &&
+    lastAppliedBrowserZoom > 0 &&
+    Math.abs(currentZoom / lastAppliedBrowserZoom - 1) > 0.002
+  ) {
+    return;
+  }
+
+  lastStableZoomScrollTop = Math.max(0, viewport.scrollTop || 0);
+  lastStableZoomMaxScrollTop = Math.max(
+    0,
+    viewport.scrollHeight - viewport.clientHeight,
+  );
 }
 
 function installTextZoomAwareFontRules() {
@@ -435,6 +490,11 @@ function syncZoomScrollExtent() {
 
   if (extent.style.height !== nextHeight) extent.style.height = nextHeight;
   if (extent.style.width !== nextWidth) extent.style.width = nextWidth;
+}
+
+function syncZoomScrollExtentAndRemember() {
+  syncZoomScrollExtent();
+  rememberZoomScrollState();
 }
 
 function captureBaselineDeviceRatio() {
@@ -614,7 +674,14 @@ function applyBrowserZoomNeutralizer() {
     Number.isFinite(lastAppliedBrowserZoom) && lastAppliedBrowserZoom > 0
       ? lastAppliedBrowserZoom
       : currentBrowserZoom;
-  const scrollTopBeforeZoom = viewport.scrollTop;
+  const zoomChanged =
+    Math.abs(currentBrowserZoom / previousBrowserZoom - 1) > 0.0005;
+  const scrollTopBeforeZoom = zoomChanged
+    ? lastStableZoomScrollTop
+    : viewport.scrollTop;
+  const maxScrollTopBeforeZoom = zoomChanged
+    ? lastStableZoomMaxScrollTop
+    : Math.max(0, viewport.scrollHeight - viewport.clientHeight);
   frame.style.transformOrigin = "0 0";
   frame.style.transform = "translateZ(0) scale(" + inverse.toFixed(6) + ")";
   const inverseChanged = appliedBrowserZoomInverse !== inverseValue;
@@ -637,18 +704,26 @@ function applyBrowserZoomNeutralizer() {
   root.style.setProperty("--static-browser-zoom-inv", "1");
 
   syncZoomScrollExtent();
-  if (
-    Math.abs(currentBrowserZoom / previousBrowserZoom - 1) > 0.0005
-  ) {
-    viewport.scrollTop = getZoomScrollTopForScale(
+  const maxScrollTopAfterZoom = Math.max(
+    0,
+    viewport.scrollHeight - viewport.clientHeight,
+  );
+  if (zoomChanged) {
+    viewport.scrollTop = getZoomScrollTopForState(
       scrollTopBeforeZoom,
+      maxScrollTopBeforeZoom,
       previousBrowserZoom,
       currentBrowserZoom,
+      maxScrollTopAfterZoom,
     );
   }
   lastAppliedBrowserZoom = currentBrowserZoom;
+  lastStableZoomScrollTop = Math.max(0, viewport.scrollTop || 0);
+  lastStableZoomMaxScrollTop = maxScrollTopAfterZoom;
   if (!zoomFrameResizeObserver && typeof ResizeObserver === "function") {
-    zoomFrameResizeObserver = new ResizeObserver(syncZoomScrollExtent);
+    zoomFrameResizeObserver = new ResizeObserver(
+      syncZoomScrollExtentAndRemember,
+    );
     zoomFrameResizeObserver.observe(frame);
   }
 }
@@ -7393,6 +7468,12 @@ function bindBitmapTextFontRefresh() {
 
 document.addEventListener("DOMContentLoaded", function () {
   initTextOnlyZoomCompensation();
+  const zoomViewport = getZoomScrollContainer();
+  if (zoomViewport) {
+    zoomViewport.addEventListener("scroll", rememberZoomScrollState, {
+      passive: true,
+    });
+  }
   document.addEventListener(
     "keydown",
     function (event) {

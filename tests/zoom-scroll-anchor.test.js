@@ -60,6 +60,20 @@ test("invalid zoom values leave scroll position unchanged", () => {
   assert.equal(convert(-20, 1, 1.25), 0);
 });
 
+test("bottom-locked scroll remains at the new bottom", () => {
+  const resolve = loadFunction("getZoomScrollTopForState");
+
+  assert.equal(resolve(75125, 75125, 1.25, 1, 93906), 93906);
+  assert.equal(resolve(93906, 93906, 1, 1.25, 75125), 75125);
+});
+
+test("non-bottom scroll uses scale conversion and clamps to the new range", () => {
+  const resolve = loadFunction("getZoomScrollTopForState");
+
+  assert.equal(resolve(2000, 93906, 1, 1.25, 75125), 1600);
+  assert.equal(resolve(80000, 93906, 1, 2, 30000), 30000);
+});
+
 test("zoom frame is wrapped by a dedicated scroll extent", () => {
   assert.match(
     html,
@@ -86,7 +100,7 @@ test("zoom controller sizes the extent and never restores a document anchor", ()
   assert.match(source, /function syncZoomScrollExtent\(\)/);
   assert.match(
     source,
-    /viewport\.scrollTop = getZoomScrollTopForScale\(/,
+    /viewport\.scrollTop = getZoomScrollTopForState\(/,
   );
   assert.doesNotMatch(source, /restoreZoomScrollAnchor\(/);
   assert.doesNotMatch(source, /scrollingElement\.scrollTop\s*=/);
