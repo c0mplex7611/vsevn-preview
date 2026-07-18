@@ -34,20 +34,19 @@ function loadFunction(name) {
   return vm.runInNewContext(`(${source.slice(start, end)})`);
 }
 
-test("zoom anchor keeps the same relative viewport position", () => {
-  const getTargetY = loadFunction("getZoomAnchorTargetViewportY");
-  const anchor = { viewportY: 158, viewportRatioY: 158 / 720 };
+test("internal scroll position preserves its physical offset", () => {
+  const convert = loadFunction("getZoomScrollTopForScale");
 
-  assert.equal(getTargetY(anchor, 720), 158);
-  assert.equal(getTargetY(anchor, 576), 126.4);
-  assert.equal(getTargetY(anchor, 900), 197.5);
+  assert.equal(convert(2000, 1, 1.25), 1600);
+  assert.equal(convert(1600, 1.25, 1), 2000);
+  assert.equal(convert(2000, 1, 0.8), 2500);
+  assert.equal(convert(2500, 0.8, 1), 2000);
 });
 
-test("zoom restore uses the current viewport target for scroll and residual", () => {
-  assert.match(
-    source,
-    /const targetViewportY = getZoomAnchorTargetViewportY\(\s*anchor,\s*window\.innerHeight,?\s*\);/,
-  );
-  assert.match(source, /const deltaY = currentPointY - targetViewportY;/);
-  assert.match(source, /const residualY = settledPointY - targetViewportY;/);
+test("invalid zoom values leave scroll position unchanged", () => {
+  const convert = loadFunction("getZoomScrollTopForScale");
+
+  assert.equal(convert(2000, 0, 1), 2000);
+  assert.equal(convert(2000, 1, NaN), 2000);
+  assert.equal(convert(-20, 1, 1.25), 0);
 });

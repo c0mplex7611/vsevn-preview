@@ -262,6 +262,23 @@ function getDocumentScrollPosition() {
   };
 }
 
+function getZoomScrollTopForScale(scrollTop, previousZoom, nextZoom) {
+  const top = Number.isFinite(scrollTop) ? Math.max(0, scrollTop) : 0;
+  if (
+    !Number.isFinite(previousZoom) ||
+    previousZoom <= 0 ||
+    !Number.isFinite(nextZoom) ||
+    nextZoom <= 0
+  ) {
+    return top;
+  }
+  return (top * previousZoom) / nextZoom;
+}
+
+function getZoomScrollContainer() {
+  return document.getElementById("zoomViewport");
+}
+
 function getZoomAnchorTargetViewportY(anchor, viewportHeight) {
   if (!anchor) return 0;
 
