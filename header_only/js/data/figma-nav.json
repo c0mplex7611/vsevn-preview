@@ -1,0 +1,15 @@
+{
+  "source": "ОК только скопонованное объя изм.2.fig / Frame 268",
+  "height": 60,
+  "paddingTop": 9,
+  "textY": 22,
+  "textSize": 21,
+  "items": [
+    { "tab": "ads", "left": 74, "width": 208, "icon": { "w": 28, "h": 32 }, "text": { "offsetX": 43, "width": 139 } },
+    { "tab": "letters", "left": 282, "width": 428, "icon": { "w": 36, "h": 32 }, "text": { "offsetX": 51, "width": 357 } },
+    { "tab": "import", "left": 710, "width": 318, "icon": { "w": 33, "h": 32 }, "text": { "offsetX": 48, "width": 244 } },
+    { "tab": "companies", "left": 1028, "width": 216, "icon": { "w": 33, "h": 32 }, "text": { "offsetX": 49, "width": 139 } },
+    { "tab": "resume", "left": 1244, "width": 233, "icon": { "w": 32, "h": 32 }, "text": { "offsetX": 48, "width": 145 } },
+    { "tab": "managers", "left": 1477, "width": 172, "icon": { "w": 32, "h": 32 }, "text": { "offsetX": 48, "width": 124 } }
+  ]
+}

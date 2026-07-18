@@ -1,0 +1,36 @@
+{
+  "source": "Figma MCP iPoYX1CGoLA01GjexG1Hej / artboard 10:15",
+  "artboard": "10:15",
+  "artboardName": "Активен чекбокс переносить",
+  "designWidth": 1920,
+  "card": {
+    "x": 19,
+    "y": 77,
+    "width": 1881,
+    "height": 1195,
+    "paddingLeft": 18,
+    "paddingRight": 12
+  },
+  "elements": {
+    "title": { "x": 42, "y": 38, "w": 366, "h": 37 },
+    "xmlDropdown": { "x": 36, "y": 275, "w": 872, "h": 50 },
+    "dateFrom": { "x": 33, "y": 99, "w": 225, "h": 50 },
+    "dateTo": { "x": 259, "y": 99, "w": 225, "h": 50 },
+    "countBox": { "x": 488, "y": 99, "w": 301, "h": 50 },
+    "rowsPerPage": { "x": 798, "y": 99, "w": 92, "h": 50 },
+    "deleteBtn": { "x": 899, "y": 99, "w": 60, "h": 50 },
+    "exportBtn": { "x": 1043, "y": 99, "w": 246, "h": 50 },
+    "pagination": { "x": 1309, "y": 99, "w": 530, "h": 51 },
+    "radioRow": { "x": 154, "y": 176, "w": 925, "h": 28 },
+    "depubCheck": { "x": 1116, "y": 177, "w": 379, "h": 26 },
+    "checkboxRow": { "y": 222 },
+    "groupsDropdown": { "x": 920, "y": 275, "w": 928, "h": 50 },
+    "tableHead": { "y": 350, "h": 127 },
+    "searchRow": { "y": 476, "h": 100 },
+    "dataRow": { "y": 575, "h": 571 }
+  },
+  "labels": {
+    "count": "КОЛИЧЕСТВО ЛОГОВ:",
+    "paginationEdge": ["First", "Next"]
+  }
+}

@@ -1,254 +1,304 @@
 <!doctype html>
 <html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes" />
-  <title>vsevn.ru — Объявления скомпонованные</title>
-  <link rel="preload" href="fonts/roboto-cyrillic.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="preload" href="fonts/roboto-latin.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="preload" href="fonts/vsevn-tabs.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="css/style.css?v=6" />
-</head>
-<body>
-  <div id="viewport">
-    <div id="frame" class="is-booting">
-
-      <!-- ============ Ряд 1: вкладки источников ============ -->
-      <header class="topbar topbar--sources">
-        <nav class="src-tabs" id="srcTabs" aria-label="Источники">
-          <a class="src-tab" href="#" data-src="trudvsem" data-kind="site" data-tip="Переключить на вкладку 1"><span class="tab-ico" aria-hidden="true"></span><span class="tab-text">ТРУДВСЕМ</span></a>
-          <a class="src-tab active" href="#" data-src="hh" data-kind="site" data-tip="Переключить на вкладку 2"><span class="tab-ico" aria-hidden="true"></span><span class="tab-text">HH.RU</span></a>
-          <a class="src-tab" href="#" data-src="zp" data-kind="site" data-tip="Переключить на вкладку 3"><span class="tab-ico" aria-hidden="true"></span><span class="tab-text">ZP.RU</span></a>
-          <a class="src-tab" href="#" data-src="rabota" data-kind="site" data-tip="Переключить на вкладку 4"><span class="tab-ico" aria-hidden="true"></span><span class="tab-text">RABOTA.RU</span></a>
-          <a class="src-tab" href="#" data-src="vk" data-kind="social" data-social-label="Все сообщества" data-tip="Переключить на вкладку 5"><span class="tab-ico" aria-hidden="true"></span><span class="tab-text">ВКОНТАКТЕ</span></a>
-          <a class="src-tab" href="#" data-src="ok" data-kind="social" data-social-label="Все группы ОК" data-tip="Переключить на вкладку 6"><span class="tab-ico" aria-hidden="true"></span><span class="tab-text">ОК</span></a>
-          <a class="src-tab" href="#" data-src="tg" data-kind="social" data-social-label="Все каналы" data-tip="Переключить на вкладку 7"><span class="tab-ico" aria-hidden="true"></span><span class="tab-text">ТЕЛЕГРАМ</span></a>
-          <a class="src-tab" href="#" data-src="max" data-kind="social" data-social-label="Все чаты" data-tip="Переключить на вкладку 8"><span class="tab-ico" aria-hidden="true"></span><span class="tab-text">МАКС</span></a>
+  <head>
+    <meta charset="UTF-8" />
+    <base href="header_only/" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=yes"
+    />
+    <title>vsevn.ru — Объявления скомпонованные</title>
+    <style id="adsBootStyle">
+      html { background: #fffcec; }
+      html:not(.ads-app-ready) #zoomViewport {
+        visibility: hidden !important;
+      }
+    </style>
+    <script>
+      (function () {
+        function revealAdsApp() {
+          document.documentElement.classList.add("ads-app-ready");
+        }
+        window.__revealAdsApp = revealAdsApp;
+        window.addEventListener(
+          "load",
+          function () {
+            window.setTimeout(revealAdsApp, 3000);
+          },
+          { once: true },
+        );
+      })();
+    </script>
+    <!-- ТЗ п.3/п.5: убран внешний render-blocking запрос Google Fonts.
+         Шрифт Roboto подключён локально через @font-face в css/style.css,
+         шрифт Inter в вёрстке не используется. Страница полностью самодостаточна. -->
+    <link
+      rel="preload"
+      href="fonts/roboto-cyrillic.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="fonts/roboto-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="css/style.css?v=435" />
+    <link rel="stylesheet" href="css/compiled-ads.css?v=228" />
+  </head>
+  <body>
+    <div id="zoomViewport">
+      <div id="zoomFrame">
+      <header class="topbar">
+        <nav class="main-nav" aria-label="Главное меню">
+          <a class="nav-link" href="#" data-tab="ads">
+            <span class="icon icon-ads" aria-hidden="true"></span>
+            <span class="nav-text" data-text="ОБЪЯВЛЕНИЯ">ОБЪЯВЛЕНИЯ</span>
+          </a>
+          <a class="nav-link active" href="#" data-tab="letters">
+            <span class="icon icon-letters" aria-hidden="true"></span>
+            <span class="nav-text" data-text="ОБЪЯВЛЕНИЯ СКОМПОНОВАННЫЕ"
+              >ОБЪЯВЛЕНИЯ СКОМПОНОВАННЫЕ</span
+            >
+          </a>
+          <a class="nav-link" href="#" data-tab="import">
+            <span class="icon icon-import" aria-hidden="true"></span>
+            <span class="nav-text" data-text="ИМПОРТ ИЗ XML ФАЙЛА"
+              >ИМПОРТ ИЗ XML ФАЙЛА</span
+            >
+          </a>
+          <a class="nav-link" href="#" data-tab="companies">
+            <span class="icon icon-companies" aria-hidden="true"></span>
+            <span class="nav-text" data-text="ГРУППЫ ОК">ГРУППЫ ОК</span>
+          </a>
+          <a class="nav-link" href="#" data-tab="resume">
+            <span class="icon icon-resume" aria-hidden="true"></span>
+            <span class="nav-text" data-text="ПОДПИСЧИКИ">ПОДПИСЧИКИ</span>
+          </a>
+          <a class="nav-link" href="#" data-tab="managers">
+            <span class="icon icon-managers" aria-hidden="true"></span>
+            <span class="nav-text" data-text="ИНТЕРФЕЙС">ИНТЕРФЕЙС</span>
+          </a>
         </nav>
-        <span class="src-underline" aria-hidden="true"></span>
-        <span class="src-underline-active" id="srcUnderline" aria-hidden="true"></span>
-        <a class="import-link" href="#" data-tip="Импорт объявлений из XML файла">
-          <span class="tab-ico" aria-hidden="true"></span>
-          <span class="tab-text">ИМПОРТ ИЗ XML ФАЙЛА</span>
-        </a>
       </header>
 
-      <!-- ============ Ряд 2: вкладки разделов ============ -->
-      <header class="topbar topbar--sections">
-        <nav class="sec-tabs" aria-label="Разделы">
-          <a class="sec-tab" href="#" data-tab="ads"><span class="tab-ico" aria-hidden="true"></span><span class="tab-text">ОБЪЯВЛЕНИЯ</span></a>
-          <a class="sec-tab active" href="#" data-tab="letters"><span class="tab-ico" aria-hidden="true"></span><span class="tab-text">ОБЪЯВЛЕНИЯ СКОМПОНОВАННЫЕ</span></a>
-          <a class="sec-tab" href="#" data-tab="managers"><span class="tab-ico" aria-hidden="true"></span><span class="tab-text">ИНТЕРФЕЙС</span></a>
-        </nav>
-      </header>
+      <div class="page-wrapper ads-page">
+        <div class="ads-card">
+          <div class="ads-card-content">
+          <!-- Заголовок -->
+          <h1 class="ads-title" data-text="Объявления скомпонованные">
+            Объявления скомпонованные
+          </h1>
 
-      <!-- ============ Карточка ============ -->
-      <div class="page">
-        <main class="card">
-          <h1 class="title">Объявления скомпонованные</h1>
-
-          <!-- Тулбар -->
-          <div class="field date-field date-field--from" id="dateFrom" data-tip="Дата начала периода">
-            <span class="date-line"><span class="date-label">ДАТА ОТ&nbsp;</span><span class="date-value" id="dateFromValue">01.01.2026</span></span>
+          <!-- Строка управления (даты / счётчик / delete / экспорт / пагинация) -->
+          <div class="ads-date-field date-field" data-date-role="from">
+            <input
+              type="text"
+              class="ads-date-input date-input"
+              id="dateFromInput"
+              value="12.05.2023"
+              readonly
+            />
+            <span class="ads-date-line"
+              ><span class="ads-date-label">ДАТА ОТ</span>
+              <span class="ads-date-value" id="dateFromRender"
+                >12.05.2023</span
+              ></span
+            >
           </div>
-          <div class="field date-field date-field--to" id="dateTo" data-tip="Дата конца периода">
-            <span class="date-line"><span class="date-label">ДАТА ДО&nbsp;</span><span class="date-value" id="dateToValue">18.07.2026</span></span>
+          <div class="ads-date-field date-field" data-date-role="to">
+            <input
+              type="text"
+              class="ads-date-input date-input"
+              id="dateToInput"
+              value="12.05.2023"
+              readonly
+            />
+            <span class="ads-date-line"
+              ><span class="ads-date-label">ДАТА ДО</span>
+              <span class="ads-date-value" id="dateToRender"
+                >12.05.2023</span
+              ></span
+            >
           </div>
 
-          <div class="field count-box">
-            <span class="count-line"><span class="count-label">КОЛИЧЕСТВО:</span><span class="count-num" id="countNum">0</span></span>
+          <div class="ads-count-box">
+            <span class="ads-count-line"
+              ><span class="ads-count-label">КОЛИЧЕСТВО ОБЪЯВЛЕНИЙ:</span
+              ><span class="ads-count-num" id="adsCountNum">0</span></span
+            >
           </div>
 
-          <div class="dd dd--rows" id="ddRows">
-            <span class="dd-text" id="ddRowsText">500</span>
-            <span class="dd-arrow" aria-hidden="true"></span>
-            <div class="dd-menu" id="ddRowsMenu"></div>
-          </div>
-
-          <button type="button" class="field delete-btn" id="deleteBtn" data-tip="Перейти на последнюю страницу таблицы">
-            <span class="delete-text">delete</span>
-            <span class="delete-ico-wrap" aria-hidden="true"><img class="delete-ico-idle" src="icons/delete.svg" alt="" /><img class="delete-ico-hover" src="icons/delete-hover.svg" alt="" /></span>
+          <button type="button" class="ads-delete-btn" id="adsDeleteBtn">
+            <span class="ads-delete-text">delete</span>
+            <span class="ads-delete-icon-wrap" aria-hidden="true"
+              ><img
+                class="ads-delete-icon-idle"
+                src="icons/compiled-ads/delete.svg"
+                width="25"
+                height="22"
+                alt="" /><img
+                class="ads-delete-icon-active"
+                src="icons/compiled-ads/delete-hover.svg"
+                width="25"
+                height="22"
+                alt=""
+            /></span>
           </button>
 
-          <button type="button" class="field export-btn" id="exportBtn" data-tip="Выгрузить текущий список в XML">
-            <span class="export-line"><span class="export-text">ЭКСПОРТ В</span><span class="export-xml">XML</span></span>
-            <span class="export-ico-wrap" aria-hidden="true"><img class="export-ico-idle" src="icons/export-xml.svg" alt="" /><img class="export-ico-hover" src="icons/export-xml-hover.svg" alt="" /></span>
-          </button>
-
-          <div class="pagination" id="pagination"></div>
-
-          <!-- Радиокнопки статуса (работают как чекбоксы, ТЗ п.33) -->
-          <div class="radio-row" id="radioRow">
-            <span class="radio is-active" data-cat="all"><span class="radio-dot"></span><span class="radio-text">Все</span></span>
-            <span class="radio is-active" data-cat="unpublished"><span class="radio-dot"></span><span class="radio-text">Ещё не опубликованные</span></span>
-            <span class="radio is-active" data-cat="moderation" data-sites-only><span class="radio-dot"></span><span class="radio-text">Модерация</span></span>
-            <span class="radio is-active" data-cat="blocked" data-sites-only><span class="radio-dot"></span><span class="radio-text">Заблокированные на сайте</span></span>
-            <span class="radio is-active" data-cat="active"><span class="radio-dot"></span><span class="radio-text">Активные</span></span>
-            <span class="radio is-active" data-cat="done"><span class="radio-dot"></span><span class="radio-text">Завершенные</span></span>
-            <span class="radio is-active" data-cat="expired"><span class="radio-dot"></span><span class="radio-text">Просроченные</span></span>
-          </div>
-
-          <!-- Чекбоксы -->
-          <label class="check check--depub"><input type="checkbox" id="chkEarlyDepub" /><span class="check-label">Депубликации раньше срока на сайте</span></label>
-          <label class="check check--responses"><input type="checkbox" id="chkResponsesOnly" /><span class="check-label">Показать только с откликами</span></label>
-          <label class="check check--wrap"><input type="checkbox" id="chkWrapText" checked /><span class="check-label">Переносить</span></label>
-          <label class="check check--collapse"><input type="checkbox" id="chkCollapseAll" /><span class="check-label">Свернуть все</span></label>
-          <label class="check check--notags"><input type="checkbox" id="chkWithoutTags" /><span class="check-label">Без тегов</span></label>
-          <label class="check check--changed"><input type="checkbox" id="chkChangedDepub" /><span class="check-label">Показать объявления с изменённой датой депубликацией</span></label>
-
-          <!-- Селекты -->
-          <div class="dd dd--xml" id="ddXml" data-default="Все файлы xml">
-            <span class="dd-text" id="ddXmlText">Все файлы xml</span>
-            <span class="dd-arrow" aria-hidden="true"></span>
-            <button type="button" class="dd-clear" aria-label="Очистить" data-tip="Очистить"><img class="ico-idle" src="icons/clear.svg" alt="" /><img class="ico-hover" src="icons/clear-hover.svg" alt="" /></button>
-            <div class="dd-menu" id="ddXmlMenu"></div>
-          </div>
-          <div class="dd dd--social" id="ddSocial" data-default="Все сообщества">
-            <span class="dd-text" id="ddSocialText">Все сообщества</span>
-            <span class="dd-arrow" aria-hidden="true"></span>
-            <button type="button" class="dd-clear" aria-label="Очистить" data-tip="Очистить"><img class="ico-idle" src="icons/clear.svg" alt="" /><img class="ico-hover" src="icons/clear-hover.svg" alt="" /></button>
-            <div class="dd-menu" id="ddSocialMenu"></div>
-          </div>
-
-          <!-- Календарь (общий для двух полей дат, позиционируется JS) -->
-          <div class="calendar" id="calendar" hidden>
-            <div class="cal-head">
-              <button type="button" class="cal-nav" id="calPrev" aria-label="Предыдущий месяц">&#8249;</button>
-              <span class="cal-select" id="calMonthSel" tabindex="0"><span id="calMonthText">Январь</span>
-                <span class="cal-menu" id="calMonthMenu" hidden></span>
-              </span>
-              <span class="cal-select" id="calYearSel" tabindex="0"><span id="calYearText">2026</span>
-                <span class="cal-menu" id="calYearMenu" hidden></span>
-              </span>
-              <button type="button" class="cal-nav" id="calNext" aria-label="Следующий месяц">&#8250;</button>
+          <div class="ads-rows-select">
+            <div
+              class="ads-dropdown ads-dropdown--rows"
+              data-dropdown="rowsPerPage"
+              data-default="500"
+            >
+              <span class="ads-dropdown-text has-value" data-text="500"
+                >500</span
+              >
+              <span class="ads-dropdown-arrow" aria-hidden="true"></span>
+              <div class="ads-dropdown-menu" hidden></div>
             </div>
-            <div class="cal-grid" id="calGrid"></div>
           </div>
 
-          <!-- ============ Таблица ============ -->
-          <div class="table-wrap">
+          <div class="ads-toolbar-export-page">
+            <button type="button" class="ads-export-btn" id="adsExportBtn">
+              <span class="ads-export-line"
+                ><span class="ads-export-text">ЭКСПОРТ В&nbsp;</span
+                ><span class="ads-export-xml">XML</span></span
+              >
+              <span class="ads-export-icon-wrap" aria-hidden="true"
+                ><img
+                  class="ads-export-icon-idle"
+                  src="icons/compiled-ads/export-xml.svg"
+                  width="36"
+                  height="36"
+                  alt="" /><img
+                  class="ads-export-icon-active"
+                  src="icons/compiled-ads/export-xml-hover.svg"
+                  width="36"
+                  height="36"
+                  alt=""
+              /></span>
+            </button>
+
+            <div class="ads-pagination" id="pagination"></div>
+          </div>
+
+          <!-- Радиокнопки статуса -->
+          <div class="ads-radio-row" id="adsRadioRow"></div>
+
+          <!-- Чекбокс «Депубликации раньше срока на сайте» -->
+          <label class="ads-check ads-check--depub">
+            <input type="checkbox" class="check-input" id="chkEarlyDepub" />
+            <span
+              class="ads-check-label"
+              data-text="Депубликации раньше срока на сайте"
+              >Депубликации раньше срока на сайте</span
+            >
+          </label>
+
+          <!-- Чекбоксы режима отображения -->
+          <label class="ads-check ads-check--responses">
+            <input type="checkbox" class="check-input" id="chkResponsesOnly" />
+            <span
+              class="ads-check-label"
+              data-text="Показать только с откликами"
+              >Показать только с откликами</span
+            >
+          </label>
+          <label class="ads-check ads-check--wrap">
+            <input
+              type="checkbox"
+              class="check-input"
+              id="chkWrapText"
+              checked
+            />
+            <span class="ads-check-label is-checked" data-text="Переносить"
+              >Переносить</span
+            >
+          </label>
+          <label class="ads-check ads-check--collapse">
+            <input type="checkbox" class="check-input" id="chkCollapseAll" />
+            <span class="ads-check-label" data-text="Свернуть все"
+              >Свернуть все</span
+            >
+          </label>
+          <label class="ads-check ads-check--notags">
+            <input type="checkbox" class="check-input" id="chkWithoutTags" />
+            <span class="ads-check-label" data-text="Без тегов">Без тегов</span>
+          </label>
+          <label class="ads-check ads-check--changed">
+            <input type="checkbox" class="check-input" id="chkChangedDepub" />
+            <span
+              class="ads-check-label"
+              data-text="Показать объявления с изменённой датой депубликацией"
+              >Показать объявления с изменённой датой депубликацией</span
+            >
+          </label>
+
+          <!-- Выпадающие списки «Все файлы xml» / «Все группы ОК» -->
+          <div
+            class="ads-dropdown ads-dropdown--xml"
+            data-dropdown="xmlFiles"
+            data-default="Все файлы xml"
+          >
+            <span class="ads-dropdown-text" data-text="Все файлы xml"
+              >Все файлы xml</span
+            >
+            <span class="ads-dropdown-arrow" aria-hidden="true"></span>
+            <button
+              type="button"
+              class="ads-dropdown-clear"
+              aria-label="Очистить"
+              hidden
+            >
+              <i class="vi vi-clear" aria-hidden="true"></i>
+            </button>
+            <div class="ads-dropdown-menu" hidden></div>
+          </div>
+          <div
+            class="ads-dropdown ads-dropdown--groups"
+            data-dropdown="groups"
+            data-default="Все группы ОК"
+          >
+            <span class="ads-dropdown-text" data-text="Все группы ОК"
+              >Все группы ОК</span
+            >
+            <span class="ads-dropdown-arrow" aria-hidden="true"></span>
+            <button
+              type="button"
+              class="ads-dropdown-clear"
+              aria-label="Очистить"
+              hidden
+            >
+              <i class="vi vi-clear" aria-hidden="true"></i>
+            </button>
+            <div class="ads-dropdown-menu" hidden></div>
+          </div>
+
+          <!-- Таблица -->
+          <div class="ads-table-wrapper">
             <table class="ads-table" id="adsTable">
-              <colgroup>
-                <col style="width: calc(77 * var(--px))" />
-                <col style="width: calc(142 * var(--px))" />
-                <col style="width: calc(370 * var(--px))" />
-                <col style="width: calc(93 * var(--px))" />
-                <col style="width: calc(93 * var(--px))" />
-                <col style="width: calc(93 * var(--px))" />
-                <col style="width: calc(93 * var(--px))" />
-                <col style="width: calc(93 * var(--px))" />
-                <col style="width: calc(78 * var(--px))" />
-                <col style="width: calc(288 * var(--px))" />
-                <col style="width: calc(401 * var(--px))" />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th class="th-title col-num">
-                    <span class="th-line is-sortable" data-sort="num" data-tip="Сортировать А-Я"><span class="th-text">№</span><button type="button" class="sort-btn" data-sort="num" tabindex="-1"></button></span>
-                    <span class="th-line is-sortable" data-sort="id" data-tip="Сортировать А-Я"><span class="th-text">ID</span><button type="button" class="sort-btn" data-sort="id" tabindex="-1"></button></span>
-                  </th>
-                  <th class="th-title col-contact">
-                    <span class="th-line"><span class="th-text">ТЕЛЕФОН(Ы)</span></span>
-                    <span class="th-line"><span class="th-text">EMAIL</span></span>
-                    <span class="th-line"><span class="th-text">СТАТУС</span></span>
-                    <span class="th-line"><span class="th-text">ТИП ОБЪЯВ.</span></span>
-                  </th>
-                  <th class="th-title col-vacancy">
-                    <span class="th-line is-sortable" data-sort="vacancy" data-tip="Сортировать А-Я"><span class="th-text"><span class="th-text-line">НАЗВАНИЕ ВАКАНСИИ ИЗ ОБЪЯВ-</span></span><span class="th-last-row"><span class="th-text-last">ЛЕНИЯ</span><button type="button" class="sort-btn" data-sort="vacancy" tabindex="-1"></button></span></span>
-                    <span class="th-line is-sortable" data-sort="fio" data-tip="Сортировать А-Я"><span class="th-text"><span class="th-text-line">ФИО ОТКЛИКНУВШЕГОСЯ СОИСКА-</span></span><span class="th-last-row"><span class="th-text-last">ТЕЛЯ</span><button type="button" class="sort-btn" data-sort="fio" tabindex="-1"></button></span></span>
-                  </th>
-                  <th class="th-title col-date1">
-                    <span class="th-line"><span class="th-text"><span class="th-text-line">ДАТА</span><span class="th-text-line">ПУБЛИ-</span><span class="th-text-line">КАЦИИ</span><span class="th-text-line">ИЗ XML</span></span></span>
-                  </th>
-                  <th class="th-title col-date2">
-                    <span class="th-line"><span class="th-text"><span class="th-text-line">ДАТА</span><span class="th-text-line">ПУБЛИ-</span><span class="th-text-line">КАЦИИ</span><span class="th-text-line">ФАКТИ.</span></span></span>
-                  </th>
-                  <th class="th-title col-date3">
-                    <span class="th-line"><span class="th-text"><span class="th-text-line">ДАТА</span><span class="th-text-line">ДЕПУБ-</span><span class="th-text-line">ЛИКАЦ.</span><span class="th-text-line">ИЗ XML</span></span></span>
-                  </th>
-                  <th class="th-title col-date4">
-                    <span class="th-line"><span class="th-text"><span class="th-text-line">ДАТА</span><span class="th-text-line">ДЕПУБ-</span><span class="th-text-line">ЛИКАЦ.</span><span class="th-text-line">ФАКТИ.</span></span></span>
-                  </th>
-                  <th class="th-title col-date5">
-                    <span class="th-line"><span class="th-text"><span class="th-text-line">ДАТА</span><span class="th-text-line">ДЕПУБ.</span><span class="th-text-line">РАНЬШЕ</span><span class="th-text-line">СРОКА</span></span></span>
-                  </th>
-                  <th class="th-title col-time">
-                    <span class="th-line"><span class="th-text"><span class="th-text-line">TIME</span><span class="th-text-line">КОЛ.</span><span class="th-text-line">ДНЕЙ</span><span class="th-text-line">ОКОН.</span></span></span>
-                  </th>
-                  <th class="th-title col-company">
-                    <span class="th-line is-sortable" data-sort="invoice" data-tip="Сортировать А-Я"><span class="th-text">НОМЕР И ДАТА СЧЁТА</span><button type="button" class="sort-btn" data-sort="invoice" tabindex="-1"></button></span>
-                    <span class="th-line is-sortable" data-sort="inn" data-tip="Сортировать А-Я"><span class="th-text">ИНН КОМПАНИИ</span><button type="button" class="sort-btn" data-sort="inn" tabindex="-1"></button></span>
-                    <span class="th-line is-sortable" data-sort="company" data-tip="Сортировать А-Я"><span class="th-text">НАЗВАНИЕ КОМПАНИИ</span><button type="button" class="sort-btn" data-sort="company" tabindex="-1"></button></span>
-                  </th>
-                  <th class="th-title col-text">
-                    <span class="th-line"><span class="th-text">ИСТОЧНИК</span></span>
-                    <span class="th-line"><span class="th-text"><span class="th-text-line">ТЕКСТ ОБЪЯВЛЕНИЯ ИЗ ТЕГОВ DOP-</span><span class="th-text-line">INFORMSOBYZANOSTI, DOPINFORMS-</span><span class="th-text-line">TREBOVANIY,&nbsp; DOPINFORMSUSLOVIY</span></span></span>
-                  </th>
-                </tr>
-                <tr>
-                  <th class="th-search col-num">
-                    <div class="search-field search-field--tall" data-key="id">
-                      <span class="search-ico" aria-hidden="true"></span>
-                      <input type="text" placeholder="Id" autocomplete="off" spellcheck="false" />
-                      <button type="button" class="search-clear" aria-label="Очистить" data-tip="Очистить"><img class="ico-idle" src="icons/clear.svg" alt="" /><img class="ico-hover" src="icons/clear-hover.svg" alt="" /></button>
-                    </div>
-                  </th>
-                  <th class="th-search col-contact">
-                    <div class="search-field" data-key="phone">
-                      <span class="search-ico" aria-hidden="true"></span>
-                      <input type="text" placeholder="По телеф." autocomplete="off" spellcheck="false" />
-                      <button type="button" class="search-clear" aria-label="Очистить" data-tip="Очистить"><img class="ico-idle" src="icons/clear.svg" alt="" /><img class="ico-hover" src="icons/clear-hover.svg" alt="" /></button>
-                    </div>
-                    <div class="search-field" data-key="email">
-                      <span class="search-ico" aria-hidden="true"></span>
-                      <input type="text" placeholder="По email" autocomplete="off" spellcheck="false" />
-                      <button type="button" class="search-clear" aria-label="Очистить" data-tip="Очистить"><img class="ico-idle" src="icons/clear.svg" alt="" /><img class="ico-hover" src="icons/clear-hover.svg" alt="" /></button>
-                    </div>
-                  </th>
-                  <th class="th-search col-vacancy">
-                    <div class="search-field" data-key="vacancy">
-                      <span class="search-ico" aria-hidden="true"></span>
-                      <input type="text" placeholder="По названию вакансии" autocomplete="off" spellcheck="false" />
-                      <button type="button" class="search-clear" aria-label="Очистить" data-tip="Очистить"><img class="ico-idle" src="icons/clear.svg" alt="" /><img class="ico-hover" src="icons/clear-hover.svg" alt="" /></button>
-                    </div>
-                    <div class="search-field" data-key="fio">
-                      <span class="search-ico" aria-hidden="true"></span>
-                      <input type="text" placeholder="По ФИО соискателя" autocomplete="off" spellcheck="false" />
-                      <button type="button" class="search-clear" aria-label="Очистить" data-tip="Очистить"><img class="ico-idle" src="icons/clear.svg" alt="" /><img class="ico-hover" src="icons/clear-hover.svg" alt="" /></button>
-                    </div>
-                  </th>
-                  <th class="th-search col-date1"></th>
-                  <th class="th-search col-date2"></th>
-                  <th class="th-search col-date3"></th>
-                  <th class="th-search col-date4"></th>
-                  <th class="th-search col-date5"></th>
-                  <th class="th-search col-time"></th>
-                  <th class="th-search col-company">
-                    <div class="search-field" data-key="invoice">
-                      <span class="search-ico" aria-hidden="true"></span>
-                      <input type="text" placeholder="По номеру счёта" autocomplete="off" spellcheck="false" />
-                      <button type="button" class="search-clear" aria-label="Очистить" data-tip="Очистить"><img class="ico-idle" src="icons/clear.svg" alt="" /><img class="ico-hover" src="icons/clear-hover.svg" alt="" /></button>
-                    </div>
-                    <div class="search-field" data-key="innName">
-                      <span class="search-ico" aria-hidden="true"></span>
-                      <input type="text" placeholder="По ИНН или по назван." autocomplete="off" spellcheck="false" />
-                      <button type="button" class="search-clear" aria-label="Очистить" data-tip="Очистить"><img class="ico-idle" src="icons/clear.svg" alt="" /><img class="ico-hover" src="icons/clear-hover.svg" alt="" /></button>
-                    </div>
-                  </th>
-                  <th class="th-search col-text"></th>
-                </tr>
-              </thead>
-              <tbody id="tbody"></tbody>
+              <colgroup id="adsColgroup"></colgroup>
+              <thead id="adsTableHead"></thead>
+              <tbody id="adsTableBody"></tbody>
             </table>
           </div>
-        </main>
+          </div>
+        </div>
       </div>
-
+      </div>
     </div>
-  </div>
 
-  <!-- Данные и приложение: синхронно, контент готов к первой отрисовке -->
-  <script src="js/data.js?v=2"></script>
-  <script src="js/app.js?v=4"></script>
-</body>
+    <script src="js/data/legal-forms.js" defer></script>
+    <script src="js/data/figma-colors.js" defer></script>
+    <script src="js/data/figma-columns.js?v=16" defer></script>
+    <script src="js/data/ads-data.js?v=9" defer></script>
+    <script src="js/data/select-options.js" defer></script>
+    <script src="js/script.js?v=367" defer></script>
+    <script src="js/compiled-ads-app.js?v=196" defer></script>
+  </body>
 </html>
