@@ -14,12 +14,6 @@
 (function () {
   "use strict";
 
-  /* Сборка: true — дизайн «прибит» (браузерный зум компенсируется одним
-     transform на кадре; Chrome/Yandex — ровно, в Firefox остаётся короткий
-     системный кадр зума до срабатывания JS — ограничение платформы).
-     false — сборка для Firefox: нативный зум, без компенсации. */
-  var ZOOM_COMPENSATION = true;
-
   var DESIGN_W = 1920;
   var frame = document.getElementById("frame");
   var viewport = document.getElementById("viewport");
@@ -27,37 +21,41 @@
   /* ==========================================================
      1. Масштаб кадра
      ========================================================== */
-  var baseW = document.documentElement.clientWidth;
-  var baseDPR = window.devicePixelRatio || 1;
-  var lastDPR = baseDPR;
-  var scale = baseW / DESIGN_W;
+  var scale = 1;
+  var lastOuterWidth = window.outerWidth;
+  var lastOuterHeight = window.outerHeight;
+  var resizeFrame = 0;
+  var heightPx = "";
 
-  function applyScale() {
+  function calculateFitScale() {
+    return Math.min(1, document.documentElement.clientWidth / DESIGN_W);
+  }
+  function applyScale(nextScale) {
+    scale = nextScale;
     frame.style.transform = "scale(" + scale + ")";
     syncHeight();
   }
   function syncHeight() {
-    viewport.style.height = frame.offsetHeight * scale + "px";
+    var nextHeight = (frame.offsetHeight * scale) + "px";
+    if (nextHeight === heightPx) return;
+    heightPx = nextHeight;
+    viewport.style.height = nextHeight;
+  }
+  function scheduleTrueResize() {
+    if (resizeFrame) return;
+    resizeFrame = requestAnimationFrame(function () {
+      resizeFrame = 0;
+      applyScale(calculateFitScale());
+      positionUnderline();
+    });
   }
 
   window.addEventListener("resize", function () {
-    var dpr = window.devicePixelRatio || 1;
-    var zoomed = Math.abs(dpr - lastDPR) > 0.001;
     tipInvalidate();
-    if (zoomed) {
-      lastDPR = dpr;
-      if (!ZOOM_COMPENSATION) return; // Firefox-сборка: нативный зум
-      var oldScale = scale;
-      var rel = oldScale > 0 ? window.scrollY / oldScale : 0;
-      scale = (baseW * baseDPR) / (dpr * DESIGN_W);
-      applyScale();
-      window.scrollTo(0, rel * scale);
-    } else {
-      baseW = document.documentElement.clientWidth;
-      baseDPR = dpr;
-      scale = baseW / DESIGN_W;
-      applyScale();
-    }
+    var outerChanged = window.outerWidth !== lastOuterWidth || window.outerHeight !== lastOuterHeight;
+    lastOuterWidth = window.outerWidth;
+    lastOuterHeight = window.outerHeight;
+    if (outerChanged) scheduleTrueResize();
   });
 
   if (typeof ResizeObserver !== "undefined") {
@@ -994,10 +992,21 @@
   }
 
   /* ==========================================================
-     Старт: первый рендер и масштаб — синхронно, до первой отрисовки
+     Старт: шрифты должны быть готовы до первого показа кадра.
      ========================================================== */
-  syncRadios();
-  render();
-  applyScale();
-  positionUnderline();
+  var booted = false;
+  function boot() {
+    if (booted) return;
+    booted = true;
+    syncRadios();
+    render();
+    applyScale(calculateFitScale());
+    positionUnderline();
+    frame.classList.remove("is-booting");
+  }
+  var fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  Promise.race([
+    fontsReady,
+    new Promise(function (resolve) { setTimeout(resolve, 1500); })
+  ]).then(boot, boot);
 })();

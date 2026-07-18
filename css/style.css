@@ -7,9 +7,9 @@
      • Кадр #frame имеет ФИКСИРОВАННУЮ раскладку 1920 дизайн-пикселей.
      • 1 дизайн-пиксель = var(--px) = 1px CSS внутри кадра (заморожено).
      • Все размеры записаны как calc(N * var(--px)), N — величина из макета.
-     • Вписывание в окно и компенсация браузерного зума выполняются ОДНИМ
-       transform: scale() на #frame (см. js/app.js). Внутри кадра раскладка
-       никогда не пересчитывается — поэтому нет reflow и «прыжков».
+   • Вписывание в окно выполняется ОДНИМ transform: scale() на #frame
+     (см. js/app.js). Браузерный Ctrl +/- остаётся нативным и не меняет
+     масштаб кадра скриптом; внутри кадра раскладка не пересчитывается.
    Шрифт: Roboto (variable, woff2) локально, без внешних запросов.
    Текст — только настоящий HTML. Графика — только для иконок.
    ============================================================================ */
@@ -81,7 +81,7 @@ html {
   -moz-text-size-adjust: none;
   -webkit-text-size-adjust: none;
   text-size-adjust: none;
-  overflow-anchor: none;
+  overflow-anchor: auto;
 }
 html::-webkit-scrollbar { width: 12px; background: #fffcec; }
 html::-webkit-scrollbar-thumb {
@@ -139,6 +139,9 @@ body {
   -moz-text-size-adjust: none;
   -webkit-text-size-adjust: none;
   text-size-adjust: none;
+}
+#frame.is-booting {
+  visibility: hidden;
 }
 
 /* ============================================================
