@@ -2288,35 +2288,37 @@ a.ads-cell-link:not(.ads-fio-link) {
 /* Вертикальный скролл — overflow-y: scroll, полоса видна сразу и вверху страницы (п.9) */
 html:has(.ads-page) {
   overflow-x: hidden !important;
-  overflow-y: scroll !important;
+  overflow-y: hidden !important;
   height: 100%;
+}
+#zoomViewport {
   scrollbar-gutter: stable;
   scrollbar-width: thin !important;
   scrollbar-color: rgba(98, 86, 14, 0.45) #fffcec !important;
 }
-html:has(.ads-page)::-webkit-scrollbar {
+#zoomViewport::-webkit-scrollbar {
   display: block !important;
   -webkit-appearance: none;
-  width: calc(12 * var(--fvw, 1vw) / 19.2);
+  width: calc(12 * var(--fvw, 1vw) / 19.2 * var(--browser-zoom-inv, 1));
   background-color: #fffcec;
 }
-html:has(.ads-page)::-webkit-scrollbar-track {
+#zoomViewport::-webkit-scrollbar-track {
   background: #fffcec;
 }
-html:has(.ads-page)::-webkit-scrollbar-thumb {
+#zoomViewport::-webkit-scrollbar-thumb {
   background: rgba(98, 86, 14, 0.45);
-  border-radius: calc(6 * var(--fvw, 1vw) / 19.2);
-  min-height: calc(48 * var(--fvw, 1vw) / 19.2);
-  border: calc(2 * var(--fvw, 1vw) / 19.2) solid #fffcec;
+  border-radius: calc(6 * var(--fvw, 1vw) / 19.2 * var(--browser-zoom-inv, 1));
+  min-height: calc(48 * var(--fvw, 1vw) / 19.2 * var(--browser-zoom-inv, 1));
+  border: calc(2 * var(--fvw, 1vw) / 19.2 * var(--browser-zoom-inv, 1)) solid #fffcec;
   background-clip: padding-box;
 }
 body:has(.ads-page) {
   overflow-x: hidden !important;
-  overflow-y: visible !important;
-  min-height: 100%;
+  overflow-y: hidden !important;
+  height: 100%;
 }
 body:has(.ads-page) #zoomFrame {
-  position: relative;
+  position: absolute;
   height: auto;
   max-height: none;
   overflow-x: hidden;

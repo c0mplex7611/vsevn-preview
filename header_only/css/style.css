@@ -471,10 +471,8 @@
 
 html {
     width: 100%;
-    min-height: 100%;
-    overflow-x: hidden;
-    overflow-y: scroll;
-    scrollbar-gutter: stable;
+    height: 100%;
+    overflow: hidden;
     scrollbar-width: none;
     -moz-text-size-adjust: none;
     -webkit-text-size-adjust: none;
@@ -488,7 +486,7 @@ html::-webkit-scrollbar {
 
 body {
     width: 100%;
-    min-height: 100%;
+    height: 100%;
     overflow: hidden;
     -webkit-text-size-adjust: none;
     -moz-text-size-adjust: none;
@@ -497,6 +495,7 @@ body {
 }
 
 #zoomViewport,
+#zoomScrollSpace,
 #zoomFrame,
 #zoomFrame * {
     -moz-text-size-adjust: none;
@@ -505,20 +504,30 @@ body {
 }
 
 #zoomViewport,
+#zoomScrollSpace,
 #zoomFrame {
     overflow-anchor: none;
 }
 
 #zoomViewport {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    overflow: hidden;
+    position: fixed;
+    inset: 0;
+    width: auto;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
 }
 
-body #zoomViewport > #zoomFrame {
+#zoomScrollSpace {
+    position: relative;
+    width: 100%;
+    min-height: 100%;
+    overflow: visible;
+}
+
+body #zoomViewport > #zoomScrollSpace > #zoomFrame {
     position: absolute;
-    translate: 0 var(--zoom-scroll-fine-y, 0px);
     top: 0;
     left: 0;
     transform-origin: 0 0;
@@ -531,7 +540,7 @@ body #zoomViewport > #zoomFrame {
 }
 
 @supports not (zoom: 1) {
-    body #zoomViewport > #zoomFrame {
+    body #zoomViewport > #zoomScrollSpace > #zoomFrame {
         zoom: 1;
         transform: none;
     }

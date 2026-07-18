@@ -12,6 +12,15 @@ const scriptPath = path.join(
   "script.js",
 );
 const source = fs.readFileSync(scriptPath, "utf8");
+const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+const baseCss = fs.readFileSync(
+  path.join(__dirname, "..", "header_only", "css", "style.css"),
+  "utf8",
+);
+const adsCss = fs.readFileSync(
+  path.join(__dirname, "..", "header_only", "css", "compiled-ads.css"),
+  "utf8",
+);
 
 function loadFunction(name) {
   const marker = `function ${name}(`;
@@ -49,4 +58,26 @@ test("invalid zoom values leave scroll position unchanged", () => {
   assert.equal(convert(2000, 0, 1), 2000);
   assert.equal(convert(2000, 1, NaN), 2000);
   assert.equal(convert(-20, 1, 1.25), 0);
+});
+
+test("zoom frame is wrapped by a dedicated scroll extent", () => {
+  assert.match(
+    html,
+    /id="zoomViewport"[\s\S]*id="zoomScrollSpace"[\s\S]*id="zoomFrame"/,
+  );
+});
+
+test("document is fixed and zoom viewport owns vertical scrolling", () => {
+  assert.match(
+    baseCss,
+    /#zoomViewport\s*\{[\s\S]*position:\s*fixed;[\s\S]*overflow-y:\s*scroll;/,
+  );
+  assert.match(
+    adsCss,
+    /html:has\(\.ads-page\)\s*\{[^}]*overflow-y:\s*hidden\s*!important;/,
+  );
+  assert.doesNotMatch(
+    adsCss,
+    /html:has\(\.ads-page\)\s*\{[^}]*overflow-y:\s*scroll\s*!important;/,
+  );
 });
