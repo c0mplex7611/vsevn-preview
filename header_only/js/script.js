@@ -262,6 +262,19 @@ function getDocumentScrollPosition() {
   };
 }
 
+function getZoomAnchorTargetViewportY(anchor, viewportHeight) {
+  if (!anchor) return 0;
+
+  const height =
+    Number.isFinite(viewportHeight) && viewportHeight > 0 ? viewportHeight : 0;
+  const ratio = Number.isFinite(anchor.viewportRatioY)
+    ? Math.min(1, Math.max(0, anchor.viewportRatioY))
+    : null;
+
+  if (height > 0 && ratio !== null) return height * ratio;
+  return Number.isFinite(anchor.viewportY) ? anchor.viewportY : 0;
+}
+
 /*
  * Keep the same live HTML point under the same viewport coordinate while
  * Firefox changes page zoom. Using scrollTop * oldDpr / newDpr is unreliable:
@@ -300,6 +313,8 @@ function createZoomScrollAnchor() {
     element: element,
     ratioY: ratioY,
     viewportY: probeY,
+    viewportRatioY:
+      window.innerHeight > 0 ? probeY / window.innerHeight : 0,
   };
 }
 
@@ -354,8 +369,12 @@ function restoreZoomScrollAnchor() {
     return;
   }
 
+  const targetViewportY = getZoomAnchorTargetViewportY(
+    anchor,
+    window.innerHeight,
+  );
   const currentPointY = rect.top + rect.height * anchor.ratioY;
-  const deltaY = currentPointY - anchor.viewportY;
+  const deltaY = currentPointY - targetViewportY;
   const scrollingElement =
     document.scrollingElement || document.documentElement;
   if (Number.isFinite(deltaY) && Math.abs(deltaY) > 0.01) {
@@ -377,7 +396,7 @@ function restoreZoomScrollAnchor() {
     const settledRect = anchor.element.getBoundingClientRect();
     const settledPointY =
       settledRect.top + settledRect.height * anchor.ratioY;
-    const residualY = settledPointY - anchor.viewportY;
+    const residualY = settledPointY - targetViewportY;
     if (Number.isFinite(residualY) && Math.abs(residualY) <= 1.5) {
       const currentFine =
         parseFloat(
