@@ -1,0 +1,237 @@
+/* Flow layout: dimensions can grow when Firefox enlarges text. */
+.topbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  width: 100%;
+  height: auto;
+  min-height: 60px;
+  padding: 10px 54px;
+}
+
+.src-tabs,
+.sec-tabs {
+  position: static;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 36px;
+  width: auto;
+  height: auto;
+}
+
+.src-tab,
+.sec-tab,
+.import-link {
+  position: relative !important;
+  inset: auto !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  width: auto !important;
+  min-height: 36px;
+  border-bottom: 3px solid transparent;
+}
+
+.src-tab.active {
+  border-bottom-color: var(--c-green);
+}
+
+.sec-tab.active {
+  border-bottom-color: var(--c-red);
+}
+
+.src-tab .tab-ico,
+.sec-tab .tab-ico,
+.import-link .tab-ico,
+.src-tab .tab-text,
+.sec-tab .tab-text,
+.import-link .tab-text {
+  position: static;
+  inset: auto;
+  height: auto;
+}
+
+.src-tab .tab-ico,
+.sec-tab .tab-ico,
+.import-link .tab-ico {
+  flex: 0 0 auto;
+}
+
+.src-tab .tab-text,
+.sec-tab .tab-text,
+.import-link .tab-text {
+  display: inline;
+  line-height: 1.18;
+}
+
+.import-link {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.src-underline,
+.src-underline-active {
+  display: none;
+}
+
+.page {
+  padding: 21px 0 40px;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 18px 16px;
+  width: 1881px;
+  min-height: 0;
+  margin: 0 0 0 20px;
+  padding: 18px 30px 30px;
+  background: #fff;
+}
+
+.title {
+  position: static;
+  flex: 0 0 100%;
+  font-size: 27px;
+  line-height: 1.37;
+  white-space: normal;
+}
+
+.field,
+.dd,
+.pagination,
+.radio-row,
+.check,
+.table-wrap {
+  position: relative;
+  inset: auto;
+}
+
+.field,
+.dd {
+  top: auto;
+  left: auto;
+  flex: 0 0 auto;
+}
+
+.date-field {
+  width: 235px;
+}
+
+.count-box {
+  width: auto;
+  min-width: 222px;
+}
+
+.dd--rows {
+  width: 104px;
+}
+
+.delete-btn {
+  width: 60px;
+}
+
+.export-btn {
+  width: 246px;
+}
+
+.pagination {
+  left: auto;
+  top: auto;
+  display: flex;
+  flex: 1 1 460px;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 50px;
+}
+
+.radio-row {
+  left: auto;
+  top: auto;
+  display: flex;
+  flex: 0 0 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 30px;
+  width: 100%;
+  height: auto;
+  min-height: 28px;
+}
+
+.radio,
+#appShell.mode-social .radio {
+  position: relative;
+  inset: auto;
+  display: inline-flex;
+  height: auto;
+  min-height: 28px;
+  white-space: normal;
+}
+
+#appShell.mode-social .radio[data-sites-only] {
+  display: none;
+}
+
+.check {
+  inset: auto;
+  flex: 0 1 auto;
+  max-width: 100%;
+}
+
+.check-label {
+  white-space: normal;
+}
+
+.check--depub {
+  margin-left: auto;
+}
+
+.dd--xml,
+.dd--social {
+  position: relative;
+  inset: auto;
+  flex: 1 1 780px;
+  width: auto;
+  min-width: 0;
+}
+
+.dd--social {
+  display: none;
+}
+
+#appShell.mode-social .dd--social {
+  display: flex;
+}
+
+.calendar {
+  z-index: 80;
+}
+
+.table-wrap {
+  flex: 0 0 100%;
+  width: 100%;
+  margin-top: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tip {
+  position: absolute;
+}
+
+/* Text-only QA hook: it mimics Firefox's reflow pressure without changing shell geometry. */
+#appShell.qa-text-zoom-125 .topbar,
+#appShell.qa-text-zoom-125 .card {
+  font-size: 125%;
+}
+
+#appShell.qa-text-zoom-125 .topbar *,
+#appShell.qa-text-zoom-125 .card * {
+  line-height: 1.35;
+}
+

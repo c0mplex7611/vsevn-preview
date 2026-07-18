@@ -1,0 +1,87 @@
+:root {
+  --grid-line: 1px;
+}
+
+.ads-table {
+  width: 1821px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.ads-table th,
+.ads-table td,
+.ads-table tr > :first-child,
+.ads-table thead tr:first-child > th,
+.ads-table thead tr:first-child > th:first-child {
+  border: var(--grid-line) solid rgba(98, 86, 14, 0.62);
+  box-shadow: none;
+}
+
+.ads-table thead .th-title {
+  height: auto;
+  min-height: 127px;
+  max-height: none;
+  overflow: hidden;
+}
+
+.th-line,
+.th-text-line,
+.th-last-row {
+  height: auto;
+  min-height: 0;
+  white-space: normal;
+}
+
+.ads-table thead .th-search {
+  height: auto;
+  min-height: 100px;
+}
+
+.search-field {
+  min-height: 50px;
+}
+
+.search-field--tall {
+  min-height: 100px;
+}
+
+.ads-table tbody tr,
+.ads-table tbody td,
+.ads-table:not(.no-wrap):not(.collapsed) tbody tr,
+.ads-table:not(.no-wrap):not(.collapsed) tbody td,
+.ads-table.no-wrap tbody tr,
+.ads-table.no-wrap tbody td {
+  height: auto;
+  max-height: none;
+}
+
+.ads-table tbody td {
+  min-height: 116px;
+}
+
+.ads-table:not(.no-wrap):not(.collapsed) tbody td .cell,
+.ads-table td[class*="col-date"] .cell,
+.ads-table td.col-time .cell {
+  max-height: none;
+  overflow: visible;
+}
+
+.ads-table.collapsed tbody tr,
+.ads-table.collapsed tbody td {
+  height: 116px;
+  max-height: 116px;
+  overflow: hidden;
+}
+
+.ads-table.collapsed tbody .cell {
+  max-height: 104px;
+  overflow: hidden;
+}
+
+.cell-line,
+.ads-table td[class*="col-date"] .cell-line,
+.ads-table td.col-time .cell-line {
+  height: auto;
+  min-height: 26px;
+}
+
