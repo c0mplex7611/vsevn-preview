@@ -15,14 +15,98 @@
   "use strict";
 
   var DESIGN_W = 1920;
-  var frame = document.getElementById("appShell");
-  var appScroll = document.getElementById("appScroll");
+  var frame = document.getElementById("frame");
+  var viewport = document.getElementById("viewport");
 
   /* ==========================================================
      1. Масштаб кадра
      ========================================================== */
-  function currentScale() {
-    return window.AppViewport ? window.AppViewport.getScale() : 1;
+  var baseW = document.documentElement.clientWidth;
+  var baseDPR = window.devicePixelRatio || 1;
+  var scale = 1;
+  var fitScale = 1;
+  var lastOuterWidth = window.outerWidth;
+  var lastOuterHeight = window.outerHeight;
+  var lastDPR = baseDPR;
+  var resizeFrame = 0;
+  var resizeKind = "";
+  var zoomAnchor = null;
+  var heightPx = "";
+
+  function calculateFitScale() {
+    return Math.min(1, document.documentElement.clientWidth / DESIGN_W);
+  }
+  function applyScale(nextScale) {
+    scale = nextScale;
+    frame.style.transform = "scale(" + scale + ")";
+    syncHeight();
+  }
+  function syncHeight() {
+    var nextHeight = (frame.offsetHeight * scale) + "px";
+    if (nextHeight === heightPx) return;
+    heightPx = nextHeight;
+    viewport.style.height = nextHeight;
+  }
+  function captureZoomAnchor() {
+    var y = Math.max(1, Math.min(window.innerHeight * 0.5, window.innerHeight - 1));
+    var x = Math.max(1, Math.min(window.innerWidth * 0.5, window.innerWidth - 1));
+    var element = document.elementFromPoint(x, y);
+    if (!element || !frame.contains(element)) return null;
+    var row = element.closest ? element.closest("tr") : null;
+    if (row) element = row;
+    var rect = element.getBoundingClientRect();
+    return {
+      element: element,
+      designTop: (rect.top + window.scrollY) / scale,
+      viewportTop: rect.top
+    };
+  }
+  function restoreZoomAnchor(anchor) {
+    if (!anchor || !anchor.element.isConnected) return;
+    var nextScroll = anchor.designTop * scale - anchor.viewportTop;
+    if (Number.isFinite(nextScroll)) window.scrollTo(window.scrollX, Math.max(0, nextScroll));
+  }
+  function scheduleResize(kind) {
+    resizeKind = kind === "window" ? "window" : (resizeKind || "zoom");
+    if (resizeFrame) return;
+    resizeFrame = requestAnimationFrame(function () {
+      resizeFrame = 0;
+      var currentDPR = window.devicePixelRatio || 1;
+      if (resizeKind === "window") {
+        baseW = document.documentElement.clientWidth;
+        baseDPR = currentDPR;
+        fitScale = Math.min(1, baseW / DESIGN_W);
+        applyScale(fitScale);
+      } else {
+        var zoomScale = baseDPR / currentDPR;
+        applyScale(fitScale * zoomScale);
+        restoreZoomAnchor(zoomAnchor);
+      }
+      zoomAnchor = null;
+      resizeKind = "";
+      positionUnderline();
+    });
+  }
+
+  window.addEventListener("resize", function () {
+    tipInvalidate();
+    var currentDPR = window.devicePixelRatio || 1;
+    var dprChanged = Math.abs(currentDPR - lastDPR) > 0.001;
+    var outerChanged = window.outerWidth !== lastOuterWidth || window.outerHeight !== lastOuterHeight;
+    lastDPR = currentDPR;
+    lastOuterWidth = window.outerWidth;
+    lastOuterHeight = window.outerHeight;
+    if (outerChanged) {
+      zoomAnchor = null;
+      scheduleResize("window");
+    } else if (dprChanged) {
+      if (!zoomAnchor) zoomAnchor = captureZoomAnchor();
+      scheduleResize("zoom");
+    }
+  });
+
+  if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(syncHeight).observe(frame);
   }
 
   /* ==========================================================
@@ -55,7 +139,6 @@
     tipEl.classList.toggle("is-wrapped", text.length > 55);
     tipEl.hidden = false;
     var fr = frame.getBoundingClientRect();
-    var scale = currentScale();
     var x = (clientX - fr.left) / scale + 16;
     var y = (clientY - fr.top) / scale + 24;
     var maxX = DESIGN_W - tipEl.offsetWidth - 8;
@@ -75,7 +158,7 @@
     else if (tipTarget) hideTip();
   });
   document.addEventListener("mouseleave", hideTip);
-  appScroll.addEventListener("scroll", tipInvalidate, { passive: true });
+  window.addEventListener("scroll", tipInvalidate, { passive: true });
   window.addEventListener("wheel", function (e) { if (e.ctrlKey) tipInvalidate(); }, { passive: true });
 
   /* ==========================================================
@@ -501,6 +584,7 @@
 
     tbody.innerHTML = pageRows.map(function (a, i) { return renderRow(a, start + i + 1); }).join("");
     renderPagination(pages);
+    syncHeight();
   }
 
   /* Пагинация: First / страницы / «...» (+5 страниц, ТЗ п.14) / xlsx / Next */
@@ -584,6 +668,7 @@
         var dx = (e.clientX - startX) / scale;
         var w = Math.max(40, startW + dx);
         cols[i].style.width = "calc(" + w.toFixed(1) + " * var(--px))";
+        syncHeight();
       }
       function up() {
         document.removeEventListener("mousemove", move);
@@ -962,8 +1047,13 @@
     booted = true;
     syncRadios();
     render();
+    baseW = document.documentElement.clientWidth;
+    baseDPR = window.devicePixelRatio || 1;
+    lastDPR = baseDPR;
+    fitScale = calculateFitScale();
+    applyScale(fitScale);
     positionUnderline();
-    if (window.AppViewport) window.AppViewport.init();
+    frame.classList.remove("is-booting");
   }
   var fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
   Promise.race([
