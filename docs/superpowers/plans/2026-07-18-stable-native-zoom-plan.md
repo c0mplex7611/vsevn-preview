@@ -4,7 +4,7 @@
 
 **Goal:** Remove vertical layout jumps during browser `Ctrl +/-` zoom while preserving the existing 1920 design-pixel layout and table behavior.
 
-**Architecture:** Keep `#frame` as the only transformed element. Calculate a fit scale for the real window size, ignore DPR-only resize events, and let the browser own scroll anchoring during native zoom. Use a guarded initial boot and a height observer that writes only real height changes.
+**Architecture:** Keep `#frame` as the only transformed element. Calculate a fit scale for the real window size, compensate browser DPR changes with `baseDPR / currentDPR`, and restore one captured viewport anchor per zoom frame. Use a guarded initial boot and a height observer that writes only real height changes.
 
 **Tech Stack:** Static HTML, CSS, vanilla JavaScript, Node syntax/static tests, Chromium browser smoke test.
 
@@ -12,7 +12,7 @@
 
 - Preserve the Figma-derived 1920 design-pixel coordinate system and existing interactions.
 - Use one `transform: scale(...)` on `#frame`; no nested vertical scroll containers.
-- Browser zoom must not trigger `window.scrollTo`, `scrollTop` writes, or DPR compensation.
+- Browser zoom may trigger one debounced `window.scrollTo` for the captured viewport anchor, but never writes `scrollTop` directly or performs DPR compensation repeatedly.
 - Keep local Roboto and `vsevn-tabs` fonts and wait for `document.fonts.ready` before first reveal.
 - No frameworks, build step, external requests, or destructive repository operations.
 
@@ -29,7 +29,7 @@
 
 - [x] **Step 1: Write the failing test**
 
-Create a test that reads the deployed source and asserts that the old compensation flag and `scrollTo` call are absent, the resize handler tracks external window dimensions, and CSS restores scroll anchoring.
+Create a test that reads the deployed source and asserts that DPR compensation, the viewport-anchor helpers, external window dimensions, font gating, and native scroll anchoring are present without the old compensation flag.
 
 ```js
 const assert = require('node:assert/strict');
@@ -41,7 +41,11 @@ const app = fs.readFileSync(path.join(root, 'js', 'app.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'css', 'style.css'), 'utf8');
 
 assert.doesNotMatch(app, /ZOOM_COMPENSATION/);
-assert.doesNotMatch(app, /window\.scrollTo\s*\(/);
+assert.match(app, /var baseDPR\s*=\s*window\.devicePixelRatio/);
+assert.match(app, /baseDPR\s*\/\s*currentDPR/);
+assert.match(app, /function captureZoomAnchor/);
+assert.match(app, /function restoreZoomAnchor/);
+assert.match(app, /restoreZoomAnchor\(zoomAnchor\)/);
 assert.match(app, /outerWidth/);
 assert.match(app, /document\.fonts\.ready/);
 assert.doesNotMatch(css, /overflow-anchor:\s*none/);
@@ -52,7 +56,7 @@ console.log('zoom behavior contract: PASS');
 - [x] **Step 2: Run the test to verify it fails**
 
 Run `node _deploy/tests/zoom-behavior.test.js`.
-Expected: FAIL because the current app still contains `ZOOM_COMPENSATION`, `window.scrollTo`, and `overflow-anchor: none`.
+Expected: FAIL because the current app lacks DPR compensation and viewport-anchor helpers.
 
 ### Task 2: Replace DPR compensation with stable native zoom
 
@@ -174,7 +178,7 @@ Check the title, toolbar, first table row, `document.scrollingElement`, and cons
 
 - [x] **Step 3: Exercise native zoom**
 
-At a scrolled table position, run the browser's zoom sequence `80% → 100% → 125% → 150% → 100%`. Between steps record `frame.style.transform`, `viewport.style.height`, and `scrollY`; verify the app does not issue `scrollTo` and does not add nested scrolling.
+At a scrolled table position, run the browser's zoom sequence `80% → 100% → 125% → 150% → 100%`. Between steps record `frame.style.transform`, `viewport.style.height`, the center anchor's `getBoundingClientRect().top`, and `scrollY`; verify the center anchor stays within 1 CSS-px and no nested scrolling appears.
 
 - [x] **Step 4: Smoke existing interactions**
 

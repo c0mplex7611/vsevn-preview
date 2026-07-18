@@ -21,10 +21,16 @@
   /* ==========================================================
      1. Масштаб кадра
      ========================================================== */
+  var baseW = document.documentElement.clientWidth;
+  var baseDPR = window.devicePixelRatio || 1;
   var scale = 1;
+  var fitScale = 1;
   var lastOuterWidth = window.outerWidth;
   var lastOuterHeight = window.outerHeight;
+  var lastDPR = baseDPR;
   var resizeFrame = 0;
+  var resizeKind = "";
+  var zoomAnchor = null;
   var heightPx = "";
 
   function calculateFitScale() {
@@ -41,21 +47,60 @@
     heightPx = nextHeight;
     viewport.style.height = nextHeight;
   }
-  function scheduleTrueResize() {
+  function captureZoomAnchor() {
+    var y = Math.max(1, Math.min(window.innerHeight * 0.5, window.innerHeight - 1));
+    var x = Math.max(1, Math.min(window.innerWidth * 0.5, window.innerWidth - 1));
+    var element = document.elementFromPoint(x, y);
+    if (!element || !frame.contains(element)) return null;
+    var rect = element.getBoundingClientRect();
+    return {
+      element: element,
+      designTop: (rect.top + window.scrollY) / scale,
+      viewportTop: rect.top
+    };
+  }
+  function restoreZoomAnchor(anchor) {
+    if (!anchor || !anchor.element.isConnected) return;
+    var nextScroll = anchor.designTop * scale - anchor.viewportTop;
+    if (Number.isFinite(nextScroll)) window.scrollTo(window.scrollX, Math.max(0, nextScroll));
+  }
+  function scheduleResize(kind) {
+    resizeKind = kind === "window" ? "window" : (resizeKind || "zoom");
     if (resizeFrame) return;
     resizeFrame = requestAnimationFrame(function () {
       resizeFrame = 0;
-      applyScale(calculateFitScale());
+      var currentDPR = window.devicePixelRatio || 1;
+      if (resizeKind === "window") {
+        baseW = document.documentElement.clientWidth;
+        baseDPR = currentDPR;
+        fitScale = Math.min(1, baseW / DESIGN_W);
+        applyScale(fitScale);
+      } else {
+        var zoomScale = baseDPR / currentDPR;
+        applyScale(fitScale * zoomScale);
+        restoreZoomAnchor(zoomAnchor);
+      }
+      zoomAnchor = null;
+      resizeKind = "";
       positionUnderline();
     });
   }
 
   window.addEventListener("resize", function () {
     tipInvalidate();
+    var currentDPR = window.devicePixelRatio || 1;
+    var dprChanged = Math.abs(currentDPR - lastDPR) > 0.001;
     var outerChanged = window.outerWidth !== lastOuterWidth || window.outerHeight !== lastOuterHeight;
+    lastDPR = currentDPR;
     lastOuterWidth = window.outerWidth;
     lastOuterHeight = window.outerHeight;
-    if (outerChanged) scheduleTrueResize();
+    if (outerChanged) {
+      zoomAnchor = null;
+      scheduleResize("window");
+    } else if (dprChanged) {
+      if (!zoomAnchor) zoomAnchor = captureZoomAnchor();
+      scheduleResize("zoom");
+    }
   });
 
   if (typeof ResizeObserver !== "undefined") {
@@ -1000,7 +1045,11 @@
     booted = true;
     syncRadios();
     render();
-    applyScale(calculateFitScale());
+    baseW = document.documentElement.clientWidth;
+    baseDPR = window.devicePixelRatio || 1;
+    lastDPR = baseDPR;
+    fitScale = calculateFitScale();
+    applyScale(fitScale);
     positionUnderline();
     frame.classList.remove("is-booting");
   }
