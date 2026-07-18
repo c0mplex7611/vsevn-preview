@@ -81,3 +81,14 @@ test("document is fixed and zoom viewport owns vertical scrolling", () => {
     /html:has\(\.ads-page\)\s*\{[^}]*overflow-y:\s*scroll\s*!important;/,
   );
 });
+
+test("zoom controller sizes the extent and never restores a document anchor", () => {
+  assert.match(source, /function syncZoomScrollExtent\(\)/);
+  assert.match(
+    source,
+    /viewport\.scrollTop = getZoomScrollTopForScale\(/,
+  );
+  assert.doesNotMatch(source, /restoreZoomScrollAnchor\(/);
+  assert.doesNotMatch(source, /scrollingElement\.scrollTop\s*=/);
+  assert.doesNotMatch(source, /--zoom-scroll-fine-y/);
+});

@@ -239,28 +239,13 @@ let lastKnownBrowserZoom = 1;
 let baselineDeviceRatio = null;
 let appliedBrowserZoomInverse = null;
 let zoomFrameResizeObserver = null;
-let lastAppliedEffectiveDpr = null;
-let pendingZoomScrollAnchor = null;
-let stableZoomScrollAnchor = null;
+let lastAppliedBrowserZoom = null;
 let textZoomProbe = null;
 let textZoomObserver = null;
 let textZoomUpdateTimer = null;
 let lastTextZoomRatio = 1;
 
 const TEXT_ZOOM_PROBE_TEXT = "ШЩЖФMwm0123456789";
-
-function getDocumentScrollPosition() {
-  const scrollingElement =
-    document.scrollingElement || document.documentElement;
-  return {
-    left: Number.isFinite(window.scrollX)
-      ? window.scrollX
-      : scrollingElement.scrollLeft || 0,
-    top: Number.isFinite(window.scrollY)
-      ? window.scrollY
-      : scrollingElement.scrollTop || 0,
-  };
-}
 
 function getZoomScrollTopForScale(scrollTop, previousZoom, nextZoom) {
   const top = Number.isFinite(scrollTop) ? Math.max(0, scrollTop) : 0;
@@ -277,158 +262,6 @@ function getZoomScrollTopForScale(scrollTop, previousZoom, nextZoom) {
 
 function getZoomScrollContainer() {
   return document.getElementById("zoomViewport");
-}
-
-function getZoomAnchorTargetViewportY(anchor, viewportHeight) {
-  if (!anchor) return 0;
-
-  const height =
-    Number.isFinite(viewportHeight) && viewportHeight > 0 ? viewportHeight : 0;
-  const ratio = Number.isFinite(anchor.viewportRatioY)
-    ? Math.min(1, Math.max(0, anchor.viewportRatioY))
-    : null;
-
-  if (height > 0 && ratio !== null) return height * ratio;
-  return Number.isFinite(anchor.viewportY) ? anchor.viewportY : 0;
-}
-
-/*
- * Keep the same live HTML point under the same viewport coordinate while
- * Firefox changes page zoom. Using scrollTop * oldDpr / newDpr is unreliable:
- * Firefox already adjusts scrollTop itself, so the second numeric correction
- * moves the page again. A DOM anchor measures the result Firefox actually
- * rendered and corrects only the remaining visual delta.
- */
-function createZoomScrollAnchor() {
-  const position = getDocumentScrollPosition();
-  if (!(position.top > 0 || position.left > 0)) return null;
-
-  const maxY = Math.max(1, window.innerHeight - 2);
-  const probeY = Math.min(maxY, Math.max(1, Math.round(window.innerHeight * 0.22)));
-  const maxX = Math.max(1, window.innerWidth - 2);
-  const probeXs = [
-    Math.min(maxX, Math.max(1, Math.round(window.innerWidth * 0.5))),
-    Math.min(maxX, 24),
-    Math.min(maxX, Math.max(1, Math.round(window.innerWidth * 0.25))),
-  ];
-
-  let element = null;
-  for (let i = 0; i < probeXs.length && !element; i += 1) {
-    const hit = document.elementFromPoint(probeXs[i], probeY);
-    if (!hit || !hit.closest) continue;
-    element = hit.closest(
-      "tr, .ads-table-wrapper, .ads-card-content, .ads-card, #zoomFrame",
-    );
-  }
-
-  if (!element || !element.isConnected) return null;
-  const rect = element.getBoundingClientRect();
-  if (!(rect.height > 0) || !Number.isFinite(rect.top)) return null;
-
-  const ratioY = Math.min(1, Math.max(0, (probeY - rect.top) / rect.height));
-  return {
-    element: element,
-    ratioY: ratioY,
-    viewportY: probeY,
-    viewportRatioY:
-      window.innerHeight > 0 ? probeY / window.innerHeight : 0,
-  };
-}
-
-function rememberStableZoomScrollAnchor() {
-  const currentScale = getEffectiveDevicePixelRatio();
-  if (
-    Number.isFinite(lastAppliedEffectiveDpr) &&
-    lastAppliedEffectiveDpr > 0 &&
-    Math.abs(currentScale / lastAppliedEffectiveDpr - 1) > 0.002
-  ) {
-    return;
-  }
-  stableZoomScrollAnchor = createZoomScrollAnchor();
-}
-
-function scheduleStableZoomScrollAnchor() {
-  if (pendingZoomScrollAnchor) return;
-  rememberStableZoomScrollAnchor();
-}
-
-function captureZoomScrollAnchor(force) {
-  if (pendingZoomScrollAnchor) return;
-
-  if (force) {
-    pendingZoomScrollAnchor = createZoomScrollAnchor();
-    return;
-  }
-
-  const currentScale = getEffectiveDevicePixelRatio();
-  const previousScale =
-    Number.isFinite(lastAppliedEffectiveDpr) && lastAppliedEffectiveDpr > 0
-      ? lastAppliedEffectiveDpr
-      : currentScale;
-  if (Math.abs(currentScale / previousScale - 1) <= 0.002) return;
-
-  /* Browser-menu zoom has no keydown. Reuse the last anchor captured during
-     normal scrolling, before Firefox starts changing the viewport. */
-  pendingZoomScrollAnchor = stableZoomScrollAnchor;
-}
-
-function restoreZoomScrollAnchor() {
-  const anchor = pendingZoomScrollAnchor;
-  pendingZoomScrollAnchor = null;
-  if (!anchor || !anchor.element || !anchor.element.isConnected) {
-    rememberStableZoomScrollAnchor();
-    return;
-  }
-
-  const rect = anchor.element.getBoundingClientRect();
-  if (!(rect.height > 0) || !Number.isFinite(rect.top)) {
-    rememberStableZoomScrollAnchor();
-    return;
-  }
-
-  const targetViewportY = getZoomAnchorTargetViewportY(
-    anchor,
-    window.innerHeight,
-  );
-  const currentPointY = rect.top + rect.height * anchor.ratioY;
-  const deltaY = currentPointY - targetViewportY;
-  const scrollingElement =
-    document.scrollingElement || document.documentElement;
-  if (Number.isFinite(deltaY) && Math.abs(deltaY) > 0.01) {
-    const maxTop = Math.max(
-      0,
-      scrollingElement.scrollHeight - document.documentElement.clientHeight,
-    );
-    scrollingElement.scrollTop = Math.min(
-      maxTop,
-      Math.max(0, scrollingElement.scrollTop + deltaY),
-    );
-  }
-
-  /* Firefox quantizes document scrollTop, leaving a visible fraction of a
-     CSS pixel at high zoom. Absorb only that final subpixel in the compositor
-     layer; this does not trigger layout or a second scroll operation. */
-  const frame = document.getElementById("zoomFrame");
-  if (frame && scrollingElement.scrollTop > 0.01) {
-    const settledRect = anchor.element.getBoundingClientRect();
-    const settledPointY =
-      settledRect.top + settledRect.height * anchor.ratioY;
-    const residualY = settledPointY - targetViewportY;
-    if (Number.isFinite(residualY) && Math.abs(residualY) <= 1.5) {
-      const currentFine =
-        parseFloat(
-          getComputedStyle(frame).getPropertyValue("--zoom-scroll-fine-y"),
-        ) || 0;
-      frame.style.setProperty(
-        "--zoom-scroll-fine-y",
-        (currentFine - residualY).toFixed(6) + "px",
-      );
-    }
-  } else if (frame) {
-    frame.style.setProperty("--zoom-scroll-fine-y", "0px");
-  }
-
-  rememberStableZoomScrollAnchor();
 }
 
 function installTextZoomAwareFontRules() {
@@ -582,18 +415,26 @@ window.getTextOnlyZoomRatio = function () {
   return lastTextZoomRatio;
 };
 
-function syncBrowserZoomViewportHeight() {
+function syncZoomScrollExtent() {
   const frame = document.getElementById("zoomFrame");
-  const viewport = document.getElementById("zoomViewport");
+  const extent = document.getElementById("zoomScrollSpace");
   const inverseZoom = parseFloat(appliedBrowserZoomInverse);
-  if (!frame || !viewport || !(inverseZoom > 0)) return;
+  if (!frame || !extent || !(inverseZoom > 0)) return;
 
   const frameHeight = frame.offsetHeight;
-  if (!(frameHeight > 0)) return;
-  const nextHeight = (frameHeight * inverseZoom).toFixed(4) + "px";
-  if (viewport.style.height !== nextHeight) {
-    viewport.style.height = nextHeight;
-  }
+  const frameWidth = frame.offsetWidth;
+  if (!(frameHeight > 0) || !(frameWidth > 0)) return;
+
+  const viewportHeight =
+    document.documentElement.clientHeight || window.innerHeight || 0;
+  const nextHeight = Math.max(
+    viewportHeight,
+    frameHeight * inverseZoom,
+  ).toFixed(4) + "px";
+  const nextWidth = (frameWidth * inverseZoom).toFixed(4) + "px";
+
+  if (extent.style.height !== nextHeight) extent.style.height = nextHeight;
+  if (extent.style.width !== nextWidth) extent.style.width = nextWidth;
 }
 
 function captureBaselineDeviceRatio() {
@@ -768,6 +609,12 @@ function applyBrowserZoomNeutralizer() {
   // перекладывается и не прыгает вверх-вниз (Chrome/Firefox/Yandex одинаково).
   const inverse = baselineDpr / effectiveDpr;
   const inverseValue = inverse.toFixed(8);
+  const currentBrowserZoom = effectiveDpr / baselineDpr;
+  const previousBrowserZoom =
+    Number.isFinite(lastAppliedBrowserZoom) && lastAppliedBrowserZoom > 0
+      ? lastAppliedBrowserZoom
+      : currentBrowserZoom;
+  const scrollTopBeforeZoom = viewport.scrollTop;
   frame.style.transformOrigin = "0 0";
   frame.style.transform = "translateZ(0) scale(" + inverse.toFixed(6) + ")";
   const inverseChanged = appliedBrowserZoomInverse !== inverseValue;
@@ -789,12 +636,19 @@ function applyBrowserZoomNeutralizer() {
   // не нужна (иначе двойное масштабирование) — держим её нейтральной.
   root.style.setProperty("--static-browser-zoom-inv", "1");
 
-  syncBrowserZoomViewportHeight();
-  lastAppliedEffectiveDpr = effectiveDpr;
-  if (!zoomFrameResizeObserver && typeof ResizeObserver === "function") {
-    zoomFrameResizeObserver = new ResizeObserver(
-      syncBrowserZoomViewportHeight,
+  syncZoomScrollExtent();
+  if (
+    Math.abs(currentBrowserZoom / previousBrowserZoom - 1) > 0.0005
+  ) {
+    viewport.scrollTop = getZoomScrollTopForScale(
+      scrollTopBeforeZoom,
+      previousBrowserZoom,
+      currentBrowserZoom,
     );
+  }
+  lastAppliedBrowserZoom = currentBrowserZoom;
+  if (!zoomFrameResizeObserver && typeof ResizeObserver === "function") {
+    zoomFrameResizeObserver = new ResizeObserver(syncZoomScrollExtent);
     zoomFrameResizeObserver.observe(frame);
   }
 }
@@ -2479,9 +2333,7 @@ function markRealPointerHover(event) {
 }
 
 function markViewportChanging() {
-  captureZoomScrollAnchor();
   applyBrowserZoomNeutralizer();
-  restoreZoomScrollAnchor();
   scheduleTextOnlyZoomCompensation();
   setHoverIntent(false);
   armHoverIntentAfterViewportChange();
@@ -7541,17 +7393,11 @@ function bindBitmapTextFontRefresh() {
 
 document.addEventListener("DOMContentLoaded", function () {
   initTextOnlyZoomCompensation();
-  rememberStableZoomScrollAnchor();
-  window.addEventListener("scroll", scheduleStableZoomScrollAnchor, {
-    passive: true,
-    capture: true,
-  });
   document.addEventListener(
     "keydown",
     function (event) {
       if (!(event.ctrlKey || event.metaKey)) return;
       if (!["+", "-", "=", "0"].includes(event.key)) return;
-      captureZoomScrollAnchor(true);
       scheduleTextOnlyZoomCompensation();
     },
     true,
@@ -7560,7 +7406,6 @@ document.addEventListener("DOMContentLoaded", function () {
     "wheel",
     function (event) {
       if (!event.ctrlKey) return;
-      captureZoomScrollAnchor(true);
       scheduleTextOnlyZoomCompensation();
     },
     { passive: true, capture: true },
