@@ -52,6 +52,8 @@
     var x = Math.max(1, Math.min(window.innerWidth * 0.5, window.innerWidth - 1));
     var element = document.elementFromPoint(x, y);
     if (!element || !frame.contains(element)) return null;
+    var row = element.closest ? element.closest("tr") : null;
+    if (row) element = row;
     var rect = element.getBoundingClientRect();
     return {
       element: element,
